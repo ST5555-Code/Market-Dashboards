@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  const key = process.env.FIRMS_MAP_KEY || '';
+  const key = (process.env.FIRMS_MAP_KEY || '').trim();
   if (!key) return res.status(200).json({ error: 'NO_KEY', msg: 'FIRMS_MAP_KEY env var not set in Vercel' });
 
   try {

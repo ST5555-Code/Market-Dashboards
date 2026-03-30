@@ -938,13 +938,18 @@ function initMap() {
       const cKey = 'firms_gulf';
       try {
         const c = JSON.parse(localStorage.getItem(cKey) || 'null');
-        if (c && Date.now() - c.ts < 15 * 60000) { _renderFires(c.data); return; }
+        if (c && Array.isArray(c.data) && Date.now() - c.ts < 15 * 60000) { _renderFires(c.data); return; }
       } catch {}
       const r = await fetch('/api/fires', { signal: AbortSignal.timeout(12000) });
       if (!r.ok) return;
-      const fires = await r.json();
-      try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: fires })); } catch {}
-      _renderFires(fires);
+      const payload = await r.json();
+      // If FIRMS key not yet active or API error, payload is an object not array
+      if (!Array.isArray(payload)) {
+        console.warn('FIRMS not available:', payload.error || payload);
+        return;
+      }
+      try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
+      _renderFires(payload);
     } catch (e) { console.warn('FIRMS:', e.message); }
   }
 
