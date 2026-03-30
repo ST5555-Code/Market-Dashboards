@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/fires.js": {
+      "regions": ["sin1"]
+    }
+  }
+}
