@@ -14,10 +14,21 @@ module.exports = async function handler(req, res) {
     const url  = `https://firms.modaps.eosdis.nasa.gov/api/area/geojson/VIIRS_SNPP_NRT/${key}/${bbox}/2`;
 
     const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    if (!r.ok) return res.status(200).json([]);
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      return res.status(200).json({ error: `FIRMS_HTTP_${r.status}`, raw: errText.substring(0, 300) });
+    }
 
-    const data = await r.json();
-    const fires = (data.features || []).map(f => ({
+    const raw = await r.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch (e) { return res.status(200).json({ error: 'FIRMS_INVALID_JSON', raw: raw.substring(0, 300) }); }
+
+    if (!data.features) {
+      return res.status(200).json({ error: 'FIRMS_NO_FEATURES', raw: JSON.stringify(data).substring(0, 300) });
+    }
+
+    const fires = data.features.map(f => ({
       lat:        f.geometry.coordinates[1],
       lon:        f.geometry.coordinates[0],
       brightness: f.properties.bright_ti4 || f.properties.brightness || 0,
@@ -29,6 +40,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=900');
     return res.status(200).json(fires);
   } catch (e) {
-    return res.status(200).json([]);
+    return res.status(200).json({ error: 'FIRMS_EXCEPTION', msg: e.message });
   }
 };
