@@ -62,6 +62,9 @@
   /* TV */
   .tv-wrap { position: relative; width: 100%; padding-top: 40%; background: #000; }
   .tv-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+  /* TV panel fills row height — eliminates black space below player */
+  .panel-tv { display: flex; flex-direction: column; }
+  .panel-tv .tv-wrap { flex: 1; padding-top: 0; min-height: 200px; }
   .tv-overlay-label { position: absolute; top: 6px; left: 6px; background: rgba(160,65,90,0.92); color: var(--white); font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 1px; border-radius: 2px; pointer-events: none; }
   .tv-ch-bar { display: flex; gap: 4px; padding: 8px 10px; background: var(--dark-card); border-top: 1px solid #2a3560; flex-wrap: wrap; }
   .tv-ch-btn { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 10px; font-weight: 600; padding: 4px 9px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; flex: 1; min-width: 55px; text-align: center; }
@@ -178,6 +181,7 @@
   /* MOBILE */
   @media (max-width: 768px) {
     .row-tv-top, .row-3col, .row-chart, .row-2col, .row-comm-curve { grid-template-columns: 1fr; }
+    .panel-tv .tv-wrap { flex: none; padding-top: 56.25%; }
     .header { flex-direction: column; gap: 4px; padding: 10px 12px; }
     .header-title { font-size: 13px; }
     .comm-grid { grid-template-columns: 1fr 1fr; }
@@ -193,7 +197,6 @@
 <div style="background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-family:inherit;">
   <a href="/" style="color:#C9A84C;text-decoration:none;font-weight:700;letter-spacing:1px;padding:4px 10px;border:1px solid #C9A84C;border-radius:3px;">⌂ HOME</a>
   <span style="color:#333;">|</span>
-  <a href="/private-banking/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Private Banking ↗</a>
   <a href="/media/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Media &amp; Entertainment ↗</a>
 </div>
 
@@ -255,7 +258,7 @@
   </div>
 
   <!-- LIVE TV -->
-  <div class="panel">
+  <div class="panel panel-tv">
     <div class="panel-header">
       <div class="panel-title">Live TV</div>
       <div class="panel-sub" id="tv-now-channel">Bloomberg Television</div>
