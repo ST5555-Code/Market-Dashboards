@@ -621,11 +621,11 @@ const layers = {};
 function initMap() {
   map = L.map('map', { center: [26.5, 54.5], zoom: 5, zoomControl: true, attributionControl: true });
 
-  // OpenStreetMap tiles — dark filter applied via CSS to .leaflet-tile-pane only
-  // Inverts OSM: white→black bg, colored borders become clearly visible country lines
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    subdomains: 'abc', maxZoom: 18
+  // ESRI World Street Map — always English labels regardless of region (Arabic/Farsi suppressed)
+  // Dark filter applied via CSS to .leaflet-tile-pane only
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
+    maxZoom: 18
   }).addTo(map);
 
   // ── Shipping Lanes (IMO Traffic Separation Scheme) ──
