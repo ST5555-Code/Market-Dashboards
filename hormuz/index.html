@@ -413,7 +413,7 @@ async function _yfFetch(sym) {
   } catch {}
 
   try {
-    const r = await fetch(`/.netlify/functions/quote?sym=${encodeURIComponent(sym)}`, {
+    const r = await fetch(`/api/quote?sym=${encodeURIComponent(sym)}`, {
       signal: AbortSignal.timeout(12000)
     });
     if (!r.ok) return { sym, ok: false, price: null };

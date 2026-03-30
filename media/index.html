@@ -496,7 +496,7 @@
       <div class="tv-overlay-label">● LIVE</div>
     </div>
     <div id="tv-local-fallback" style="display:none; padding:24px 16px; text-align:center; background:#0a0f1e;">
-      <div style="color:var(--sandstone); font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px;">LIVE TV · DEPLOYED TO NETLIFY ✓</div>
+      <div style="color:var(--sandstone); font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px;">LIVE TV</div>
       <div style="color:var(--midscale); font-size:11px; margin-bottom:18px; line-height:1.6;">Player loading — or click a channel below to open on YouTube.</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;" id="tv-yt-links"></div>
     </div>
@@ -749,7 +749,7 @@ const STOCKS = [
   { sym: 'MSFT', name: 'Microsoft' },
 ];
 
-// ─── YAHOO FINANCE VIA NETLIFY FUNCTION — rate-limited queue (max 3 concurrent) ─
+// ─── YAHOO FINANCE VIA /api/quote — rate-limited queue (max 3 concurrent) ─────
 const _fsQueue = [];
 let _fsRunning = 0;
 const _FS_CONCURRENCY = 3;
@@ -771,7 +771,7 @@ function _fsDrain() {
 
 async function _fsFetch(sym) {
   try {
-    const r = await fetch(`/.netlify/functions/quote?sym=${encodeURIComponent(sym)}`, {
+    const r = await fetch(`/api/quote?sym=${encodeURIComponent(sym)}`, {
       signal: AbortSignal.timeout(12000)
     });
     if (!r.ok) return { sym, price: null, change: null, pct: null };
