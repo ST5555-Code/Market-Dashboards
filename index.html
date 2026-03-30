@@ -83,7 +83,7 @@
   /* ── Cards ── */
   .cards {
     display: grid;
-    grid-template-columns: repeat(3, 280px);
+    grid-template-columns: repeat(4, 260px);
     gap: 16px;
   }
 
@@ -109,6 +109,7 @@
   .card.energy::before    { background: linear-gradient(90deg, #B8922A, #DCB96E); }
   .card.media::before     { background: linear-gradient(90deg, #3A6190, #5A82AF); }
   .card.cleantech::before { background: linear-gradient(90deg, #1E7A45, #4CAF7D); }
+  .card.hormuz::before    { background: linear-gradient(90deg, #8B1A1A, #C94040); }
 
   .card:hover {
     border-color: #2e2e2e;
@@ -125,6 +126,7 @@
   .card.energy    .card-sector { color: #DCB96E; }
   .card.media     .card-sector { color: #5A82AF; }
   .card.cleantech .card-sector { color: #4CAF7D; }
+  .card.hormuz    .card-sector { color: #C94040; }
 
   .card-title {
     font-size: 17px;
@@ -187,9 +189,9 @@
   }
 
   /* ── Mobile ── */
-  @media (max-width: 960px) {
+  @media (max-width: 1120px) {
     .cards {
-      grid-template-columns: repeat(2, 280px);
+      grid-template-columns: repeat(2, 260px);
     }
   }
   @media (max-width: 640px) {
@@ -252,6 +254,19 @@
         <span class="tag">Battery Metals</span>
         <span class="tag">Nuclear</span>
         <span class="tag">Green Finance</span>
+      </div>
+      <div class="card-arrow">↗</div>
+    </a>
+
+    <a class="card hormuz" href="/hormuz/">
+      <div class="card-sector">Geopolitical Intelligence</div>
+      <div class="card-title">Strait of Hormuz</div>
+      <div class="card-desc">Live conflict intelligence, interactive map, GCC military bases, refineries, pipelines, and NASA fire hotspots.</div>
+      <div class="card-tags">
+        <span class="tag">Conflict Intel</span>
+        <span class="tag">Oil &amp; Gas</span>
+        <span class="tag">GCC Map</span>
+        <span class="tag">NASA FIRMS</span>
       </div>
       <div class="card-arrow">↗</div>
     </a>
