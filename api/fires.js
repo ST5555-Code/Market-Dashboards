@@ -1,8 +1,8 @@
 // Vercel Serverless Function: NASA FIRMS fire hotspot proxy
-// Path: /api/fires
+// Path: /api/fires  — CommonJS format, matches quote.js pattern
 // Requires FIRMS_MAP_KEY env var — free at firms.modaps.eosdis.nasa.gov/api/
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
@@ -31,4 +31,4 @@ export default async function handler(req, res) {
   } catch (e) {
     return res.status(200).json([]);
   }
-}
+};

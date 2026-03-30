@@ -907,9 +907,8 @@ function initMap() {
   layers.term = termGroup;
   termGroup.addTo(map);
 
-  // ── NASA FIRMS Fire Hotspots — via serverless proxy (no CORS, server-side fetch) ──
-  // serverless fn at /.netlify/functions/fires fetches NASA FIRMS on server side
-  // Requires FIRMS_MAP_KEY env var — free at firms.modaps.eosdis.nasa.gov/api/
+  // ── NASA FIRMS Fire Hotspots — via /api/fires serverless proxy ──
+  // Requires FIRMS_MAP_KEY env var in Vercel → free at firms.modaps.eosdis.nasa.gov/api/
   const firmsGroup = L.layerGroup();
   layers.firms = firmsGroup;
 
