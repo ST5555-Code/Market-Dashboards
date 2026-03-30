@@ -4,34 +4,258 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intelligence Dashboards</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; font-family:'Inter',sans-serif; background:#0D0D0D; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
-  h1 { font-size:13px; letter-spacing:3px; text-transform:uppercase; color:#888; margin-bottom:40px; }
-  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
-  .card { background:#161616; border:1px solid #2a2a2a; border-radius:4px; padding:28px 36px; text-align:center; text-decoration:none; color:#fff; width:200px; transition:border-color .2s; }
-  .card:hover { border-color:#888; }
-  .card-icon { font-size:28px; margin-bottom:10px; }
-  .card-title { font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
-  .card-sub { font-size:10px; color:#555; margin-top:5px; }
-  .card.energy { border-top:3px solid #DCB96E; }
-  .card.media { border-top:3px solid #5A82AF; }
-  .card.pb { border-top:3px solid #DB0011; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #080808;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 44px;
+    background: #0f0f0f;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  .topbar-brand {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .topbar-time {
+    font-size: 10px;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+  }
+
+  .hero-eyebrow {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #3a3a3a;
+    margin-bottom: 18px;
+  }
+
+  .hero-title {
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 300;
+    letter-spacing: -0.5px;
+    color: #d0d0d0;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .hero-title strong {
+    font-weight: 700;
+    color: #f0f0f0;
+  }
+
+  .hero-sub {
+    font-size: 12px;
+    color: #3e3e3e;
+    letter-spacing: 1px;
+    margin-bottom: 56px;
+  }
+
+  /* ── Cards ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 280px);
+    gap: 16px;
+  }
+
+  .card {
+    position: relative;
+    background: #0f0f0f;
+    border: 1px solid #1c1c1c;
+    border-radius: 3px;
+    padding: 32px 28px 28px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, transform 0.15s;
+    overflow: hidden;
+    text-align: left;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    transition: opacity 0.2s;
+  }
+  .card.energy::before { background: linear-gradient(90deg, #B8922A, #DCB96E); }
+  .card.media::before  { background: linear-gradient(90deg, #3A6190, #5A82AF); }
+
+  .card:hover {
+    border-color: #2e2e2e;
+    transform: translateY(-2px);
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card-sector {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .card.energy .card-sector { color: #DCB96E; }
+  .card.media  .card-sector { color: #5A82AF; }
+
+  .card-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #f0f0f0;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+  }
+
+  .card-desc {
+    font-size: 11px;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: #161616;
+    border: 1px solid #252525;
+    color: #555;
+  }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    font-size: 14px;
+    color: #2a2a2a;
+    transition: color 0.2s, transform 0.2s;
+  }
+  .card:hover .card-arrow {
+    color: #666;
+    transform: translate(2px, -2px);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    padding: 16px 28px;
+    border-top: 1px solid #141414;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-note {
+    font-size: 9px;
+    color: #2a2a2a;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .cards {
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: 340px;
+    }
+    .hero { padding: 40px 16px; }
+    .topbar { padding: 0 16px; }
+  }
 </style>
 </head>
 <body>
-  <h1>Intelligence Dashboards</h1>
+
+<div class="topbar">
+  <span class="topbar-brand">Intelligence Portal</span>
+  <span class="topbar-time" id="clock"></span>
+</div>
+
+<div class="hero">
+  <div class="hero-eyebrow">Live Intelligence</div>
+  <h1 class="hero-title">Market <strong>Dashboards</strong></h1>
+  <p class="hero-sub">Real-time data · News · Deals · TV</p>
+
   <div class="cards">
+
     <a class="card energy" href="/energy/">
-      <div class="card-icon">⚡</div>
-      <div class="card-title">Upstream Energy</div>
-      <div class="card-sub">E&P · Commodities · M&A</div>
+      <div class="card-sector">Upstream Energy</div>
+      <div class="card-title">Energy & Commodities</div>
+      <div class="card-desc">Live commodity prices, forward curves, M&A deal flow, earnings, and debt financing activity.</div>
+      <div class="card-tags">
+        <span class="tag">Crude · Gas · LNG</span>
+        <span class="tag">Forward Curve</span>
+        <span class="tag">M&A</span>
+        <span class="tag">Earnings</span>
+      </div>
+      <div class="card-arrow">↗</div>
     </a>
-<a class="card media" href="/media/">
-      <div class="card-icon">🎬</div>
-      <div class="card-title">Media & Entertainment</div>
-      <div class="card-sub">Box Office · Streaming · Sports</div>
+
+    <a class="card media" href="/media/">
+      <div class="card-sector">Media & Entertainment</div>
+      <div class="card-title">Media & Streaming</div>
+      <div class="card-desc">Streaming scoreboard, sports broadcast rights, box office, M&A transactions, and financing activity.</div>
+      <div class="card-tags">
+        <span class="tag">Streaming</span>
+        <span class="tag">Sports Rights</span>
+        <span class="tag">M&A</span>
+        <span class="tag">Earnings</span>
+      </div>
+      <div class="card-arrow">↗</div>
     </a>
+
   </div>
+</div>
+
+<div class="footer">
+  <span class="footer-note">Confidential · Internal Use Only</span>
+  <span class="footer-note" id="date-stamp"></span>
+</div>
+
+<script>
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function tick(){
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()) + ' ' +
+      Intl.DateTimeFormat('en-US',{timeZoneName:'short'}).formatToParts(now).find(p=>p.type==='timeZoneName').value;
+    document.getElementById('date-stamp').textContent =
+      now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
 </body>
 </html>
