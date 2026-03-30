@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPSTREAM ENERGY INTELLIGENCE MONITOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --oxford: #1E2846;
+    --glacier: #5A82AF;
+    --sandstone: #DCB96E;
+    --bluegrey: #D2DCE6;
+    --midscale: #737887;
+    --maroon: #A0415A;
+    --turquoise: #50AF8C;
+    --white: #FFFFFF;
+    --dark-card: #253157;
+    --bg: #0F1525;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); font-size: 13px; overflow-x: hidden; }
+
+  /* HEADER */
+  .header { background: var(--oxford); border-bottom: 3px solid var(--sandstone); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-title { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--white); text-transform: uppercase; }
+  .header-title span { color: var(--sandstone); }
+  .header-meta { font-size: 11px; color: var(--midscale); text-align: right; }
+  #clock { color: var(--sandstone); font-weight: 600; }
+
+  /* BREAKING BAR */
+  .breaking-bar { background: var(--maroon); padding: 6px 20px; display: flex; align-items: center; gap: 12px; overflow: hidden; }
+  .breaking-label { background: var(--white); color: var(--maroon); font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; }
+  .breaking-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .breaking-text a { color: var(--white); text-decoration: none; }
+  .breaking-text a:hover { text-decoration: underline; }
+
+  /* TICKER */
+  .ticker-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 6px 0; overflow: hidden; }
+  .ticker-wrap { display: flex; animation: ticker-scroll 70s linear infinite; width: max-content; }
+  .ticker-wrap:hover { animation-play-state: paused; }
+  @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 18px; white-space: nowrap; border-right: 1px solid #3a4570; }
+  .ticker-item a { color: var(--white); text-decoration: none; font-weight: 600; font-size: 12px; }
+  .ticker-item a:hover { color: var(--sandstone); }
+  .tick-label { color: var(--midscale); font-size: 10px; }
+  .tick-price { color: var(--bluegrey); font-size: 12px; }
+  .tick-unit { color: var(--midscale); font-size: 10px; }
+  .tick-up { color: var(--turquoise); font-size: 11px; }
+  .tick-down { color: var(--maroon); font-size: 11px; }
+  .tick-flat { color: var(--midscale); font-size: 11px; }
+
+  /* GRIDS */
+  .row-tv-top { display: grid; grid-template-columns: 1fr 0.8fr; gap: 2px; padding: 2px; }
+  .row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-chart { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-full { padding: 2px; }
+  /* COMM-CURVE ROW */
+  .row-comm-curve { display: grid; grid-template-columns: 1fr 2fr; gap: 2px; padding: 2px; }
+  /* TV */
+  .tv-wrap { position: relative; width: 100%; padding-top: 40%; background: #000; }
+  .tv-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+  .tv-overlay-label { position: absolute; top: 6px; left: 6px; background: rgba(160,65,90,0.92); color: var(--white); font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 1px; border-radius: 2px; pointer-events: none; }
+  .tv-ch-bar { display: flex; gap: 4px; padding: 8px 10px; background: var(--dark-card); border-top: 1px solid #2a3560; flex-wrap: wrap; }
+  .tv-ch-btn { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 10px; font-weight: 600; padding: 4px 9px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; flex: 1; min-width: 55px; text-align: center; }
+  .tv-ch-btn:hover { background: #253157; color: var(--white); border-color: var(--glacier); }
+  .tv-ch-btn.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
+
+  /* PANELS */
+  .panel { background: var(--oxford); border: 1px solid #2a3560; border-radius: 3px; overflow: hidden; }
+  .panel-header { background: var(--dark-card); border-bottom: 2px solid var(--glacier); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sandstone); }
+  .panel-sub { font-size: 10px; color: var(--midscale); display:flex; align-items:center; gap:5px; }
+  .refresh-btn { background:none; border:none; color:var(--midscale); font-size:13px; padding:0 2px; cursor:pointer; line-height:1; transition:color .15s, transform .2s; }
+  .refresh-btn:hover { color:var(--sandstone); transform:rotate(180deg); }
+  .refresh-all-btn { background:var(--dark-card); border:1px solid var(--sandstone); color:var(--sandstone); font-size:10px; padding:4px 10px; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; letter-spacing:.5px; transition:all .15s; }
+  .refresh-all-btn:hover { background:var(--sandstone); color:var(--oxford); }
+  .panel-body { padding: 12px; }
+  .panel-body-scroll { padding: 12px; max-height: 340px; overflow-y: auto; }
+
+  /* COMMODITY PRICES */
+  .comm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .comm-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid var(--glacier); }
+  .comm-card.oil { border-left-color: var(--sandstone); }
+  .comm-card.gas { border-left-color: var(--turquoise); }
+  .comm-card.spread { border-left-color: var(--midscale); }
+  .comm-name { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .comm-price { font-size: 20px; font-weight: 700; color: var(--white); }
+  .comm-unit { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .comm-change { font-size: 11px; margin-top: 3px; display: flex; gap: 10px; }
+  .up { color: var(--turquoise); }
+  .down { color: var(--maroon); }
+  .flat { color: var(--midscale); }
+  .comm-sub { font-size: 10px; color: var(--midscale); margin-top: 2px; }
+  .source-note { font-size: 9px; color: var(--midscale); margin-top: 10px; border-top: 1px solid #2a3560; padding-top: 6px; }
+
+  /* NEWS */
+  .news-list { list-style: none; }
+  .news-item { padding: 7px 0; border-bottom: 1px solid #1a2040; display: flex; flex-direction: column; gap: 3px; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item a { color: var(--white); text-decoration: none; font-size: 12px; line-height: 1.4; font-weight: 500; }
+  .news-item a:hover { color: var(--sandstone); }
+  .news-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .news-source { font-size: 9px; color: var(--glacier); text-transform: uppercase; letter-spacing: 0.5px; }
+  .news-time { font-size: 9px; color: var(--midscale); }
+  .news-tag { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .tag-ma { background: #3d1a24; color: var(--maroon); }
+  .tag-opec { background: #2a2010; color: var(--sandstone); }
+  .tag-price { background: #1a2d3d; color: var(--glacier); }
+  .tag-financing { background: #25203a; color: #9a85d0; }
+  .tag-upstream { background: #1a3028; color: var(--turquoise); }
+  .tag-energy { background: #2a2a2a; color: var(--midscale); }
+  .news-loading { color: var(--midscale); font-size: 12px; padding: 20px 0; text-align: center; }
+
+  /* EARNINGS */
+  .earn-list { list-style: none; }
+  .earn-item { padding: 6px 0; border-bottom: 1px solid #1a2040; display: flex; align-items: center; justify-content: space-between; }
+  .earn-item:last-child { border-bottom: none; }
+  .earn-co { font-weight: 600; color: var(--white); font-size: 12px; }
+  .earn-ticker { color: var(--glacier); font-size: 10px; }
+  .earn-date { color: var(--midscale); font-size: 11px; }
+  .earn-days { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 2px; }
+  .earn-soon { background: #3d1a1a; color: var(--maroon); }
+  .earn-near { background: #3d2a10; color: var(--sandstone); }
+  .earn-far { background: #1a2d1a; color: var(--turquoise); }
+
+  /* FORWARD CURVE CHART */
+  .chart-wrap { padding: 12px; }
+  .chart-container { position: relative; height: 280px; }
+  .chart-tabs { display: flex; gap: 6px; padding: 8px 12px 0; }
+  .chart-tab { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 11px; font-weight: 600; padding: 4px 12px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; }
+  .chart-tab.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
+  .chart-status { font-size: 10px; color: var(--midscale); padding: 4px 12px 0; }
+
+  /* STOCKS TABLE */
+  .stocks-table { width: 100%; border-collapse: collapse; }
+  .stocks-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 8px; text-align: right; border-bottom: 1px solid #2a3560; white-space: nowrap; }
+  .stocks-table th:first-child, .stocks-table th:nth-child(2) { text-align: left; }
+  .stocks-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; text-align: right; white-space: nowrap; }
+  .stocks-table td:first-child, .stocks-table td:nth-child(2) { text-align: left; }
+  .stocks-table tr:last-child td { border-bottom: none; }
+  .stocks-table tr:hover { background: #1a2040; }
+  .s-ticker { font-weight: 700; color: var(--glacier); }
+  .s-name { color: var(--midscale); font-size: 10px; }
+  .s-price { color: var(--white); font-weight: 600; }
+  .s-up { color: var(--turquoise); }
+  .s-down { color: var(--maroon); }
+  .s-flat { color: var(--midscale); }
+  .s-sector { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; }
+  .sec-major { background: #1a2d3d; color: var(--glacier); }
+  .sec-gas { background: #1a3028; color: var(--turquoise); }
+  .sec-oil { background: #2a2010; color: var(--sandstone); }
+  .sec-ofs { background: #25203a; color: #9a85d0; }
+  .sec-etf { background: #2a2a2a; color: var(--midscale); }
+
+  /* M&A TABLE */
+  .deal-table { width: 100%; border-collapse: collapse; }
+  .deal-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; text-align: left; border-bottom: 1px solid #2a3560; }
+  .deal-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; vertical-align: top; line-height: 1.4; }
+  .deal-table tr:last-child td { border-bottom: none; }
+  .deal-date { color: var(--midscale); font-size: 10px; white-space: nowrap; }
+  .deal-desc { color: var(--white); }
+  .deal-badge { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 700; white-space: nowrap; }
+  .badge-ma { background: #3d1a24; color: var(--maroon); }
+  .badge-div { background: #2a2010; color: var(--sandstone); }
+  .badge-fin { background: #25203a; color: #9a85d0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--oxford); }
+  ::-webkit-scrollbar-thumb { background: var(--glacier); border-radius: 2px; }
+
+  /* FOOTER */
+  .footer { background: var(--oxford); border-top: 2px solid var(--sandstone); padding: 8px 20px; display: flex; justify-content: space-between; font-size: 10px; color: var(--midscale); }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .row-tv-top, .row-3col, .row-chart, .row-2col, .row-comm-curve { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 4px; padding: 10px 12px; }
+    .header-title { font-size: 13px; }
+    .comm-grid { grid-template-columns: 1fr 1fr; }
+    .panel-body, .panel-body-scroll { padding: 10px; }
+    .panel-body-scroll { max-height: none; }
+    .footer { flex-direction: column; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV BAR -->
+<div style="background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-family:inherit;">
+  <a href="/" style="color:#C9A84C;text-decoration:none;font-weight:700;letter-spacing:1px;padding:4px 10px;border:1px solid #C9A84C;border-radius:3px;">⌂ HOME</a>
+  <span style="color:#333;">|</span>
+  <a href="/private-banking/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Private Banking ↗</a>
+  <a href="/media/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Media &amp; Entertainment ↗</a>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">UPSTREAM ENERGY <span>INTELLIGENCE</span> MONITOR</div>
+    <div style="font-size:10px;color:var(--midscale);margin-top:2px;">E&P · Commodities · M&A · Capital Markets · Forward Curves</div>
+  </div>
+  <div class="header-meta" style="display:flex;align-items:center;gap:14px;">
+    <div style="text-align:right;">
+      <div id="clock">--:-- --</div>
+      <div>Live Data · Stocks 60s · Feeds 10min</div>
+    </div>
+    <button class="refresh-all-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
+  </div>
+</div>
+
+<!-- BREAKING BAR -->
+<div class="breaking-bar">
+  <div class="breaking-label">LATEST</div>
+  <div class="breaking-text" id="breaking-text">Loading energy headlines...</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-item" style="color:var(--midscale)">Loading market data...</div>
+  </div>
+</div>
+
+<!-- ROW 1: Industry News | Energy Business News | TV -->
+<div class="row-3col">
+
+  <!-- INDUSTRY NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Industry News</div>
+      <div class="panel-sub"><span id="industry-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="industry-list">
+        <li class="news-loading">Fetching industry news...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ENERGY BUSINESS NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Energy Business News</div>
+      <div class="panel-sub"><span id="news-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="news-list">
+        <li class="news-loading">Fetching live energy headlines...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- LIVE TV -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Live TV</div>
+      <div class="panel-sub" id="tv-now-channel">Bloomberg Television</div>
+    </div>
+    <div class="tv-wrap" id="tv-player-wrap">
+      <iframe id="tv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="tv-overlay-label">● LIVE</div>
+    </div>
+    <div id="tv-local-fallback" style="display:none; padding:20px 12px; text-align:center; background:#0a0f1e;">
+      <div style="color:var(--sandstone);font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">LIVE TV · DEPLOYED TO NETLIFY ✓</div>
+      <div style="color:var(--midscale);font-size:10px;margin-bottom:14px;line-height:1.6;">Player loading — or click a channel below to open on YouTube.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;" id="tv-yt-links"></div>
+    </div>
+    <div class="tv-ch-bar">
+      <button class="tv-ch-btn active" onclick="switchTV(this,0)">Bloomberg</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,1)">CNBC</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,2)">Al Jazeera</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,3)">Sky News</button>
+    </div>
+    <div style="font-size:9px;color:var(--midscale);padding:5px 10px;">Auto-muted on load · Click unmute in player · Refresh if stream blank</div>
+  </div>
+
+</div>
+
+<!-- ROW 2: Commodity Prices | Forward Curve -->
+<div class="row-comm-curve">
+
+  <!-- COMMODITY PRICES -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Commodity Prices</div>
+      <div class="panel-sub"><span id="comm-update">Loading...</span><button class="refresh-btn" onclick="loadCommodities()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="comm-grid">
+        <div class="comm-card oil" id="card-wti">
+          <div class="comm-name">WTI Crude</div>
+          <div><span class="comm-price" id="wti-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="wti-chg" class="flat">--</span><span id="wti-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+        <div class="comm-card oil" id="card-brent">
+          <div class="comm-name">Brent Crude</div>
+          <div><span class="comm-price" id="brent-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="brent-chg" class="flat">--</span><span id="brent-pct" class="flat">--</span></div>
+          <div class="comm-sub">ICE Front Month</div>
+        </div>
+        <div class="comm-card gas" id="card-hh">
+          <div class="comm-name">Henry Hub</div>
+          <div><span class="comm-price" id="hh-price">--</span><span class="comm-unit">$/MMBtu</span></div>
+          <div class="comm-change"><span id="hh-chg" class="flat">--</span><span id="hh-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+        <div class="comm-card gas" id="card-ttf">
+          <div class="comm-name">TTF Natural Gas</div>
+          <div><span class="comm-price" id="ttf-price">--</span><span class="comm-unit">$/MMBtu</span></div>
+          <div class="comm-change"><span id="ttf-chg" class="flat">--</span><span id="ttf-pct" class="flat">--</span></div>
+          <div class="comm-sub">European Benchmark</div>
+        </div>
+        <div class="comm-card spread" id="card-brent-wti">
+          <div class="comm-name">Brent–WTI Spread</div>
+          <div><span class="comm-price" id="spread-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="spread-sub" class="flat">Brent premium to WTI</span></div>
+        </div>
+        <div class="comm-card oil" id="card-gasoline">
+          <div class="comm-name">RBOB Gasoline</div>
+          <div><span class="comm-price" id="gasoline-price">--</span><span class="comm-unit">$/gal</span></div>
+          <div class="comm-change"><span id="gasoline-chg" class="flat">--</span><span id="gasoline-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+      </div>
+      <div class="source-note">Source: Yahoo Finance (CL=F, BZ=F, NG=F, TTF=F, RB=F) · Live via Netlify Function</div>
+    </div>
+  </div>
+
+  <!-- FORWARD CURVE -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Forward Price Curve</div>
+      <div class="panel-sub"><span id="curve-update">Loading 5-year strip...</span><button class="refresh-btn" onclick="loadCurve()" title="Refresh">↻</button></div>
+    </div>
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="showCurve('oil', this)">WTI Crude</button>
+      <button class="chart-tab" onclick="showCurve('gas', this)">Henry Hub</button>
+      <button class="chart-tab" onclick="showCurve('both', this)">Both</button>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-container">
+        <canvas id="curveChart"></canvas>
+      </div>
+    </div>
+    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX December futures · Spot + Dec '26/'27/'28/'29 · Exchange-traded forward prices · Refresh for latest</div>
+  </div>
+
+</div>
+
+<!-- ROW 3: Earnings | M&A | Financing -->
+<div class="row-3col">
+
+  <!-- EARNINGS CALENDAR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">E&P Earnings Calendar</div>
+      <div class="panel-sub">Q1 2026 · Upcoming</div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="earn-list" id="earn-list"></ul>
+      <div class="source-note">Source: Company IR calendars · Compiled manually</div>
+    </div>
+  </div>
+
+  <!-- M&A NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">M&A &amp; Deal Activity</div>
+      <div class="panel-sub"><span id="ma-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Recent Transactions</div>
+      <table class="deal-table">
+        <thead><tr><th>Date</th><th>Transaction</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td class="deal-date">Mar 25</td><td class="deal-desc">Cross Timbers sells oil &amp; gas assets to CTTC Energy</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Mar 25</td><td class="deal-desc">Diversified acquires Harmsworth assets from Sheridan Production (East Texas)</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Feb 28</td><td class="deal-desc">Clearvent Energy acquires Eagle Ford assets in Texas</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Feb 28</td><td class="deal-desc">SM Energy sells Carbon Ranch assets to Matador Energy (South Texas)</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Feb 12</td><td class="deal-desc">Ovintiv divests Anadarko Basin assets in Oklahoma</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Feb 11</td><td class="deal-desc">Devon Energy and Citizens Energy agree to all-stock transaction</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Jan 30</td><td class="deal-desc">EOG Resources divests Woodbine assets</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px;">Live Deal Headlines</div>
+      <ul class="news-list" id="ma-list">
+        <li class="news-loading">Fetching deal news...</li>
+      </ul>
+      <div class="source-note">Static: Moelis Upstream Weekly, Mar 20 2026 · Live: RSS feeds</div>
+    </div>
+  </div>
+
+  <!-- FINANCING ACTIVITY -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Debt &amp; Financing</div>
+      <div class="panel-sub">Recent E&P Issuances</div>
+    </div>
+    <div class="panel-body-scroll">
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Senior Unsecured Notes</div>
+      <table class="deal-table">
+        <thead><tr><th>Issuer</th><th>Amount</th><th>Coupon / Due</th></tr></thead>
+        <tbody>
+          <tr><td class="deal-desc">Infinity Natural Resources</td><td class="deal-date">$350M</td><td class="deal-date">7.625% / 2031</td></tr>
+          <tr><td class="deal-desc">NW Energy</td><td class="deal-date">$1.1B</td><td class="deal-date">Sr. Notes / 2034</td></tr>
+          <tr><td class="deal-desc">CNX Resources</td><td class="deal-date">$500M</td><td class="deal-date">Sr. Notes / 2034</td></tr>
+          <tr><td class="deal-desc">Mewbourne Oil Co.</td><td class="deal-date">$1.1B</td><td class="deal-date">Sr. Notes / 2031</td></tr>
+          <tr><td class="deal-desc">Crescent Energy Finance</td><td class="deal-date">$600M</td><td class="deal-date">9.25% / 2031</td></tr>
+          <tr><td class="deal-desc">CNX Resources</td><td class="deal-date">$500M</td><td class="deal-date">7.875% / 2031</td></tr>
+          <tr><td class="deal-desc">Northern Oil &amp; Gas</td><td class="deal-date">$400M</td><td class="deal-date">Sr. Notes / 2031</td></tr>
+          <tr><td class="deal-desc">APA Corp</td><td class="deal-date">$750M</td><td class="deal-date">6.875% / 2033</td></tr>
+          <tr><td class="deal-desc">CrossAmerica Partners</td><td class="deal-date">$500M</td><td class="deal-date">5.375% / 2034</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px;">Live Financing Headlines</div>
+      <ul class="news-list" id="fin-list">
+        <li class="news-loading">Fetching financing news...</li>
+      </ul>
+      <div class="source-note">Source: Moelis Upstream Weekly, Mar 20 2026 · Bloomberg · S&P Capital IQ</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ROW 4: E&P Stocks -->
+<div class="row-full">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">E&P &amp; Energy Stocks — Live</div>
+      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="stocks-table">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th>Price</th>
+            <th>Chg</th>
+            <th>% Chg</th>
+            <th>52W Hi</th>
+            <th>52W Lo</th>
+          </tr>
+        </thead>
+        <tbody id="stocks-body">
+          <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--midscale)">Loading stock data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance Direct · Refreshes every 60s · ~ = approx</div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Live: Yahoo Finance · OilPrice.com · Reuters · Rigzone · rss2json</div>
+  <div>Static: Moelis Upstream Weekly Mar 20 2026 · Bloomberg · S&P Capital IQ | ~ = estimated</div>
+</div>
+
+<script>
+// =====================
+// CLOCK
+// =====================
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short'
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// =====================
+// ─── YAHOO FINANCE VIA NETLIFY FUNCTION — rate-limited queue (max 3 concurrent) ─
+const _yfQueue = [];
+let _yfRunning = 0;
+const _YF_CONCURRENCY = 3;
+
+function yf(sym) {
+  return new Promise(resolve => {
+    _yfQueue.push({ sym, resolve });
+    _yfDrain();
+  });
+}
+
+function _yfDrain() {
+  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
+    const { sym, resolve } = _yfQueue.shift();
+    _yfRunning++;
+    _yfFetch(sym).then(result => { resolve(result); _yfRunning--; _yfDrain(); });
+  }
+}
+
+async function _yfFetch(sym) {
+  try {
+    const r = await fetch(`/.netlify/functions/quote?sym=${encodeURIComponent(sym)}`, {
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!r.ok) return { sym, ok: false, price: null };
+    const data = await r.json();
+    const m = data?.chart?.result?.[0]?.meta;
+    if (m?.regularMarketPrice) {
+      const price = m.regularMarketPrice;
+      const prev  = m.chartPreviousClose || m.previousClose || price;
+      const chg   = price - prev;
+      const pct   = prev ? (chg / prev * 100) : 0;
+      return { sym, ok:true, price, prev, chg, pct,
+               high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow, mktCap: m.marketCap };
+    }
+    return { sym, ok: false, price: null };
+  } catch {
+    return { sym, ok: false, price: null };
+  }
+}
+
+function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
+function fmtChg(v, dec=2) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(dec); }
+function fmtPct(v) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+function cls(v) { return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
+function sCls(v) { return v > 0 ? 's-up' : v < 0 ? 's-down' : 's-flat'; }
+
+// =====================
+// COMMODITY PRICES
+// =====================
+async function loadCommodities() {
+  const [wti, brent, hh, ttf, rb] = await Promise.all([
+    yf('CL=F'), yf('BZ=F'), yf('NG=F'), yf('TTF=F'), yf('RB=F')
+  ]);
+
+  function setComm(idPrice, idChg, idPct, data, dec) {
+    document.getElementById(idPrice).textContent = fmt(data.price, dec);
+    const c = document.getElementById(idChg);
+    const p = document.getElementById(idPct);
+    c.textContent = fmtChg(data.chg, dec);
+    c.className = cls(data.chg);
+    p.textContent = fmtPct(data.pct);
+    p.className = cls(data.pct);
+  }
+
+  setComm('wti-price', 'wti-chg', 'wti-pct', wti, 2);
+  setComm('brent-price', 'brent-chg', 'brent-pct', brent, 2);
+  setComm('hh-price', 'hh-chg', 'hh-pct', hh, 3);
+  setComm('ttf-price', 'ttf-chg', 'ttf-pct', ttf, 2);
+  setComm('gasoline-price', 'gasoline-chg', 'gasoline-pct', rb, 3);
+
+  // Brent-WTI spread
+  if (brent.price && wti.price) {
+    const sp = brent.price - wti.price;
+    document.getElementById('spread-price').textContent = fmt(sp, 2);
+    const sub = document.getElementById('spread-sub');
+    sub.textContent = sp >= 0 ? `Brent premium to WTI` : `WTI premium to Brent`;
+    sub.className = 'flat';
+  }
+
+  document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// =====================
+// FORWARD CURVE
+// =====================
+let curveChart = null;
+let oilData = { labels: [], data: [] };
+let gasData = { labels: [], data: [] };
+let activeView = 'oil';
+
+// WTI and HH futures — Spot + Dec strips through Dec 2029
+// Static fallback prices (Python/yfinance as of 2026-03-29) — live fetch overlays on load
+const OIL_FUTURES = [
+  { sym: 'CL=F',      label: 'Spot',    fallback: 68.99 },
+  { sym: 'CLZ26.NYM', label: 'Dec\'26', fallback: 77.36 },
+  { sym: 'CLZ27.NYM', label: 'Dec\'27', fallback: 71.76 },
+  { sym: 'CLZ28.NYM', label: 'Dec\'28', fallback: 69.32 },
+  { sym: 'CLZ29.NYM', label: 'Dec\'29', fallback: 67.22 },
+];
+const GAS_FUTURES = [
+  { sym: 'NG=F',      label: 'Spot',    fallback: 3.03 },
+  { sym: 'NGZ26.NYM', label: 'Dec\'26', fallback: 4.72 },
+  { sym: 'NGZ27.NYM', label: 'Dec\'27', fallback: 4.70 },
+  { sym: 'NGZ28.NYM', label: 'Dec\'28', fallback: 4.58 },
+  { sym: 'NGZ29.NYM', label: 'Dec\'29', fallback: 4.34 },
+];
+
+async function fetchCurve(contracts) {
+  // Pre-fill with fallbacks so chart always renders all 5 points
+  const merged = contracts.map(c => ({ label: c.label, price: c.fallback, live: false }));
+  const results = await Promise.all(contracts.map(c => yf(c.sym)));
+  results.forEach((r, i) => {
+    if (r.price) { merged[i].price = +r.price.toFixed(2); merged[i].live = true; }
+  });
+  return {
+    labels:    merged.map(m => m.label),
+    data:      merged.map(m => m.price),
+    liveCount: merged.filter(m => m.live).length
+  };
+}
+
+function buildChart(labels, datasets) {
+  const ctx = document.getElementById('curveChart').getContext('2d');
+  if (curveChart) curveChart.destroy();
+  curveChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#D2DCE6', font: { family: 'Inter', size: 11 }, boxWidth: 16 } },
+        tooltip: {
+          backgroundColor: '#1E2846',
+          borderColor: '#5A82AF',
+          borderWidth: 1,
+          titleColor: '#DCB96E',
+          bodyColor: '#D2DCE6',
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#737887', font: { size: 10 } }, grid: { color: '#1a2040' } },
+        y: {
+          ticks: { color: '#737887', font: { size: 10 }, callback: v => '$' + v },
+          grid: { color: '#1a2040' },
+          title: { display: true, text: '$/bbl', color: '#737887', font: { size: 10 } }
+        },
+        y2: { display: false }
+      }
+    }
+  });
+}
+
+function showCurve(view, btn) {
+  activeView = view;
+  document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCurve();
+}
+
+function renderCurve() {
+  if (activeView === 'oil') {
+    buildChart(oilData.labels, [{
+      label: 'WTI Crude ($/bbl)',
+      data: oilData.data,
+      borderColor: '#DCB96E',
+      backgroundColor: 'rgba(220,185,110,0.08)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: '#DCB96E',
+      tension: 0.3,
+      fill: true,
+    }]);
+  } else if (activeView === 'gas') {
+    buildChart(gasData.labels, [{
+      label: 'Henry Hub ($/MMBtu)',
+      data: gasData.data,
+      borderColor: '#50AF8C',
+      backgroundColor: 'rgba(80,175,140,0.08)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: '#50AF8C',
+      tension: 0.3,
+      fill: true,
+    }]);
+  } else {
+    // Both — need merged labels
+    const allLabels = [...new Set([...oilData.labels, ...gasData.labels])];
+    buildChart(allLabels, [
+      {
+        label: 'WTI Crude ($/bbl)',
+        data: oilData.data,
+        borderColor: '#DCB96E',
+        backgroundColor: 'rgba(220,185,110,0.0)',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.3,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Henry Hub ($/MMBtu)',
+        data: gasData.data,
+        borderColor: '#50AF8C',
+        backgroundColor: 'rgba(80,175,140,0.0)',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.3,
+        yAxisID: 'y2',
+      }
+    ]);
+    // Show dual axes for both
+    if (curveChart) {
+      curveChart.options.scales.y2 = {
+        display: true, position: 'right',
+        ticks: { color: '#50AF8C', font: { size: 10 }, callback: v => '$' + v },
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '$/MMBtu', color: '#50AF8C', font: { size: 10 } }
+      };
+      curveChart.update();
+    }
+  }
+}
+
+async function loadCurve() {
+  document.getElementById('curve-update').textContent = 'Fetching live prices...';
+  // Render immediately with fallback data while live fetch runs
+  oilData = { labels: OIL_FUTURES.map(c=>c.label), data: OIL_FUTURES.map(c=>c.fallback), liveCount: 0 };
+  gasData = { labels: GAS_FUTURES.map(c=>c.label), data: GAS_FUTURES.map(c=>c.fallback), liveCount: 0 };
+  renderCurve();
+  // Now fetch live and update
+  const [oil, gas] = await Promise.all([fetchCurve(OIL_FUTURES), fetchCurve(GAS_FUTURES)]);
+  oilData = oil;
+  gasData = gas;
+  const totalLive = oil.liveCount + gas.liveCount;
+  const t = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('curve-update').textContent = totalLive > 0
+    ? `${totalLive}/10 live · ${t} · ~ = static fallback`
+    : `Static fallback · ${t} · Live fetch unavailable`;
+  renderCurve();
+}
+
+// =====================
+// E&P STOCKS
+// =====================
+const STOCKS = [
+  { sym: 'XOM',  name: 'Exxon Mobil',        sector: 'major' },
+  { sym: 'CVX',  name: 'Chevron',             sector: 'major' },
+  { sym: 'COP',  name: 'ConocoPhillips',      sector: 'major' },
+  { sym: 'EOG',  name: 'EOG Resources',       sector: 'oil'   },
+  { sym: 'DVN',  name: 'Devon Energy',        sector: 'oil'   },
+  { sym: 'OXY',  name: 'Occidental',          sector: 'oil'   },
+  { sym: 'HES',  name: 'Hess Corp',           sector: 'oil'   },
+  { sym: 'APA',  name: 'APA Corp',            sector: 'oil'   },
+  { sym: 'MRO',  name: 'Marathon Oil',        sector: 'oil'   },
+  { sym: 'FANG', name: 'Diamondback Energy',  sector: 'oil'   },
+  { sym: 'PR',   name: 'Permian Resources',   sector: 'oil'   },
+  { sym: 'EQT',  name: 'EQT Corp',            sector: 'gas'   },
+  { sym: 'AR',   name: 'Antero Resources',    sector: 'gas'   },
+  { sym: 'CTRA', name: 'Coterra Energy',      sector: 'gas'   },
+  { sym: 'RRC',  name: 'Range Resources',     sector: 'gas'   },
+  { sym: 'SWN',  name: 'SWN Energy',          sector: 'gas'   },
+  { sym: 'SLB',  name: 'SLB (Schlumberger)',  sector: 'ofs'   },
+  { sym: 'HAL',  name: 'Halliburton',         sector: 'ofs'   },
+  { sym: 'XLE',  name: 'Energy Select SPDR',  sector: 'etf'   },
+  { sym: 'XOP',  name: 'SPDR Oil & Gas E&P',  sector: 'etf'   },
+];
+
+const SECTOR_LABELS = { major: ['sec-major','Major'], gas: ['sec-gas','Gas'], oil: ['sec-oil','Oil'], ofs: ['sec-ofs','OFS'], etf: ['sec-etf','ETF'] };
+
+async function loadStocks() {
+  const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
+  const tbody = document.getElementById('stocks-body');
+  tbody.innerHTML = '';
+  results.forEach((r, i) => {
+    const s = STOCKS[i];
+    const [secCls, secLabel] = SECTOR_LABELS[s.sector] || ['sec-etf','—'];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="s-ticker">${s.sym}</span></td>
+      <td><span class="s-name">${s.name}</span></td>
+      <td><span class="s-sector ${secCls}">${secLabel}</span></td>
+      <td class="s-price">${r.price ? '$'+fmt(r.price) : '—'}</td>
+      <td class="${sCls(r.chg)}">${fmtChg(r.chg)}</td>
+      <td class="${sCls(r.pct)}">${fmtPct(r.pct)}</td>
+      <td class="s-flat">${r.high52 ? '$'+fmt(r.high52) : '—'}</td>
+      <td class="s-flat">${r.low52  ? '$'+fmt(r.low52)  : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+  return results;
+}
+
+// =====================
+// TICKER
+// =====================
+const TICKER_COMMS = [
+  { sym: 'CL=F', label: 'WTI', unit: '$/bbl' },
+  { sym: 'BZ=F', label: 'Brent', unit: '$/bbl' },
+  { sym: 'NG=F', label: 'HH Gas', unit: '$/MMBtu' },
+  { sym: 'TTF=F', label: 'TTF', unit: '$/MMBtu' },
+  { sym: 'RB=F', label: 'RBOB', unit: '$/gal' },
+];
+const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','EQT','AR','FANG','SLB','HAL','XLE','XOP'];
+
+async function loadTicker() {
+  const commResults = await Promise.all(TICKER_COMMS.map(c => yf(c.sym)));
+  const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
+  const wrap = document.getElementById('ticker-wrap');
+
+  const commItems = commResults.map((r, i) => {
+    const c = TICKER_COMMS[i];
+    const p = r.price ? fmt(r.price, i < 3 ? 2 : 3) : '—';
+    const pct = fmtPct(r.pct);
+    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
+    return `<div class="ticker-item">
+      <span class="tick-label">${c.label}</span>
+      <span class="tick-price">$${p}</span>
+      <span class="tick-unit">${c.unit}</span>
+      <span class="${tcls}">${pct}</span>
+    </div>`;
+  });
+
+  const stockItems = stockResults.map((r, i) => {
+    const sym = TICKER_STOCKS[i];
+    const p = r.price ? '$'+fmt(r.price) : '—';
+    const pct = fmtPct(r.pct);
+    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
+    return `<div class="ticker-item">
+      <a href="https://finance.yahoo.com/quote/${sym}" target="_blank">${sym}</a>
+      <span class="tick-price">${p}</span>
+      <span class="${tcls}">${pct}</span>
+    </div>`;
+  });
+
+  const all = [...commItems, ...stockItems];
+  wrap.innerHTML = all.join('') + all.join('');
+}
+
+// =====================
+// RSS NEWS
+// =====================
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+const ENERGY_FEEDS = [
+  { url: 'https://oilprice.com/rss/main', name: 'OilPrice' },
+  { url: 'https://feeds.reuters.com/reuters/businessNews', name: 'Reuters' },
+  { url: 'https://www.rigzone.com/news/rss/rigzone_latest.aspx', name: 'Rigzone' },
+];
+
+const ENERGY_KW = ['oil','gas','crude','brent','wti','lng','upstream','e&p','permian','shale','energy','petroleum','barrel','opec','natural gas','refin','pipeline','midstream','producer','exploration','production','drilling','well','reservoir','offshore','frack','hydrocarbon','fossil'];
+const MA_KW     = ['acqui','merger','buyout','deal','stake','divestiture','divest','bid','offer','purchase','consolidat','takeover'];
+const FIN_KW    = ['note','bond','debt','issuance','credit','loan','facility','borrow','refinanc','senior','financing','capital market'];
+
+const isEnergy  = t => ENERGY_KW.some(k => t.toLowerCase().includes(k));
+const isMA      = t => MA_KW.some(k => t.toLowerCase().includes(k)) && isEnergy(t);
+const isFin     = t => FIN_KW.some(k => t.toLowerCase().includes(k)) && isEnergy(t);
+
+function getEnergyTag(text) {
+  const t = text.toLowerCase();
+  if (MA_KW.some(k => t.includes(k))) return '<span class="news-tag tag-ma">M&A</span>';
+  if (FIN_KW.some(k => t.includes(k))) return '<span class="news-tag tag-financing">Financing</span>';
+  if (t.includes('opec') || t.includes('saudi') || t.includes('iran') || t.includes('supply')) return '<span class="news-tag tag-opec">OPEC</span>';
+  if (t.includes('price') || t.includes('wti') || t.includes('brent') || t.includes('crude')) return '<span class="news-tag tag-price">Price</span>';
+  return '<span class="news-tag tag-upstream">E&P</span>';
+}
+
+function timeAgo(d) {
+  const diff = (Date.now() - new Date(d)) / 60000;
+  if (diff < 60) return Math.floor(diff) + 'm ago';
+  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
+  return Math.floor(diff/1440) + 'd ago';
+}
+
+async function fetchFeed(f) {
+  try {
+    const r = await fetch(RSS2JSON + encodeURIComponent(f.url));
+    const d = await r.json();
+    if (d.status !== 'ok') return [];
+    return (d.items || []).map(i => ({ title: i.title, link: i.link, pubDate: i.pubDate, source: f.name }));
+  } catch { return []; }
+}
+
+function renderNews(items, listId, updateId, filterFn, limit=12) {
+  const list = document.getElementById(listId);
+  const filtered = items.filter(i => filterFn(i.title))
+    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate)).slice(0, limit);
+  if (!filtered.length) {
+    list.innerHTML = '<li class="news-loading">No headlines found — feeds may be rate-limited. Refresh in a moment.</li>';
+    return;
+  }
+  list.innerHTML = filtered.map(i => `
+    <li class="news-item">
+      <a href="${i.link}" target="_blank">${i.title}</a>
+      <div class="news-meta">
+        <span class="news-source">${i.source}</span>
+        <span class="news-time">${timeAgo(i.pubDate)}</span>
+        ${getEnergyTag(i.title)}
+      </div>
+    </li>`).join('');
+  if (updateId) document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadAllNews() {
+  const results = await Promise.all(ENERGY_FEEDS.map(fetchFeed));
+  const all = [].concat(...results);
+
+  renderNews(all, 'news-list',     'news-update',     isEnergy, 14);
+  renderNews(all, 'ma-list',       'ma-update',       isMA,     10);
+  renderNews(all, 'fin-list',      null,              isFin,    8);
+  renderNews(all, 'industry-list', 'industry-update', isEnergy, 14);
+
+  // Breaking bar
+  const topBiz = all.filter(i => isEnergy(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  if (topBiz.length) {
+    document.getElementById('breaking-text').innerHTML = topBiz.slice(0,3)
+      .map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; ');
+  }
+}
+
+// =====================
+// EARNINGS
+// =====================
+const EARNINGS = [
+  { co: 'SLB',             sym: 'SLB',  date: '2026-04-17' },
+  { co: 'Halliburton',     sym: 'HAL',  date: '2026-04-22' },
+  { co: 'Hess Corp',       sym: 'HES',  date: '2026-04-30' },
+  { co: 'EQT Corp',        sym: 'EQT',  date: '2026-04-28' },
+  { co: 'Antero Resources',sym: 'AR',   date: '2026-04-29' },
+  { co: 'Exxon Mobil',     sym: 'XOM',  date: '2026-04-25' },
+  { co: 'ConocoPhillips',  sym: 'COP',  date: '2026-05-01' },
+  { co: 'Chevron',         sym: 'CVX',  date: '2026-05-02' },
+  { co: 'Devon Energy',    sym: 'DVN',  date: '2026-05-06' },
+  { co: 'APA Corp',        sym: 'APA',  date: '2026-05-06' },
+  { co: 'Marathon Oil',    sym: 'MRO',  date: '2026-05-06' },
+  { co: 'Diamondback',     sym: 'FANG', date: '2026-05-06' },
+  { co: 'Walt Disney',     sym: 'DIS',  date: '2026-05-06' },
+  { co: 'EOG Resources',   sym: 'EOG',  date: '2026-05-07' },
+  { co: 'Occidental',      sym: 'OXY',  date: '2026-05-07' },
+  { co: 'Coterra Energy',  sym: 'CTRA', date: '2026-05-07' },
+];
+
+function loadEarnings() {
+  const today = new Date();
+  const list = document.getElementById('earn-list');
+  const upcoming = EARNINGS
+    .map(e => { const d = new Date(e.date); return {...e, days: Math.ceil((d-today)/86400000), d}; })
+    .filter(e => e.days >= 0).sort((a,b) => a.days - b.days);
+  list.innerHTML = upcoming.map(e => {
+    const cls = e.days <= 7 ? 'earn-soon' : e.days <= 21 ? 'earn-near' : 'earn-far';
+    const label = e.days === 0 ? 'TODAY' : e.days === 1 ? '1 day' : e.days + ' days';
+    return `<li class="earn-item">
+      <div><div class="earn-co">${e.co}</div><div class="earn-ticker">${e.sym}</div></div>
+      <div style="text-align:right">
+        <div class="earn-date">${e.d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        <span class="earn-days ${cls}">${label}</span>
+      </div>
+    </li>`;
+  }).join('');
+}
+
+// =====================
+// =====================
+// REFRESH ALL
+// =====================
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function refreshAll() {
+  const btn = document.querySelector('.refresh-all-btn');
+  if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
+  loadCurve();
+  await loadCommodities();
+  await sleep(300);
+  await loadStocks();
+  await sleep(300);
+  loadAllNews();
+  loadTicker();
+  if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
+}
+
+// INIT
+// =====================
+// =====================
+// LIVE TV
+// =====================
+const TV_CHANNELS = [
+  { name: 'Bloomberg Television', videoId: 'iEpJwprxDdk', ytUrl: 'https://www.youtube.com/@BloombergTelevision/live' },
+  { name: 'CNBC Live',            videoId: '9NyxcX3rhQs', ytUrl: 'https://www.youtube.com/@CNBC/live' },
+  { name: 'Al Jazeera English',   videoId: 'gCNeDWCI0vo', ytUrl: 'https://www.youtube.com/@AlJazeeraEnglish/live' },
+  { name: 'Sky News Live',        videoId: 'YDvsBbKfLPA', ytUrl: 'https://www.youtube.com/@SkyNews/live' },
+];
+
+function initTV() {
+  const iframe = document.getElementById('tv-iframe');
+  const ch = TV_CHANNELS[0];
+  iframe.src = `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+  // Also populate fallback links in case iframe fails
+  document.getElementById('tv-yt-links').innerHTML = TV_CHANNELS.map(c =>
+    `<a href="${c.ytUrl}" target="_blank" style="background:var(--dark-card);border:1px solid #3a4570;color:var(--white);text-decoration:none;padding:5px 10px;border-radius:3px;font-size:10px;font-weight:600;">▶ ${c.name}</a>`
+  ).join('');
+}
+
+function switchTV(btn, idx) {
+  const ch = TV_CHANNELS[idx];
+  document.getElementById('tv-iframe').src =
+    `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+  document.getElementById('tv-now-channel').textContent = ch.name;
+  document.querySelectorAll('.tv-ch-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function init() {
+  initTV();
+  loadEarnings();
+  await Promise.all([loadCommodities(), loadTicker(), loadAllNews()]);
+  loadCurve(); // Slightly defer to not overload requests
+}
+init();
+setInterval(() => { loadCommodities(); loadTicker(); loadStocks(); }, 60000);
+setInterval(() => loadAllNews(), 600000);
+setInterval(() => loadCurve(), 3600000); // Curve refreshes hourly
+loadStocks(); // Load stocks after initial fire
+</script>
+</body>
+</html>
