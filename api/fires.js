@@ -10,10 +10,12 @@ module.exports = async function handler(req, res) {
   if (!key) return res.status(200).json({ error: 'NO_KEY', msg: 'FIRMS_MAP_KEY env var not set in Vercel' });
 
   try {
-    const bbox = '44,18,66,36'; // W,S,E,N — Gulf + surrounding region
-    const url  = `https://firms.modaps.eosdis.nasa.gov/api/area/geojson/VIIRS_SNPP_NRT/${key}/${bbox}/2`;
+    const bbox    = '44,18,66,36'; // W,S,E,N — Gulf + surrounding region
+    const firmsUrl = `https://firms.modaps.eosdis.nasa.gov/api/area/geojson/VIIRS_SNPP_NRT/${key}/${bbox}/2`;
+    // Route through allorigins relay — Vercel IPs are blocked by NASA FIRMS directly
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(firmsUrl)}`;
 
-    const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
     if (!r.ok) {
       const errText = await r.text().catch(() => '');
       return res.status(200).json({ error: `FIRMS_HTTP_${r.status}`, raw: errText.substring(0, 300) });
