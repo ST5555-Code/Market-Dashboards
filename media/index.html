@@ -461,7 +461,7 @@
   <!-- INDUSTRY NEWS -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title">Industry News</div>
+      <div class="panel-title">Top News</div>
       <div class="panel-sub" id="news-update-time">Loading...</div>
     </div>
     <div class="panel-body-scroll">
@@ -881,7 +881,6 @@ function renderNewsList(items, listId, updateId, filterFn) {
 async function loadNews() {
   const entResults = await Promise.all(ENT_FEEDS.map(fetchFeed));
   const entItems = [].concat(...entResults);
-  renderNewsList(entItems, 'news-list', 'news-update-time', isBiz);
   renderNewsList(entItems, 'ma-list', 'ma-update-time', isMA);
   const allBiz = entItems.filter(i => isBiz(i.title)).sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
   if (allBiz.length > 0) {
@@ -896,6 +895,21 @@ async function loadSportsNews() {
   const results = await Promise.all(SPORTS_FEEDS.map(fetchFeed));
   const items = [].concat(...results);
   // renderNewsList(items, 'sports-list', 'sports-update-time', () => true);
+}
+
+// =====================
+// TOP NEWS (general headlines — Row 1 left panel)
+// =====================
+const TOP_FEEDS = [
+  { url: 'https://feeds.reuters.com/reuters/topNews', name: 'Reuters' },
+  { url: 'http://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
+  { url: 'https://www.theguardian.com/world/rss', name: 'Guardian' },
+];
+
+async function loadTopNews() {
+  const results = await Promise.all(TOP_FEEDS.map(fetchFeed));
+  const items = [].concat(...results).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  renderNewsList(items, 'news-list', 'news-update-time', () => true);
 }
 
 // =====================
@@ -954,12 +968,11 @@ async function init() {
   initTV();
   loadEarnings();
   loadTicker();
-  await loadNews();
-  await loadBizNews();
+  await Promise.all([loadNews(), loadBizNews(), loadTopNews()]);
 }
 init();
 setInterval(loadTicker, 60000);
-setInterval(() => { loadNews(); loadBizNews(); }, 600000);
+setInterval(() => { loadNews(); loadBizNews(); loadTopNews(); }, 600000);
 </script>
 </body>
 </html>

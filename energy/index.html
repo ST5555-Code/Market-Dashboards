@@ -234,7 +234,7 @@
   <!-- INDUSTRY NEWS -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title">Industry News</div>
+      <div class="panel-title">Top News</div>
       <div class="panel-sub"><span id="industry-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
     </div>
     <div class="panel-body-scroll">
@@ -887,6 +887,21 @@ function renderNews(items, listId, updateId, filterFn, limit=12) {
   if (updateId) document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
+// =====================
+// TOP NEWS (general headlines — Row 1 left panel)
+// =====================
+const TOP_FEEDS = [
+  { url: 'https://feeds.reuters.com/reuters/topNews', name: 'Reuters' },
+  { url: 'http://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
+  { url: 'https://www.theguardian.com/world/rss', name: 'Guardian' },
+];
+
+async function loadTopNews() {
+  const results = await Promise.all(TOP_FEEDS.map(fetchFeed));
+  const items = [].concat(...results).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  renderNews(items, 'industry-list', 'industry-update', () => true, 14);
+}
+
 async function loadAllNews() {
   const results = await Promise.all(ENERGY_FEEDS.map(fetchFeed));
   const all = [].concat(...results);
@@ -894,7 +909,6 @@ async function loadAllNews() {
   renderNews(all, 'news-list',     'news-update',     isEnergy, 14);
   renderNews(all, 'ma-list',       'ma-update',       isMA,     10);
   renderNews(all, 'fin-list',      null,              isFin,    8);
-  renderNews(all, 'industry-list', 'industry-update', isEnergy, 14);
 
   // Breaking bar
   const topBiz = all.filter(i => isEnergy(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
@@ -998,12 +1012,12 @@ function switchTV(btn, idx) {
 async function init() {
   initTV();
   loadEarnings();
-  await Promise.all([loadCommodities(), loadTicker(), loadAllNews()]);
+  await Promise.all([loadCommodities(), loadTicker(), loadAllNews(), loadTopNews()]);
   loadCurve(); // Slightly defer to not overload requests
 }
 init();
 setInterval(() => { loadCommodities(); loadTicker(); loadStocks(); }, 60000);
-setInterval(() => loadAllNews(), 600000);
+setInterval(() => { loadAllNews(); loadTopNews(); }, 600000);
 setInterval(() => loadCurve(), 3600000); // Curve refreshes hourly
 loadStocks(); // Load stocks after initial fire
 </script>
