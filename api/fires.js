@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   const key = process.env.FIRMS_MAP_KEY || '';
-  if (!key) return res.status(200).json([]);
+  if (!key) return res.status(200).json({ error: 'NO_KEY', msg: 'FIRMS_MAP_KEY env var not set in Vercel' });
 
   try {
     const bbox = '44,18,66,36'; // W,S,E,N — Gulf + surrounding region
