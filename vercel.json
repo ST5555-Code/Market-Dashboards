@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/fires.js": {
-      "regions": ["sin1"]
+      "runtime": "edge"
     }
   }
 }
