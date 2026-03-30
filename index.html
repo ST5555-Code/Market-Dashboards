@@ -83,7 +83,7 @@
   /* ── Cards ── */
   .cards {
     display: grid;
-    grid-template-columns: repeat(2, 280px);
+    grid-template-columns: repeat(3, 280px);
     gap: 16px;
   }
 
@@ -106,8 +106,9 @@
     height: 2px;
     transition: opacity 0.2s;
   }
-  .card.energy::before { background: linear-gradient(90deg, #B8922A, #DCB96E); }
-  .card.media::before  { background: linear-gradient(90deg, #3A6190, #5A82AF); }
+  .card.energy::before    { background: linear-gradient(90deg, #B8922A, #DCB96E); }
+  .card.media::before     { background: linear-gradient(90deg, #3A6190, #5A82AF); }
+  .card.cleantech::before { background: linear-gradient(90deg, #1E7A45, #4CAF7D); }
 
   .card:hover {
     border-color: #2e2e2e;
@@ -121,8 +122,9 @@
     text-transform: uppercase;
     margin-bottom: 14px;
   }
-  .card.energy .card-sector { color: #DCB96E; }
-  .card.media  .card-sector { color: #5A82AF; }
+  .card.energy    .card-sector { color: #DCB96E; }
+  .card.media     .card-sector { color: #5A82AF; }
+  .card.cleantech .card-sector { color: #4CAF7D; }
 
   .card-title {
     font-size: 17px;
@@ -185,6 +187,11 @@
   }
 
   /* ── Mobile ── */
+  @media (max-width: 960px) {
+    .cards {
+      grid-template-columns: repeat(2, 280px);
+    }
+  }
   @media (max-width: 640px) {
     .cards {
       grid-template-columns: 1fr;
@@ -232,6 +239,19 @@
         <span class="tag">Sports Rights</span>
         <span class="tag">M&A</span>
         <span class="tag">Earnings</span>
+      </div>
+      <div class="card-arrow">↗</div>
+    </a>
+
+    <a class="card cleantech" href="/cleantech/">
+      <div class="card-sector">Cleantech &amp; Transition</div>
+      <div class="card-title">Energy Transition</div>
+      <div class="card-desc">Carbon markets, RINs, LCFS, battery metals, nuclear, clean energy equities, M&A, and green finance.</div>
+      <div class="card-tags">
+        <span class="tag">Carbon · RINs · LCFS</span>
+        <span class="tag">Battery Metals</span>
+        <span class="tag">Nuclear</span>
+        <span class="tag">Green Finance</span>
       </div>
       <div class="card-arrow">↗</div>
     </a>
