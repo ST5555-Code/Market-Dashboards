@@ -218,7 +218,7 @@
 
 <!-- BREAKING BAR -->
 <div class="breaking-bar">
-  <div class="breaking-label">LATEST</div>
+  <div class="breaking-label">IRAN WAR</div>
   <div class="breaking-text" id="breaking-text">Loading conflict headlines...</div>
 </div>
 
@@ -925,7 +925,7 @@ function initMap() {
       })
       .bindTooltip(
         `<div class="map-tip-title">🔥 Fire / Thermal Anomaly</div>` +
-        `<div class="map-tip-body">NASA VIIRS SNPP · ${f.date} ${f.time} UTC<br>` +
+        `<div class="map-tip-body">NASA VIIRS SNPP · ${f.datetime || ''}<br>` +
         `Brightness: ${Math.round(bright)}K · FRP: ${frp}MW<br>` +
         `Confidence: ${f.confidence}</div>`,
         {sticky: true, maxWidth: 220}
@@ -941,7 +941,7 @@ function initMap() {
         const c = JSON.parse(localStorage.getItem(cKey) || 'null');
         if (c && Date.now() - c.ts < 15 * 60000) { _renderFires(c.data); return; }
       } catch {}
-      const r = await fetch('/.netlify/functions/fires', { signal: AbortSignal.timeout(12000) });
+      const r = await fetch('/api/fires', { signal: AbortSignal.timeout(12000) });
       if (!r.ok) return;
       const fires = await r.json();
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: fires })); } catch {}
