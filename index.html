@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelligence Dashboards</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Inter',sans-serif; background:#0D0D0D; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
+  h1 { font-size:13px; letter-spacing:3px; text-transform:uppercase; color:#888; margin-bottom:40px; }
+  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .card { background:#161616; border:1px solid #2a2a2a; border-radius:4px; padding:28px 36px; text-align:center; text-decoration:none; color:#fff; width:200px; transition:border-color .2s; }
+  .card:hover { border-color:#888; }
+  .card-icon { font-size:28px; margin-bottom:10px; }
+  .card-title { font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+  .card-sub { font-size:10px; color:#555; margin-top:5px; }
+  .card.energy { border-top:3px solid #DCB96E; }
+  .card.media { border-top:3px solid #5A82AF; }
+  .card.pb { border-top:3px solid #DB0011; }
+</style>
+</head>
+<body>
+  <h1>Intelligence Dashboards</h1>
+  <div class="cards">
+    <a class="card energy" href="/energy/">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">Upstream Energy</div>
+      <div class="card-sub">E&P · Commodities · M&A</div>
+    </a>
+<a class="card media" href="/media/">
+      <div class="card-icon">🎬</div>
+      <div class="card-title">Media & Entertainment</div>
+      <div class="card-sub">Box Office · Streaming · Sports</div>
+    </a>
+  </div>
+</body>
+</html>

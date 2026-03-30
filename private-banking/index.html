@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLOBAL PRIVATE BANKING INTELLIGENCE</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #DB0011;
+  --dark-red: #9B0010;
+  --gold: #C9A84C;
+  --bg: #0D0D0D;
+  --card: #161616;
+  --card2: #1E1E1E;
+  --border: #2A2A2A;
+  --border2: #3A1A1E;
+  --white: #FFFFFF;
+  --muted: #888888;
+  --up: #2ECC71;
+  --dn: #E84040;
+  --flat: #888888;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--white); font-size:13px; overflow-x:hidden; }
+
+/* HEADER */
+.header { background:#111111; border-bottom:3px solid var(--red); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; }
+.header-left { display:flex; align-items:center; gap:14px; }
+.hsbc-bar { width:6px; height:36px; background:var(--red); border-radius:1px; }
+.header-title { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+.header-title span { color:var(--red); }
+.header-meta { font-size:11px; color:var(--muted); text-align:right; line-height:1.6; }
+#clock { color:var(--gold); font-weight:600; }
+
+/* BREAKING BAR */
+.breaking-bar { background:var(--dark-red); padding:5px 20px; display:flex; align-items:center; gap:12px; overflow:hidden; }
+.breaking-label { background:var(--white); color:var(--red); font-size:10px; font-weight:700; padding:2px 6px; white-space:nowrap; letter-spacing:1px; }
+.breaking-text { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.breaking-text a { color:var(--white); text-decoration:none; }
+
+/* TICKER */
+.ticker-bar { background:#111111; border-bottom:1px solid var(--border2); padding:5px 0; overflow:hidden; }
+.ticker-wrap { display:flex; animation:scroll-ticker 80s linear infinite; width:max-content; }
+.ticker-wrap:hover { animation-play-state:paused; }
+@keyframes scroll-ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.ticker-item { display:inline-flex; align-items:center; gap:5px; padding:0 16px; white-space:nowrap; border-right:1px solid #2A1A1E; }
+.t-sym { color:var(--white); font-weight:600; font-size:11px; }
+.t-price { color:#CCCCCC; font-size:11px; }
+.t-up { color:var(--up); font-size:10px; }
+.t-dn { color:var(--dn); font-size:10px; }
+.t-fl { color:var(--muted); font-size:10px; }
+
+/* GRID LAYOUTS */
+.row-4col { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:2px; padding:2px; }
+.row-4col-tv { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:2px; padding:2px; }
+.row-3col { display:grid; grid-template-columns:2fr 1fr 1fr; gap:2px; padding:2px; }
+.row-3col-equal { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; padding:2px; }
+
+/* PANELS */
+.panel { background:var(--card); border:1px solid var(--border2); border-radius:3px; overflow:hidden; }
+.panel-header { background:var(--card2); border-bottom:2px solid var(--red); padding:7px 12px; display:flex; align-items:center; justify-content:space-between; }
+.panel-title { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); }
+.panel-sub { font-size:10px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+.panel-body { padding:10px 12px; }
+
+/* STATUS DOTS */
+.status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.dot-live { background:var(--up); box-shadow:0 0 5px var(--up); animation:pulse-green 2s infinite; }
+.dot-loading { background:var(--gold); animation:pulse-gold 1s infinite; }
+.dot-error { background:var(--dn); }
+@keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes pulse-gold { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* MARKET INDEX CARDS */
+.idx-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.idx-card { background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:7px 9px; }
+.idx-name { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; }
+.idx-price { font-size:14px; font-weight:600; margin:2px 0; }
+.idx-chg { font-size:11px; font-weight:500; }
+.idx-up { color:var(--up); }
+.idx-dn { color:var(--dn); }
+.idx-fl { color:var(--muted); }
+
+/* FX TABLE */
+.fx-table { width:100%; border-collapse:collapse; }
+.fx-table tr { border-bottom:1px solid var(--border); }
+.fx-table tr:last-child { border-bottom:none; }
+.fx-table td { padding:5px 4px; font-size:12px; }
+.fx-pair { color:var(--gold); font-weight:600; font-size:11px; }
+.fx-price { font-weight:500; text-align:right; }
+.fx-chg { font-size:10px; text-align:right; }
+
+/* RATES TABLE */
+.rates-table { width:100%; border-collapse:collapse; }
+.rates-table tr { border-bottom:1px solid var(--border); }
+.rates-table tr:last-child { border-bottom:none; }
+.rates-table td { padding:5px 4px; font-size:12px; }
+.rate-name { color:var(--muted); font-size:11px; }
+.rate-val { font-weight:600; text-align:right; font-size:13px; }
+
+/* CRYPTO / ALTS CARDS */
+.alt-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.alt-card { background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:7px 9px; }
+.alt-icon { font-size:16px; margin-bottom:2px; }
+.alt-name { font-size:9px; color:var(--muted); text-transform:uppercase; }
+.alt-price { font-size:13px; font-weight:600; margin:2px 0; }
+.alt-chg { font-size:11px; }
+
+/* NEWS */
+.news-list { list-style:none; }
+.news-item { border-bottom:1px solid var(--border); padding:7px 0; }
+.news-item:last-child { border-bottom:none; }
+.news-item a { color:var(--white); text-decoration:none; font-size:12px; line-height:1.4; font-weight:500; display:block; }
+.news-item a:hover { color:var(--gold); }
+.news-meta { font-size:10px; color:var(--muted); margin-top:3px; display:flex; gap:8px; }
+.news-tag { background:var(--dark-red); color:var(--white); font-size:9px; padding:1px 5px; border-radius:2px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* STOCKS TABLE */
+.stocks-table { width:100%; border-collapse:collapse; }
+.stocks-table thead tr { border-bottom:2px solid var(--red); }
+.stocks-table tbody tr { border-bottom:1px solid var(--border); }
+.stocks-table tbody tr:last-child { border-bottom:none; }
+.stocks-table tbody tr:hover { background:rgba(219,0,17,0.05); }
+.stocks-table th { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; padding:5px 6px; font-weight:600; text-align:right; }
+.stocks-table th:first-child { text-align:left; }
+.stocks-table td { padding:5px 6px; font-size:12px; text-align:right; }
+.stocks-table td:first-child { text-align:left; }
+.s-sym { color:var(--gold); font-weight:600; font-size:11px; }
+.s-name { color:var(--muted); font-size:10px; }
+.s-up { color:var(--up); }
+.s-dn { color:var(--dn); }
+.s-fl { color:var(--muted); }
+
+/* M&A TABLE */
+.deal-list { list-style:none; }
+.deal-item { border-bottom:1px solid var(--border); padding:7px 0; }
+.deal-item:last-child { border-bottom:none; }
+.deal-header { font-size:11px; font-weight:600; color:var(--white); }
+.deal-detail { font-size:10px; color:var(--muted); margin-top:2px; line-height:1.4; }
+.deal-tag { font-size:9px; padding:1px 5px; border-radius:2px; margin-right:4px; }
+.tag-rumor { background:#3A2A00; color:var(--gold); }
+.tag-closed { background:#0A2A0A; color:var(--up); }
+.tag-pending { background:#2A1A00; color:#FFA040; }
+
+/* CALENDAR */
+.cal-list { list-style:none; }
+.cal-item { display:flex; gap:10px; align-items:flex-start; border-bottom:1px solid var(--border); padding:6px 0; }
+.cal-item:last-child { border-bottom:none; }
+.cal-date { background:var(--dark-red); color:var(--white); font-size:9px; font-weight:700; padding:3px 6px; border-radius:2px; white-space:nowrap; min-width:52px; text-align:center; }
+.cal-body { flex:1; }
+.cal-name { font-size:11px; font-weight:600; }
+.cal-detail { font-size:10px; color:var(--muted); margin-top:1px; }
+
+/* CB RATES */
+.cb-list { list-style:none; }
+.cb-item { border-bottom:1px solid var(--border); padding:6px 0; }
+.cb-item:last-child { border-bottom:none; }
+.cb-row { display:flex; justify-content:space-between; align-items:center; }
+.cb-name { font-size:11px; font-weight:600; }
+.cb-rate { font-size:13px; font-weight:700; color:var(--gold); }
+.cb-next { font-size:10px; color:var(--muted); margin-top:2px; }
+
+/* AUM */
+.aum-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.aum-card { background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:8px 10px; }
+.aum-region { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; }
+.aum-val { font-size:15px; font-weight:700; color:var(--white); margin:2px 0; }
+.aum-sub { font-size:10px; color:var(--muted); }
+.aum-bar { height:3px; background:var(--border); border-radius:2px; margin-top:5px; }
+.aum-fill { height:100%; border-radius:2px; background:var(--red); }
+
+/* TV */
+.tv-wrap { position:relative; width:100%; padding-top:56.25%; background:#000; }
+.tv-iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
+.tv-channels { display:flex; flex-wrap:wrap; gap:4px; padding:8px; background:var(--card2); }
+.tv-btn { background:#2A1A1E; border:1px solid var(--border2); color:var(--muted); font-size:10px; padding:3px 8px; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; }
+.tv-btn:hover, .tv-btn.active { background:var(--red); border-color:var(--red); color:var(--white); }
+.tv-local-fallback { padding:10px; display:none; }
+.tv-local-fallback a { color:var(--red); font-size:11px; display:block; margin:3px 0; }
+
+/* RETRY BUTTON */
+.retry-btn { background:none; border:1px solid var(--border2); color:var(--muted); font-size:9px; padding:2px 7px; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; }
+.retry-btn:hover { border-color:var(--red); color:var(--red); }
+.refresh-btn { background:none; border:none; color:var(--muted); font-size:12px; padding:0 3px; cursor:pointer; line-height:1; transition:color .15s, transform .2s; }
+.refresh-btn:hover { color:var(--gold); transform:rotate(180deg); }
+.refresh-all-btn { background:var(--dark-red); border:none; color:var(--white); font-size:10px; padding:4px 10px; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; letter-spacing:.5px; transition:background .15s; }
+.refresh-all-btn:hover { background:var(--red); }
+
+/* SOURCE NOTE */
+.source-note { font-size:9px; color:#555; padding:4px 12px 6px; border-top:1px solid var(--border); }
+
+/* SCROLLABLE */
+.scroll-body { overflow-y:auto; max-height:220px; padding:10px 12px; }
+.scroll-body::-webkit-scrollbar { width:4px; }
+.scroll-body::-webkit-scrollbar-track { background:var(--bg); }
+.scroll-body::-webkit-scrollbar-thumb { background:var(--dark-red); border-radius:2px; }
+
+/* MOBILE */
+@media (max-width:768px) {
+  .row-4col, .row-4col-tv, .row-3col, .row-3col-equal { grid-template-columns:1fr; }
+  .idx-grid, .alt-grid, .aum-grid { grid-template-columns:1fr 1fr; }
+  .scroll-body { max-height:none; }
+  .header-title { font-size:13px; letter-spacing:1px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV BAR -->
+<div style="background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-family:inherit;">
+  <a href="/" style="color:#DB0011;text-decoration:none;font-weight:700;letter-spacing:1px;padding:4px 10px;border:1px solid #DB0011;border-radius:3px;">⌂ HOME</a>
+  <span style="color:#333;">|</span>
+  <a href="/energy/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Upstream Energy ↗</a>
+  <a href="/media/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Media &amp; Entertainment ↗</a>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="hsbc-bar"></div>
+    <div>
+      <div class="header-title">GLOBAL <span>PRIVATE BANKING</span> INTELLIGENCE</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">WEALTH · MARKETS · ALTERNATIVES · MACRO</div>
+    </div>
+  </div>
+  <div class="header-meta" style="display:flex;align-items:center;gap:14px;">
+    <div style="text-align:right;">
+      <div id="clock">--:--:-- UTC</div>
+      <div id="mkt-status">Markets Loading...</div>
+    </div>
+    <button class="refresh-all-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
+  </div>
+</div>
+
+<!-- FILE:// WARNING BANNER -->
+<div id="local-banner" style="display:none;background:#2a1a00;border-bottom:1px solid #C9A84C;padding:5px 20px;font-size:11px;color:#C9A84C;">
+  ⚠ Running locally — some data blocked. <strong>Deploy to Netlify for full live data.</strong> Click ↻ on any block to retry individual panels.
+</div>
+
+<!-- BREAKING NEWS BAR -->
+<div class="breaking-bar">
+  <div class="breaking-label">BREAKING</div>
+  <div class="breaking-text" id="breaking-text"><a href="#" id="breaking-link">Loading latest headlines...</a></div>
+</div>
+
+<!-- TICKER BAR -->
+<div class="ticker-bar">
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-item"><span class="t-sym">Loading...</span></div>
+    <div class="ticker-item"><span class="t-sym">Loading...</span></div>
+  </div>
+</div>
+
+<!-- ROW 1: REGIONAL MARKETS -->
+<div class="row-4col">
+
+  <!-- US -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🇺🇸 United States</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="us-dot"></span><span id="us-upd">Loading</span><button class="refresh-btn" onclick="loadUS()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="idx-grid" id="us-grid">
+        <div class="idx-card"><div class="idx-name">S&P 500</div><div class="idx-price" id="sp500-p">—</div><div class="idx-chg" id="sp500-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">NASDAQ</div><div class="idx-price" id="nas-p">—</div><div class="idx-chg" id="nas-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">DJIA</div><div class="idx-price" id="dji-p">—</div><div class="idx-chg" id="dji-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">Russell 2K</div><div class="idx-price" id="rut-p">—</div><div class="idx-chg" id="rut-c">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EUROPE / UK -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🇪🇺 Europe &amp; UK</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="eu-dot"></span><span id="eu-upd">Loading</span><button class="refresh-btn" onclick="loadEurope()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="idx-grid">
+        <div class="idx-card"><div class="idx-name">FTSE 100</div><div class="idx-price" id="ftse-p">—</div><div class="idx-chg" id="ftse-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">DAX</div><div class="idx-price" id="dax-p">—</div><div class="idx-chg" id="dax-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">CAC 40</div><div class="idx-price" id="cac-p">—</div><div class="idx-chg" id="cac-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">Euro Stoxx</div><div class="idx-price" id="stx-p">—</div><div class="idx-chg" id="stx-c">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASIA -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🌏 Asia Pacific</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="asia-dot"></span><span id="asia-upd">Loading</span><button class="refresh-btn" onclick="loadAsia()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="idx-grid">
+        <div class="idx-card"><div class="idx-name">Nikkei 225</div><div class="idx-price" id="n225-p">—</div><div class="idx-chg" id="n225-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">Hang Seng</div><div class="idx-price" id="hsi-p">—</div><div class="idx-chg" id="hsi-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">Shanghai</div><div class="idx-price" id="sse-p">—</div><div class="idx-chg" id="sse-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">ASX 200</div><div class="idx-price" id="asx-p">—</div><div class="idx-chg" id="asx-c">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE EAST -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🌍 Middle East</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="me-dot"></span><span id="me-upd">Loading</span><button class="refresh-btn" onclick="loadME()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="idx-grid">
+        <div class="idx-card"><div class="idx-name">Tadawul (SA)</div><div class="idx-price" id="tasi-p">—</div><div class="idx-chg" id="tasi-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">DFM (UAE)</div><div class="idx-price" id="dfm-p">—</div><div class="idx-chg" id="dfm-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">ADX (UAE)</div><div class="idx-price" id="adx-p">—</div><div class="idx-chg" id="adx-c">—</div></div>
+        <div class="idx-card"><div class="idx-name">EM Mkt ETF</div><div class="idx-price" id="eem-p">—</div><div class="idx-chg" id="eem-c">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2: FX | RATES | ALTS/CRYPTO | TV -->
+<div class="row-4col-tv">
+
+  <!-- FX RATES -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">FX Rates</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="fx-dot"></span><span id="fx-upd">Loading</span><button class="refresh-btn" onclick="loadFX()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body" style="padding:6px 10px;">
+      <table class="fx-table" id="fx-table">
+        <tr><td class="fx-pair">EUR/USD</td><td class="fx-price" id="eurusd-p">—</td><td class="fx-chg" id="eurusd-c">—</td></tr>
+        <tr><td class="fx-pair">GBP/USD</td><td class="fx-price" id="gbpusd-p">—</td><td class="fx-chg" id="gbpusd-c">—</td></tr>
+        <tr><td class="fx-pair">USD/JPY</td><td class="fx-price" id="usdjpy-p">—</td><td class="fx-chg" id="usdjpy-c">—</td></tr>
+        <tr><td class="fx-pair">USD/CHF</td><td class="fx-price" id="usdchf-p">—</td><td class="fx-chg" id="usdchf-c">—</td></tr>
+        <tr><td class="fx-pair">USD/HKD</td><td class="fx-price" id="usdhkd-p">—</td><td class="fx-chg" id="usdhkd-c">—</td></tr>
+        <tr><td class="fx-pair">USD/SGD</td><td class="fx-price" id="usdsgd-p">—</td><td class="fx-chg" id="usdsgd-c">—</td></tr>
+        <tr><td class="fx-pair">USD/CNH</td><td class="fx-price" id="usdcnh-p">—</td><td class="fx-chg" id="usdcnh-c">—</td></tr>
+        <tr><td class="fx-pair">GBP/EUR</td><td class="fx-price" id="gbpeur-p">—</td><td class="fx-chg" id="gbpeur-c">—</td></tr>
+      </table>
+    </div>
+    <div class="source-note">Source: Yahoo Finance · Live via proxy</div>
+  </div>
+
+  <!-- RATES & FIXED INCOME -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Rates &amp; Fixed Income</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="rates-dot"></span><span id="rates-upd">Loading</span><button class="refresh-btn" onclick="loadRates()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body" style="padding:6px 10px;">
+      <table class="rates-table">
+        <tr><td class="rate-name">US 2Y Yield</td><td class="rate-val" id="us2y-p">—</td><td class="s-fl" id="us2y-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">US 10Y Yield</td><td class="rate-val" id="us10y-p">—</td><td class="s-fl" id="us10y-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">US 30Y Yield</td><td class="rate-val" id="us30y-p">—</td><td class="s-fl" id="us30y-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">VIX</td><td class="rate-val" id="vix-p">—</td><td class="s-fl" id="vix-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">IG Credit Sprd</td><td class="rate-val" id="lqd-p">—</td><td class="s-fl" id="lqd-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">HY Credit Sprd</td><td class="rate-val" id="hyg-p">—</td><td class="s-fl" id="hyg-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">TIPS 10Y (Real)</td><td class="rate-val" id="tips-p">—</td><td class="s-fl" id="tips-c" style="font-size:10px;text-align:right;">—</td></tr>
+        <tr><td class="rate-name">USD Index (DXY)</td><td class="rate-val" id="dxy-p">—</td><td class="s-fl" id="dxy-c" style="font-size:10px;text-align:right;">—</td></tr>
+      </table>
+    </div>
+    <div class="source-note">Source: Yahoo Finance · ^TNX, ^IRX, ^TYX, ^VIX, LQD, HYG, TIP, DX-Y.NYB</div>
+  </div>
+
+  <!-- SAFE HAVEN & CRYPTO -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Safe Haven &amp; Crypto</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="alts-dot"></span><span id="alts-upd">Loading</span><button class="refresh-btn" onclick="loadAlts()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="alt-grid">
+        <div class="alt-card">
+          <div class="alt-icon">🥇</div>
+          <div class="alt-name">Gold</div>
+          <div class="alt-price" id="gold-p">—</div>
+          <div class="alt-chg" id="gold-c">—</div>
+        </div>
+        <div class="alt-card">
+          <div class="alt-icon">🥈</div>
+          <div class="alt-name">Silver</div>
+          <div class="alt-price" id="silver-p">—</div>
+          <div class="alt-chg" id="silver-c">—</div>
+        </div>
+        <div class="alt-card">
+          <div class="alt-icon">₿</div>
+          <div class="alt-name">Bitcoin</div>
+          <div class="alt-price" id="btc-p">—</div>
+          <div class="alt-chg" id="btc-c">—</div>
+        </div>
+        <div class="alt-card">
+          <div class="alt-icon">⟠</div>
+          <div class="alt-name">Ethereum</div>
+          <div class="alt-price" id="eth-p">—</div>
+          <div class="alt-chg" id="eth-c">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="source-note">Source: Yahoo Finance · GC=F, SI=F, BTC-USD, ETH-USD</div>
+  </div>
+
+  <!-- LIVE TV -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Live TV</div>
+      <div class="panel-sub" style="font-size:9px;color:var(--muted);">Stream</div>
+    </div>
+    <div id="tv-player-wrap">
+      <div class="tv-wrap">
+        <iframe id="tv-iframe" class="tv-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+      <div class="tv-channels" id="tv-channels"></div>
+    </div>
+    <div class="tv-local-fallback" id="tv-local-fallback">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">Deploy to HTTPS to enable live TV. Direct links:</div>
+      <a href="https://www.youtube.com/watch?v=iEpJwprxDdk" target="_blank">▶ Bloomberg TV</a>
+      <a href="https://www.youtube.com/watch?v=9NyxcX3rhQs" target="_blank">▶ CNBC Live</a>
+      <a href="https://www.youtube.com/watch?v=YDvsBbKfLPA" target="_blank">▶ Sky News</a>
+      <a href="https://www.youtube.com/@dwnews/live" target="_blank">▶ DW News</a>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3: NEWS | M&A | CB CALENDAR -->
+<div class="row-3col">
+
+  <!-- PRIVATE BANKING NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Private Banking &amp; Markets News</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="news-dot"></span><span id="news-upd">Loading</span><button class="refresh-btn" onclick="loadNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="scroll-body" id="news-list">
+      <ul class="news-list" id="news-items"><li style="color:var(--muted);font-size:11px;">Fetching headlines...</li></ul>
+    </div>
+    <div class="source-note">Source: Reuters · CNBC · Financial news feeds</div>
+  </div>
+
+  <!-- RESEARCH & WHITE PAPERS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Research &amp; White Papers</div>
+      <div class="panel-sub" style="font-size:9px;color:var(--muted);">Wealth &amp; PB reports</div>
+    </div>
+    <div class="scroll-body">
+      <ul class="deal-list">
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.bcg.com/publications/2025/global-wealth-report" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">BCG Global Wealth Report 2025 ↗</a></div>
+          <div class="deal-detail">Global AUM flows, UHNW segment growth, digital PB trends · BCG</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.capgemini.com/insights/research-library/world-wealth-report/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Capgemini World Wealth Report 2025 ↗</a></div>
+          <div class="deal-detail">HNW population, regional wealth distribution, client expectations · Capgemini</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.mckinsey.com/industries/financial-services/our-insights/the-future-of-wealth-management" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">McKinsey: Future of Wealth Management ↗</a></div>
+          <div class="deal-detail">Model disruption, fee compression, personalization at scale · McKinsey</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.oliverwyman.com/our-expertise/industries/banking-and-financial-services/retail-and-business-banking/wealth-management.html" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Oliver Wyman Wealth Management ↗</a></div>
+          <div class="deal-detail">PB operating models, cross-border flows, regulatory outlook · Oliver Wyman</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.bain.com/insights/topics/financial-services/wealth-management/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Bain Wealth Management Insights ↗</a></div>
+          <div class="deal-detail">Client loyalty, alternatives allocation, next-gen wealth transfer · Bain</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.pwc.com/gx/en/industries/financial-services/asset-wealth-management.html" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">PwC Asset &amp; Wealth Management 2025 ↗</a></div>
+          <div class="deal-detail">Regulatory change, consolidation trends, ESG mandates · PwC</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://www.ubs.com/global/en/wealth-management/insights.html" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">UBS Chief Investment Office ↗</a></div>
+          <div class="deal-detail">House views, CIO monthly, year-ahead outlook · UBS</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://privatebank.jpmorgan.com/global/en/insights" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">JPMorgan Private Bank Insights ↗</a></div>
+          <div class="deal-detail">Eye on the Market, alternatives, macro · JPM PB</div>
+        </li>
+      </ul>
+    </div>
+    <div class="source-note">Links to publisher sites · Updated manually</div>
+  </div>
+
+  <!-- CENTRAL BANK CALENDAR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Central Bank Calendar</div>
+      <div class="panel-sub" style="font-size:9px;color:var(--muted);">Next decisions</div>
+    </div>
+    <div class="scroll-body">
+      <ul class="cb-list">
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">Fed (FOMC)</span><span class="cb-rate">4.25–4.50%</span></div>
+          <div class="cb-next">Next: May 6–7, 2026 · Pause expected</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">ECB</span><span class="cb-rate">2.50%</span></div>
+          <div class="cb-next">Next: Apr 17, 2026 · 25bps cut possible</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">Bank of England</span><span class="cb-rate">4.50%</span></div>
+          <div class="cb-next">Next: May 8, 2026 · Hold likely</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">Bank of Japan</span><span class="cb-rate">0.50%</span></div>
+          <div class="cb-next">Next: Apr 30–May 1, 2026 · Hike risk</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">SNB</span><span class="cb-rate">0.25%</span></div>
+          <div class="cb-next">Next: Jun 2026 · Hold expected</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">PBOC</span><span class="cb-rate">3.10% LPR</span></div>
+          <div class="cb-next">Ongoing · Easing bias maintained</div>
+        </li>
+        <li class="cb-item">
+          <div class="cb-row"><span class="cb-name">SAMA (Saudi)</span><span class="cb-rate">5.25%</span></div>
+          <div class="cb-next">Pegged to USD · Follows Fed</div>
+        </li>
+      </ul>
+    </div>
+    <div class="source-note">Static · ~approximate rates · Verify before client use</div>
+  </div>
+</div>
+
+<!-- ROW 4: PB STOCKS | EARNINGS | AUM SNAPSHOT -->
+<div class="row-3col">
+
+  <!-- PRIVATE BANK & WEALTH MANAGER STOCKS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Private Banks &amp; Wealth Managers</div>
+      <div class="panel-sub"><span class="status-dot dot-loading" id="pb-dot"></span><span id="pb-upd">Loading</span><button class="refresh-btn" onclick="loadPBStocks()" title="Refresh">↻</button></div>
+    </div>
+    <div class="scroll-body" style="padding:8px 10px;">
+      <table class="stocks-table">
+        <thead><tr>
+          <th>Name</th><th>Price</th><th>Chg%</th><th>52W Hi</th><th>52W Lo</th>
+        </tr></thead>
+        <tbody id="pb-stocks-body">
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:12px;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="source-note">Source: Yahoo Finance via proxy · Live prices</div>
+  </div>
+
+  <!-- EARNINGS CALENDAR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Upcoming Earnings</div>
+      <div class="panel-sub" style="font-size:9px;color:var(--muted);">Q1 2026</div>
+    </div>
+    <div class="scroll-body">
+      <ul class="cal-list">
+        <li class="cal-item"><div class="cal-date">Apr 11</div><div class="cal-body"><div class="cal-name">JPMorgan (JPM)</div><div class="cal-detail">Q1 2026 · Pre-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 11</div><div class="cal-body"><div class="cal-name">Citigroup (C)</div><div class="cal-detail">Q1 2026 · Pre-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 14</div><div class="cal-body"><div class="cal-name">Goldman Sachs (GS)</div><div class="cal-detail">Q1 2026 · Pre-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 15</div><div class="cal-body"><div class="cal-name">Morgan Stanley (MS)</div><div class="cal-detail">Q1 2026 · Pre-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 22</div><div class="cal-body"><div class="cal-name">Barclays (BCS)</div><div class="cal-detail">Q1 2026 · TBC</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 24</div><div class="cal-body"><div class="cal-name">Blackstone (BX)</div><div class="cal-detail">Q1 2026 · Post-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 28</div><div class="cal-body"><div class="cal-name">UBS Group (UBS)</div><div class="cal-detail">Q1 2026 · TBC</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 29</div><div class="cal-body"><div class="cal-name">KKR &amp; Co (KKR)</div><div class="cal-detail">Q1 2026 · Post-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">Apr 30</div><div class="cal-body"><div class="cal-name">Apollo (APO)</div><div class="cal-detail">Q1 2026 · Post-mkt</div></div></li>
+        <li class="cal-item"><div class="cal-date">May 5</div><div class="cal-body"><div class="cal-name">HSBC Holdings</div><div class="cal-detail">Q1 2026 Interim Update</div></div></li>
+        <li class="cal-item"><div class="cal-date">May 7</div><div class="cal-body"><div class="cal-name">BlackRock (BLK)</div><div class="cal-detail">Q1 2026 · Pre-mkt</div></div></li>
+      </ul>
+    </div>
+    <div class="source-note">~Approximate dates · Confirm before use</div>
+  </div>
+
+  <!-- FINTECH & UHNW INNOVATION -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Fintech &amp; UHNW Innovation</div>
+      <div class="panel-sub" style="font-size:9px;color:var(--muted);">Platforms reshaping ultra-wealth</div>
+    </div>
+    <div class="scroll-body">
+      <ul class="deal-list">
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://icapitalnetwork.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">iCapital Network ↗</a> <span style="font-size:9px;color:var(--muted);">Alts Access</span></div>
+          <div class="deal-detail">$200B+ AUA · Democratizes PE/VC/HF access for advisors and UHNW · Fills private market allocation gap</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://caisgroup.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">CAIS ↗</a> <span style="font-size:9px;color:var(--muted);">Alts Platform</span></div>
+          <div class="deal-detail">Alternative investment platform for independent wealth advisors · Due diligence + execution in one stack</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://moonfare.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Moonfare ↗</a> <span style="font-size:9px;color:var(--muted);">PE Access</span></div>
+          <div class="deal-detail">€5B+ AUM · Digital access to top-quartile PE funds from €50K · KKR, Carlyle, EQT flagship funds</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://addepar.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Addepar ↗</a> <span style="font-size:9px;color:var(--muted);">Portfolio Analytics</span></div>
+          <div class="deal-detail">$6T+ AUM tracked · Portfolio aggregation and reporting for family offices and PB · Acquired by Goldman-backed consortium</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://anchorage.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Anchorage Digital ↗</a> <span style="font-size:9px;color:var(--muted);">Crypto Custody</span></div>
+          <div class="deal-detail">First US federally chartered crypto bank · Institutional-grade custody for UHNW digital asset allocation</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://allocate.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Allocate ↗</a> <span style="font-size:9px;color:var(--muted);">VC Access</span></div>
+          <div class="deal-detail">VC fund access for wealth managers · Sequoia, a16z, Benchmark exposure from $100K minimums</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://compoundplanning.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Compound ↗</a> <span style="font-size:9px;color:var(--muted);">Digital Family Office</span></div>
+          <div class="deal-detail">Tech-executive-focused wealth platform · Equity comp planning, tax optimization, all-in-one family office layer</div>
+        </li>
+        <li class="deal-item">
+          <div class="deal-header"><a href="https://carta.com/equity" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Carta ↗</a> <span style="font-size:9px;color:var(--muted);">Equity &amp; Fund Admin</span></div>
+          <div class="deal-detail">Cap table + fund admin for founders and UHNW holding private stakes · $2T+ equity tracked on platform</div>
+        </li>
+      </ul>
+    </div>
+    <div class="source-note">Curated · Static links · Not investment advice</div>
+  </div>
+</div>
+
+<script>
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  const utc = n.toUTCString().split(' ')[4];
+  const loc = n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('clock').textContent = `${utc} UTC  |  ${loc} LOCAL`;
+  const h = n.getUTCHours();
+  const open = (h >= 13 && h < 20);
+  document.getElementById('mkt-status').textContent = open ? '🟢 US MARKETS OPEN' : '🔴 US MARKETS CLOSED';
+  document.getElementById('mkt-status').style.color = open ? '#2ECC71' : '#E84040';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ─── YAHOO FINANCE VIA NETLIFY FUNCTION — rate-limited queue (max 3 concurrent) ─
+const _yfQueue = [];
+let _yfRunning = 0;
+const _YF_CONCURRENCY = 3;
+
+function yf(sym) {
+  return new Promise(resolve => {
+    _yfQueue.push({ sym, resolve });
+    _yfDrain();
+  });
+}
+
+function _yfDrain() {
+  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
+    const { sym, resolve } = _yfQueue.shift();
+    _yfRunning++;
+    _yfFetch(sym).then(result => { resolve(result); _yfRunning--; _yfDrain(); });
+  }
+}
+
+async function _yfFetch(sym) {
+  try {
+    const r = await fetch(`/.netlify/functions/quote?sym=${encodeURIComponent(sym)}`, {
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!r.ok) return { sym, ok: false, price: null };
+    const data = await r.json();
+    const m = data?.chart?.result?.[0]?.meta;
+    if (m?.regularMarketPrice) {
+      const price = m.regularMarketPrice;
+      const prev  = m.chartPreviousClose || m.previousClose || price;
+      const chg   = price - prev;
+      const pct   = prev ? (chg / prev * 100) : 0;
+      return { sym, ok:true, price, prev, chg, pct,
+               high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow, mktCap: m.marketCap };
+    }
+    return { sym, ok: false, price: null };
+  } catch {
+    return { sym, ok: false, price: null };
+  }
+}
+
+function fmt(n, dec=2) { if (n==null) return '—'; return n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function fmtK(n) {
+  if (n==null) return '—';
+  if (n>=1000000) return (n/1000000).toFixed(2)+'M';
+  if (n>=1000) return (n/1000).toFixed(1)+'K';
+  return n.toFixed(2);
+}
+function chgClass(v) { return v>0?'idx-up':v<0?'idx-dn':'idx-fl'; }
+function chgArrow(v) { return v>0?'▲':v<0?'▼':''; }
+function setDot(id, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'status-dot ' + (ok===true?'dot-live':ok===false?'dot-error':'dot-loading');
+}
+
+// ─── INDEX HELPER ─────────────────────────────────────────────────────────────
+function setIdx(pid, cid, d) {
+  const pp = document.getElementById(pid);
+  const cp = document.getElementById(cid);
+  if (!pp || !cp) return;
+  if (!d.ok) { pp.textContent='—'; cp.textContent='N/A'; cp.className='idx-chg idx-fl'; return; }
+  const dec = d.price > 1000 ? 0 : d.price > 100 ? 1 : 2;
+  pp.textContent = fmt(d.price, dec);
+  cp.textContent = `${chgArrow(d.pct)} ${Math.abs(d.pct).toFixed(2)}%`;
+  cp.className = 'idx-chg ' + chgClass(d.pct);
+}
+
+// ─── LOAD US INDICES ──────────────────────────────────────────────────────────
+async function loadUS() {
+  document.getElementById('us-upd').textContent = 'Loading';
+  const [sp,nas,dji,rut] = await Promise.all([yf('^GSPC'),yf('^IXIC'),yf('^DJI'),yf('^RUT')]);
+  setIdx('sp500-p','sp500-c',sp); setIdx('nas-p','nas-c',nas);
+  setIdx('dji-p','dji-c',dji); setIdx('rut-p','rut-c',rut);
+  const ok = [sp,nas,dji,rut].some(x=>x.ok);
+  setDot('us-dot',ok); document.getElementById('us-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── LOAD EUROPE ─────────────────────────────────────────────────────────────
+async function loadEurope() {
+  document.getElementById('eu-upd').textContent = 'Loading';
+  const [ftse,dax,cac,stx] = await Promise.all([yf('^FTSE'),yf('^GDAXI'),yf('^FCHI'),yf('^STOXX50E')]);
+  setIdx('ftse-p','ftse-c',ftse); setIdx('dax-p','dax-c',dax);
+  setIdx('cac-p','cac-c',cac); setIdx('stx-p','stx-c',stx);
+  const ok = [ftse,dax,cac,stx].some(x=>x.ok);
+  setDot('eu-dot',ok); document.getElementById('eu-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── LOAD ASIA ────────────────────────────────────────────────────────────────
+async function loadAsia() {
+  document.getElementById('asia-upd').textContent = 'Loading';
+  const [n225,hsi,sse,asx] = await Promise.all([yf('^N225'),yf('^HSI'),yf('000001.SS'),yf('^AXJO')]);
+  setIdx('n225-p','n225-c',n225); setIdx('hsi-p','hsi-c',hsi);
+  setIdx('sse-p','sse-c',sse); setIdx('asx-p','asx-c',asx);
+  const ok = [n225,hsi,sse,asx].some(x=>x.ok);
+  setDot('asia-dot',ok); document.getElementById('asia-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── LOAD MIDDLE EAST ─────────────────────────────────────────────────────────
+async function loadME() {
+  document.getElementById('me-upd').textContent = 'Loading';
+  const [tasi,dfm,adx,eem] = await Promise.all([yf('^TASI.SR'),yf('^DFMGI'),yf('^ADI'),yf('EEM')]);
+  setIdx('tasi-p','tasi-c',tasi); setIdx('dfm-p','dfm-c',dfm);
+  setIdx('adx-p','adx-c',adx); setIdx('eem-p','eem-c',eem);
+  const ok = [tasi,dfm,adx,eem].some(x=>x.ok);
+  setDot('me-dot',ok); document.getElementById('me-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── FX RATES ─────────────────────────────────────────────────────────────────
+async function loadFX() {
+  document.getElementById('fx-upd').textContent = 'Loading';
+  const pairs = [
+    {sym:'EURUSD=X', pid:'eurusd-p', cid:'eurusd-c', dec:4},
+    {sym:'GBPUSD=X', pid:'gbpusd-p', cid:'gbpusd-c', dec:4},
+    {sym:'USDJPY=X', pid:'usdjpy-p', cid:'usdjpy-c', dec:2},
+    {sym:'USDCHF=X', pid:'usdchf-p', cid:'usdchf-c', dec:4},
+    {sym:'USDHKD=X', pid:'usdhkd-p', cid:'usdhkd-c', dec:4},
+    {sym:'USDSGD=X', pid:'usdsgd-p', cid:'usdsgd-c', dec:4},
+    {sym:'USDCNH=X', pid:'usdcnh-p', cid:'usdcnh-c', dec:4},
+    {sym:'GBPEUR=X', pid:'gbpeur-p', cid:'gbpeur-c', dec:4},
+  ];
+  const results = await Promise.all(pairs.map(p => yf(p.sym)));
+  let ok = false;
+  results.forEach((d, i) => {
+    const {pid,cid,dec} = pairs[i];
+    const pp = document.getElementById(pid);
+    const cp = document.getElementById(cid);
+    if (!d.ok) { if(pp)pp.textContent='—'; if(cp){cp.textContent='N/A';cp.className='fx-chg t-fl';} return; }
+    ok = true;
+    if(pp) pp.textContent = fmt(d.price, dec);
+    if(cp) {
+      cp.textContent = `${chgArrow(d.pct)} ${Math.abs(d.pct).toFixed(3)}%`;
+      cp.className = 'fx-chg ' + (d.pct>0?'t-up':d.pct<0?'t-dn':'t-fl');
+    }
+  });
+  setDot('fx-dot',ok);
+  document.getElementById('fx-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── RATES ─────────────────────────────────────────────────────────────────────
+async function loadRates() {
+  document.getElementById('rates-upd').textContent = 'Loading';
+  const items = [
+    {sym:'^IRX', pid:'us2y-p', cid:'us2y-c', label:'%', dec:3},
+    {sym:'^TNX', pid:'us10y-p', cid:'us10y-c', label:'%', dec:3},
+    {sym:'^TYX', pid:'us30y-p', cid:'us30y-c', label:'%', dec:3},
+    {sym:'^VIX', pid:'vix-p', cid:'vix-c', label:'', dec:2},
+    {sym:'LQD',  pid:'lqd-p', cid:'lqd-c', label:'', dec:2},
+    {sym:'HYG',  pid:'hyg-p', cid:'hyg-c', label:'', dec:2},
+    {sym:'TIP',  pid:'tips-p', cid:'tips-c', label:'', dec:2},
+    {sym:'DX-Y.NYB', pid:'dxy-p', cid:'dxy-c', label:'', dec:2},
+  ];
+  const results = await Promise.all(items.map(i => yf(i.sym)));
+  let ok = false;
+  results.forEach((d, i) => {
+    const {pid,cid,label,dec} = items[i];
+    const pp = document.getElementById(pid);
+    const cp = document.getElementById(cid);
+    if (!d.ok) { if(pp)pp.textContent='—'; if(cp){cp.textContent='N/A';cp.className='s-fl';} return; }
+    ok = true;
+    if(pp) pp.textContent = fmt(d.price,dec) + label;
+    if(cp) {
+      cp.textContent = `${chgArrow(d.pct)} ${Math.abs(d.pct).toFixed(2)}%`;
+      cp.className = d.pct>0?'s-up':d.pct<0?'s-dn':'s-fl';
+    }
+  });
+  setDot('rates-dot',ok);
+  document.getElementById('rates-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── SAFE HAVEN & CRYPTO ─────────────────────────────────────────────────────
+async function loadAlts() {
+  document.getElementById('alts-upd').textContent = 'Loading';
+  const [gold,silver,btc,eth] = await Promise.all([yf('GC=F'),yf('SI=F'),yf('BTC-USD'),yf('ETH-USD')]);
+  function setAlt(d, pid, cid, prefix, dec) {
+    const pp = document.getElementById(pid);
+    const cp = document.getElementById(cid);
+    if (!d.ok) { if(pp)pp.textContent='—'; if(cp){cp.textContent='N/A';cp.className='alt-chg idx-fl';} return; }
+    if(pp) pp.textContent = prefix + fmtK(d.price);
+    if(cp) {
+      cp.textContent = `${chgArrow(d.pct)} ${Math.abs(d.pct).toFixed(2)}%`;
+      cp.className = 'alt-chg ' + chgClass(d.pct);
+    }
+  }
+  setAlt(gold,  'gold-p',   'gold-c',   '$', 2);
+  setAlt(silver,'silver-p', 'silver-c', '$', 2);
+  setAlt(btc,   'btc-p',    'btc-c',    '$', 0);
+  setAlt(eth,   'eth-p',    'eth-c',    '$', 0);
+  const ok = [gold,silver,btc,eth].some(x=>x.ok);
+  setDot('alts-dot',ok);
+  document.getElementById('alts-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+}
+
+// ─── PB STOCKS ─────────────────────────────────────────────────────────────────
+const PB_STOCKS = [
+  { sym:'HSBC', name:'HSBC Holdings' },
+  { sym:'UBS',  name:'UBS Group' },
+  { sym:'GS',   name:'Goldman Sachs' },
+  { sym:'MS',   name:'Morgan Stanley' },
+  { sym:'JPM',  name:'JPMorgan Chase' },
+  { sym:'C',    name:'Citigroup' },
+  { sym:'BCS',  name:'Barclays' },
+  { sym:'DB',   name:'Deutsche Bank' },
+  { sym:'BX',   name:'Blackstone' },
+  { sym:'KKR',  name:'KKR & Co.' },
+  { sym:'APO',  name:'Apollo Global' },
+  { sym:'CG',   name:'Carlyle Group' },
+  { sym:'ARES', name:'Ares Management' },
+  { sym:'BLK',  name:'BlackRock' },
+  { sym:'SCHW', name:'Charles Schwab' },
+];
+
+async function loadPBStocks() {
+  document.getElementById('pb-upd').textContent = 'Loading';
+  setDot('pb-dot', null);
+  const results = await Promise.all(PB_STOCKS.map(s => yf(s.sym)));
+  const tbody = document.getElementById('pb-stocks-body');
+  let ok = false;
+  tbody.innerHTML = '';
+  results.forEach((d, i) => {
+    const s = PB_STOCKS[i];
+    const row = document.createElement('tr');
+    if (!d.ok) {
+      row.innerHTML = `<td><div class="s-sym">${s.sym}</div><div class="s-name">${s.name}</div></td><td colspan="4" class="s-fl">—</td>`;
+    } else {
+      ok = true;
+      const cc = d.pct>0?'s-up':d.pct<0?'s-dn':'s-fl';
+      const dec = d.price > 100 ? 2 : 2;
+      row.innerHTML = `
+        <td><div class="s-sym">${s.sym}</div><div class="s-name">${s.name}</div></td>
+        <td style="font-weight:600;">$${fmt(d.price,2)}</td>
+        <td class="${cc}">${chgArrow(d.pct)} ${Math.abs(d.pct).toFixed(2)}%</td>
+        <td style="color:var(--muted);font-size:11px;">${d.high52 ? '$'+fmt(d.high52,2) : '—'}</td>
+        <td style="color:var(--muted);font-size:11px;">${d.low52  ? '$'+fmt(d.low52,2)  : '—'}</td>`;
+    }
+    tbody.appendChild(row);
+  });
+  setDot('pb-dot', ok);
+  document.getElementById('pb-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error — deploy to HTTPS';
+}
+
+// ─── TICKER ───────────────────────────────────────────────────────────────────
+const TICKER_SYMS = [
+  {sym:'HSBC',label:'HSBC'},{sym:'UBS',label:'UBS'},{sym:'GS',label:'GS'},
+  {sym:'MS',label:'MS'},{sym:'JPM',label:'JPM'},{sym:'C',label:'C'},
+  {sym:'DB',label:'DB'},{sym:'BX',label:'BX'},{sym:'KKR',label:'KKR'},
+  {sym:'APO',label:'APO'},{sym:'BLK',label:'BLK'},{sym:'SCHW',label:'SCHW'},
+  {sym:'^GSPC',label:'S&P500'},{sym:'^FTSE',label:'FTSE'},{sym:'^N225',label:'N225'},
+  {sym:'^HSI',label:'HSI'},{sym:'GC=F',label:'GOLD'},{sym:'BTC-USD',label:'BTC'},
+  {sym:'EURUSD=X',label:'EUR/USD'},{sym:'^TNX',label:'US10Y'},
+];
+async function loadTicker() {
+  const results = await Promise.all(TICKER_SYMS.map(s => yf(s.sym)));
+  const items = results.map((d,i) => {
+    const s = TICKER_SYMS[i];
+    if (!d.ok) return `<div class="ticker-item"><span class="t-sym">${s.label}</span><span class="t-fl"> N/A</span></div>`;
+    const cc = d.pct>0?'t-up':d.pct<0?'t-dn':'t-fl';
+    const dec = d.price>1000?0:d.price>100?2:4;
+    const priceStr = d.price>1000 ? d.price.toLocaleString('en-US',{maximumFractionDigits:0}) : fmt(d.price,dec);
+    return `<div class="ticker-item"><span class="t-sym">${s.label}</span><span class="t-price"> ${priceStr}</span><span class="${cc}"> ${chgArrow(d.pct)}${Math.abs(d.pct).toFixed(2)}%</span></div>`;
+  }).join('');
+  const wrap = document.getElementById('ticker-wrap');
+  wrap.innerHTML = items + items; // duplicate for seamless loop
+}
+
+// ─── NEWS RSS ─────────────────────────────────────────────────────────────────
+const RSS_FEEDS = [
+  { url:'https://feeds.reuters.com/reuters/businessNews', tag:'Reuters' },
+  { url:'https://www.cnbc.com/id/10000664/device/rss/rss.html', tag:'CNBC' },
+  { url:'https://feeds.reuters.com/reuters/financialServicesAndRealEstateNews', tag:'Reuters FS' },
+];
+const PB_KEYWORDS = ['wealth','private bank','asset manag','hedge fund','private equity','Goldman','JPMorgan','UBS','HSBC','BlackRock','KKR','Blackstone','interest rate','Federal Reserve','ECB','central bank','inflation','crypto','bitcoin','gold','markets','M&A','merger','acquisition','fund','investor','endowment'];
+async function loadNews() {
+  document.getElementById('news-upd').textContent = 'Loading';
+  const proxy = 'https://api.rss2json.com/v1.api.json?rss_url=';
+  let allItems = [];
+  for (const feed of RSS_FEEDS) {
+    try {
+      const r = await fetch(proxy + encodeURIComponent(feed.url), { signal: AbortSignal.timeout(8000) });
+      const data = await r.json();
+      if (data.items?.length) {
+        allItems.push(...data.items.map(item => ({...item, _tag: feed.tag})));
+      }
+    } catch { continue; }
+  }
+  // Filter for PB-relevant news
+  const relevant = allItems.filter(item => {
+    const text = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
+    return PB_KEYWORDS.some(k => text.includes(k.toLowerCase()));
+  });
+  const items = (relevant.length > 0 ? relevant : allItems).slice(0, 20);
+  const ul = document.getElementById('news-items');
+  if (!items.length) {
+    ul.innerHTML = '<li style="color:var(--muted);font-size:11px;padding:8px 0;">No headlines available. Deploy to HTTPS for live feeds.</li>';
+    setDot('news-dot', false);
+    document.getElementById('news-upd').textContent = 'Error';
+    return;
+  }
+  ul.innerHTML = items.map(item => {
+    const d = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+    const titleWords = (item.title||'').split(' ');
+    const keyword = PB_KEYWORDS.find(k => item.title?.toLowerCase().includes(k.toLowerCase())) || '';
+    return `<li class="news-item">
+      <a href="${item.link||'#'}" target="_blank" rel="noopener">${item.title||'No title'}</a>
+      <div class="news-meta">
+        <span class="news-tag">${item._tag}</span>
+        <span>${d}</span>
+        ${keyword ? `<span style="color:var(--gold);font-size:9px;">${keyword}</span>` : ''}
+      </div>
+    </li>`;
+  }).join('');
+  setDot('news-dot', true);
+  document.getElementById('news-upd').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  // Set breaking bar
+  if (items[0]) {
+    document.getElementById('breaking-link').textContent = items[0].title;
+    document.getElementById('breaking-link').href = items[0].link || '#';
+    document.getElementById('breaking-link').setAttribute('target','_blank');
+  }
+}
+
+// ─── LIVE TV ─────────────────────────────────────────────────────────────────
+const TV_CHANNELS = [
+  { name:'Bloomberg', videoId:'iEpJwprxDdk' },
+  { name:'CNBC',      videoId:'9NyxcX3rhQs' },
+  { name:'Sky News',  videoId:'YDvsBbKfLPA' },
+  { name:'DW News',   videoId:'jnCfeqzIa8g' },
+  { name:'Al Jaz.',   videoId:'gCNeDWCI0vo' },
+  { name:'France 24', videoId:'nGTSqOrBrfc' },
+];
+let activeCh = 0;
+const IS_LOCAL = window.location.protocol === 'file:';
+function initTV() {
+  const btnWrap = document.getElementById('tv-channels');
+  btnWrap.innerHTML = TV_CHANNELS.map((ch,i) =>
+    `<button class="tv-btn${i===0?' active':''}" onclick="switchTV(${i},this)">${ch.name}</button>`
+  ).join('');
+  if (IS_LOCAL) {
+    document.getElementById('tv-player-wrap').style.display = 'none';
+    document.getElementById('tv-local-fallback').style.display = 'block';
+  } else {
+    document.getElementById('tv-iframe').src = `https://www.youtube-nocookie.com/embed/${TV_CHANNELS[0].videoId}?autoplay=1&mute=1&controls=1&rel=0`;
+  }
+}
+function switchTV(i, btn) {
+  activeCh = i;
+  document.querySelectorAll('.tv-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tv-iframe').src = `https://www.youtube-nocookie.com/embed/${TV_CHANNELS[i].videoId}?autoplay=1&mute=1&controls=1&rel=0`;
+}
+
+// ─── REFRESH ALL ─────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const btn = document.querySelector('.refresh-all-btn');
+  if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
+  await Promise.all([loadUS(), loadEurope(), loadAsia(), loadME(),
+                     loadFX(), loadRates(), loadAlts(), loadPBStocks()]);
+  loadTicker();
+  loadNews();
+  if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  if (window.location.protocol === 'file:') {
+    document.getElementById('local-banner').style.display = 'block';
+  }
+  initTV();
+  loadNews();
+  await Promise.all([loadUS(), loadEurope(), loadAsia(), loadME(),
+                     loadFX(), loadRates(), loadAlts(), loadPBStocks()]);
+  loadTicker();
+}
+init();
+
+// Refresh every 5 minutes
+setInterval(() => {
+  loadUS(); loadEurope(); loadAsia(); loadME();
+  loadFX(); loadRates(); loadAlts();
+  loadPBStocks(); loadTicker();
+}, 300000);
+
+// Refresh news every 15 minutes
+setInterval(loadNews, 900000);
+</script>
+</body>
+</html>
