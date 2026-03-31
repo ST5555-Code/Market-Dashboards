@@ -1,59 +1,84 @@
-// /api/acled.js — ACLED Armed Conflict Location & Event Data proxy
-// Requires Vercel env vars: ACLED_KEY and ACLED_EMAIL
-// Free registration at: https://acleddata.com/register/
+// /api/acled.js — ACLED Armed Conflict Location & Event Data
+// Auth: OAuth password grant (token valid 24h)
+// Vercel env vars required: ACLED_EMAIL and ACLED_PASSWORD
+// Register free at: https://acleddata.com/register/
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  const key   = (process.env.ACLED_KEY   || '').trim();
-  const email = (process.env.ACLED_EMAIL || '').trim();
+  const email    = (process.env.ACLED_EMAIL    || '').trim();
+  const password = (process.env.ACLED_PASSWORD || '').trim();
 
-  if (!key || !email) {
-    return res.status(200).json({ error: 'NO_ACLED_CREDS', msg: 'Set ACLED_KEY and ACLED_EMAIL in Vercel env vars' });
+  if (!email || !password) {
+    return res.status(200).json({ error: 'NO_ACLED_CREDS', msg: 'Set ACLED_EMAIL and ACLED_PASSWORD in Vercel env vars' });
   }
 
   try {
+    // Step 1: get OAuth bearer token
+    const tokenRes = await fetch('https://acleddata.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        username:   email,
+        password:   password,
+        grant_type: 'password',
+        client_id:  'acled',
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!tokenRes.ok) {
+      return res.status(200).json({ error: `ACLED_AUTH_${tokenRes.status}` });
+    }
+
+    const { access_token } = await tokenRes.json();
+    if (!access_token) {
+      return res.status(200).json({ error: 'ACLED_NO_TOKEN' });
+    }
+
+    // Step 2: fetch conflict events for Gulf + Iran + Iraq + Yemen
     const params = new URLSearchParams({
-      key,
-      email,
-      // Gulf states + Iran + Iraq + Yemen — pipe = OR in ACLED query language
       country: 'Iran|Iraq|Saudi Arabia|Kuwait|United Arab Emirates|Oman|Bahrain|Qatar|Yemen',
-      year: '2026',
-      limit: '1000',
-      fields: 'event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|admin1|location|latitude|longitude|fatalities|notes',
+      year:    '2026',
+      limit:   '1000',
+      fields:  'event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|admin1|location|latitude|longitude|fatalities|notes',
     });
 
-    const url = `https://api.acleddata.com/acled/read.json?${params.toString()}`;
-    const r = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(15000)
+    const dataRes = await fetch(`https://api.acleddata.com/acled/read.json?${params}`, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Accept': 'application/json',
+      },
+      signal: AbortSignal.timeout(15000),
     });
 
-    if (!r.ok) return res.status(200).json({ error: `ACLED_HTTP_${r.status}` });
+    if (!dataRes.ok) {
+      return res.status(200).json({ error: `ACLED_DATA_${dataRes.status}` });
+    }
 
-    const body = await r.json();
+    const body = await dataRes.json();
 
-    // Normalize to flat array, filter to valid coords
     const events = (body.data || [])
       .filter(e => e.latitude && e.longitude)
       .map(e => ({
-        id:        e.event_id_cnty,
-        date:      e.event_date,
-        type:      e.event_type,
-        subtype:   e.sub_event_type,
-        actor1:    e.actor1,
-        actor2:    e.actor2 || '',
-        country:   e.country,
-        region:    e.admin1 || '',
-        location:  e.location,
-        lat:       parseFloat(e.latitude),
-        lon:       parseFloat(e.longitude),
+        id:         e.event_id_cnty,
+        date:       e.event_date,
+        type:       e.event_type,
+        subtype:    e.sub_event_type,
+        actor1:     e.actor1,
+        actor2:     e.actor2 || '',
+        country:    e.country,
+        region:     e.admin1 || '',
+        location:   e.location,
+        lat:        parseFloat(e.latitude),
+        lon:        parseFloat(e.longitude),
         fatalities: parseInt(e.fatalities) || 0,
-        notes:     e.notes || '',
+        notes:      e.notes || '',
       }));
 
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // 1-hour cache
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.status(200).json(events);
+
   } catch (e) {
     return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message });
   }
