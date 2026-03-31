@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/fires.js": {
-      "runtime": "edge"
-    }
-  }
-}
