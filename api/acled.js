@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
       fields:  'event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|admin1|location|latitude|longitude|fatalities|notes',
     });
 
-    const dataRes = await fetch(`https://api.acleddata.com/acled/read.json?${params}`, {
+    const dataRes = await fetch(`https://acleddata.com/api/acled/read?${params}`, {
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Accept': 'application/json',
@@ -80,6 +80,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json(events);
 
   } catch (e) {
-    return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message });
+    return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message, cause: e.cause?.message || '' });
   }
 };
