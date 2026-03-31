@@ -370,7 +370,7 @@
 
 <!-- FOOTER -->
 <div class="footer">
-  <div>Live: Yahoo Finance (BZ=F, CL=F, TTF=F, RB=F, GC=F) · Reuters · Al Jazeera · AP · rss2json</div>
+  <div>Live: Yahoo Finance (BZ=F, CL=F, TTF=F, RB=F, GC=F) · CNBC Energy · Al Jazeera · Google News · rss2json</div>
   <div>Static: EIA · IEA · S&P Global Platts · Goldman Sachs · JP Morgan · ONI · IGU 2024</div>
 </div>
 
@@ -524,14 +524,14 @@ async function fetchFeed(feed) {
 }
 
 const WAR_FEEDS = [
-  { url: 'https://feeds.reuters.com/reuters/topNews',                                               name: 'Reuters' },
+  { url: 'https://news.google.com/rss/search?q=Iran+IRGC+Hormuz+tanker+war&hl=en&gl=US&ceid=US:en', name: 'Google News' },
   { url: 'https://www.aljazeera.com/xml/rss/all.xml',                                               name: 'Al Jazeera' },
   { url: 'https://news.google.com/rss/search?q=Iran+Hormuz+war+oil&hl=en&gl=US&ceid=US:en',        name: 'Google News' },
 ];
 const SHIP_FEEDS = [
   { url: 'https://oilprice.com/rss/main',                                                           name: 'OilPrice' },
   { url: 'https://news.google.com/rss/search?q=Hormuz+shipping+pipeline+tanker&hl=en&gl=US&ceid=US:en', name: 'Google News' },
-  { url: 'https://feeds.reuters.com/reuters/businessNews',                                           name: 'Reuters' },
+  { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', name: 'CNBC Energy' },
 ];
 
 const WAR_KW  = ['iran','hormuz','irgc','tehran','khamenei','strait','missile','attack','strike','military','sanctions','tanker','nuclear','houthi','conflict','war','blockade','biden','trump','israel','hezbollah','retaliat'];

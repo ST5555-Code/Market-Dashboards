@@ -901,9 +901,9 @@ async function loadTicker() {
 
 // ─── NEWS RSS ─────────────────────────────────────────────────────────────────
 const RSS_FEEDS = [
-  { url:'https://feeds.reuters.com/reuters/businessNews', tag:'Reuters' },
+  { url:'https://news.google.com/rss/search?q=M%26A+private+equity+wealth&hl=en&gl=US&ceid=US:en', tag:'Google News' },
   { url:'https://www.cnbc.com/id/10000664/device/rss/rss.html', tag:'CNBC' },
-  { url:'https://feeds.reuters.com/reuters/financialServicesAndRealEstateNews', tag:'Reuters FS' },
+  { url:'https://www.cnbc.com/id/10001147/device/rss/rss.html', tag:'CNBC Finance' },
 ];
 const PB_KEYWORDS = ['wealth','private bank','asset manag','hedge fund','private equity','Goldman','JPMorgan','UBS','HSBC','BlackRock','KKR','Blackstone','interest rate','Federal Reserve','ECB','central bank','inflation','crypto','bitcoin','gold','markets','M&A','merger','acquisition','fund','investor','endowment'];
 async function loadNews() {

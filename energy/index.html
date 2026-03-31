@@ -466,7 +466,7 @@
 
 <!-- FOOTER -->
 <div class="footer">
-  <div>Live: Yahoo Finance · OilPrice.com · Reuters · Rigzone · rss2json</div>
+  <div>Live: Yahoo Finance · OilPrice.com · CNBC Energy · Rigzone · rss2json</div>
   <div>Static: Moelis Upstream Weekly Mar 20 2026 · Bloomberg · S&P Capital IQ | ~ = estimated</div>
 </div>
 
@@ -832,7 +832,7 @@ const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
 const ENERGY_FEEDS = [
   { url: 'https://oilprice.com/rss/main', name: 'OilPrice' },
-  { url: 'https://feeds.reuters.com/reuters/businessNews', name: 'Reuters' },
+  { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', name: 'CNBC Energy' },
   { url: 'https://www.rigzone.com/news/rss/rigzone_latest.aspx', name: 'Rigzone' },
 ];
 
@@ -893,7 +893,7 @@ function renderNews(items, listId, updateId, filterFn, limit=12) {
 // TOP NEWS (general headlines — Row 1 left panel)
 // =====================
 const TOP_FEEDS = [
-  { url: 'https://feeds.reuters.com/reuters/topNews', name: 'Reuters' },
+  { url: 'https://news.google.com/rss/search?q=oil+gas+upstream+energy&hl=en&gl=US&ceid=US:en', name: 'Google News' },
   { url: 'http://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
   { url: 'https://www.theguardian.com/world/rss', name: 'Guardian' },
 ];
