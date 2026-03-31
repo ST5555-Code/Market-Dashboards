@@ -264,7 +264,9 @@
       <div class="map-divider"></div>
       <label class="map-toggle"><input type="checkbox" id="tog-cities" checked onchange="toggleLayer('cities',this.checked)"> ● Cities</label>
       <div class="map-divider"></div>
-      <label class="map-toggle"><input type="checkbox" id="tog-firms" checked onchange="toggleFIRMS(this.checked)"> <span style="color:#FF6600">🔥</span> NASA FIRMS Fires</label>
+      <label class="map-toggle"><input type="checkbox" id="tog-firms" checked onchange="toggleFIRMS(this.checked)"> <span style="color:#FF6600">🔥</span> GDACS Fires</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-acled" checked onchange="toggleACLED(this.checked)"> <span style="color:#E040FB">⚔</span> Conflict Events</label>
     </div>
   </div>
 
@@ -907,55 +909,119 @@ function initMap() {
   layers.term = termGroup;
   termGroup.addTo(map);
 
-  // ── NASA FIRMS Fire Hotspots — via /api/fires serverless proxy ──
-  // Requires FIRMS_MAP_KEY env var in Vercel → free at firms.modaps.eosdis.nasa.gov/api/
+  // ── GDACS Wildfire/Disaster Hotspots — no API key required ──
+  // Source: UN OCHA Global Disaster Alert and Coordination System
   const firmsGroup = L.layerGroup();
   layers.firms = firmsGroup;
 
-  function _renderFires(fires) {
+  function _renderGDACS(events) {
     firmsGroup.clearLayers();
-    fires.forEach(f => {
-      const bright = f.brightness || 0;
-      const frp    = f.frp || 0;
-      const color  = bright > 380 ? '#FF2200' : bright > 355 ? '#FF6600' : '#FF9900';
-      const r      = frp > 100 ? 7 : frp > 30 ? 5 : bright > 380 ? 5 : 3;
-      L.circleMarker([f.lat, f.lon], {
+    events.forEach(e => {
+      const alert = (e.alert || '').toLowerCase();
+      const color = alert === 'red' ? '#FF2200' : alert === 'orange' ? '#FF6600' : '#FF9900';
+      const r = alert === 'red' ? 8 : alert === 'orange' ? 6 : 4;
+      const sev = e.severity ? `${Math.round(e.severity).toLocaleString()} ${e.severityUnit}` : 'n/a';
+      L.circleMarker([e.lat, e.lon], {
         radius: r, color, fillColor: color, fillOpacity: 0.88, weight: 0.5
       })
       .bindTooltip(
-        `<div class="map-tip-title">🔥 Fire / Thermal Anomaly</div>` +
-        `<div class="map-tip-body">NASA VIIRS SNPP · ${f.datetime || ''}<br>` +
-        `Brightness: ${Math.round(bright)}K · FRP: ${frp}MW<br>` +
-        `Confidence: ${f.confidence}</div>`,
-        {sticky: true, maxWidth: 220}
+        `<div class="map-tip-title">🔥 ${e.name || 'Wildfire'}</div>` +
+        `<div class="map-tip-body">GDACS · ${e.country || ''}<br>` +
+        `Alert: <b style="color:${color}">${e.alert || 'Green'}</b> · Area: ${sev}<br>` +
+        `Since: ${(e.fromDate || '').slice(0,10)}</div>`,
+        {sticky: true, maxWidth: 240}
       )
       .addTo(firmsGroup);
     });
+    const n = events.length;
+    document.getElementById('map-status').textContent =
+      `GDACS · ${n} fire event${n !== 1 ? 's' : ''} · Gulf & Middle East`;
   }
 
   async function loadFIRMS() {
     try {
-      const cKey = 'firms_gulf';
+      const cKey = 'gdacs_gulf';
       try {
-        const c = JSON.parse(localStorage.getItem(cKey) || 'null');
-        if (c && Array.isArray(c.data) && Date.now() - c.ts < 15 * 60000) { _renderFires(c.data); return; }
+        const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
+        if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 30 * 60000) {
+          _renderGDACS(cached.data); return;
+        }
       } catch {}
-      const r = await fetch('/api/fires', { signal: AbortSignal.timeout(12000) });
+      const r = await fetch('/api/gdacs', { signal: AbortSignal.timeout(12000) });
       if (!r.ok) return;
       const payload = await r.json();
-      // If FIRMS key not yet active or API error, payload is an object not array
-      if (!Array.isArray(payload)) {
-        console.warn('FIRMS not available:', payload.error || payload);
-        return;
-      }
+      if (!Array.isArray(payload)) { console.warn('GDACS:', payload.error || payload); return; }
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
-      _renderFires(payload);
-    } catch (e) { console.warn('FIRMS:', e.message); }
+      _renderGDACS(payload);
+    } catch (e) { console.warn('GDACS fires:', e.message); }
   }
 
   loadFIRMS();
   firmsGroup.addTo(map);
-  setInterval(loadFIRMS, 15 * 60000);
+  setInterval(loadFIRMS, 30 * 60000);
+
+  // ── ACLED Armed Conflict Events ──
+  // Source: Armed Conflict Location & Event Data (acleddata.com) — free API key required
+  // Set ACLED_KEY and ACLED_EMAIL in Vercel env vars to activate
+  const acledGroup = L.layerGroup();
+  layers.acled = acledGroup;
+
+  const ACLED_COLOR = {
+    'Battles':                       '#FF4444',
+    'Explosions/Remote violence':    '#FF6600',
+    'Violence against civilians':    '#A855F7',
+    'Protests':                      '#F59E0B',
+    'Riots':                         '#F59E0B',
+    'Strategic developments':        '#38BDF8',
+  };
+
+  function _renderACLED(events) {
+    acledGroup.clearLayers();
+    events.forEach(e => {
+      const color = ACLED_COLOR[e.type] || '#737887';
+      const r = e.fatalities > 50 ? 10 : e.fatalities > 10 ? 7 : e.fatalities > 0 ? 5 : 3;
+      L.circleMarker([e.lat, e.lon], {
+        radius: r, color, fillColor: color, fillOpacity: 0.75, weight: 1
+      })
+      .bindTooltip(
+        `<div class="map-tip-title">⚔ ${e.type}</div>` +
+        `<div class="map-tip-body"><b>${e.subtype}</b><br>` +
+        `${e.location}, ${e.country} · ${e.date}<br>` +
+        `${e.actor1}${e.actor2 ? ' vs ' + e.actor2 : ''}<br>` +
+        `Fatalities: <b style="color:${e.fatalities > 0 ? '#FF4444' : '#aaa'}">${e.fatalities}</b><br>` +
+        `<span style="font-size:10px;color:#aaa">${(e.notes || '').slice(0, 120)}${e.notes && e.notes.length > 120 ? '…' : ''}</span></div>`,
+        {sticky: true, maxWidth: 260}
+      )
+      .addTo(acledGroup);
+    });
+    console.log(`ACLED: ${events.length} conflict events loaded`);
+  }
+
+  async function loadACLED() {
+    try {
+      const cKey = 'acled_gulf';
+      try {
+        const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
+        if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 60 * 60000) {
+          _renderACLED(cached.data); return;
+        }
+      } catch {}
+      const r = await fetch('/api/acled', { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) return;
+      const payload = await r.json();
+      if (!Array.isArray(payload)) {
+        // NO_ACLED_CREDS is expected until key is set — silent fail
+        if (payload.error !== 'NO_ACLED_CREDS') console.warn('ACLED:', payload.error || payload);
+        return;
+      }
+      try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
+      _renderACLED(payload);
+    } catch (e) { console.warn('ACLED:', e.message); }
+  }
+
+  loadACLED();
+  acledGroup.addTo(map);
+  setInterval(loadACLED, 60 * 60000);
 
   // Resize fix
   setTimeout(() => map.invalidateSize(), 300);
@@ -969,6 +1035,9 @@ function toggleLayer(name, show) {
 }
 function toggleFIRMS(show) {
   toggleLayer('firms', show);
+}
+function toggleACLED(show) {
+  toggleLayer('acled', show);
 }
 
 // =====================
