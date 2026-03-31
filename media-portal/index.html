@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence Dashboards</title>
+<title>Market Dashboards</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,7 +83,7 @@
   /* ── Cards ── */
   .cards {
     display: grid;
-    grid-template-columns: repeat(3, 260px);
+    grid-template-columns: repeat(2, 260px);
     gap: 16px;
   }
 
@@ -106,10 +106,8 @@
     height: 2px;
     transition: opacity 0.2s;
   }
-  .card.energy::before    { background: linear-gradient(90deg, #B8922A, #DCB96E); }
-  .card.media::before     { background: linear-gradient(90deg, #3A6190, #5A82AF); }
-  .card.cleantech::before { background: linear-gradient(90deg, #1E7A45, #4CAF7D); }
-  .card.hormuz::before    { background: linear-gradient(90deg, #8B1A1A, #C94040); }
+  .card.media::before   { background: linear-gradient(90deg, #3A6190, #5A82AF); }
+  .card.hormuz::before  { background: linear-gradient(90deg, #8B1A1A, #C94040); }
 
   .card:hover {
     border-color: #2e2e2e;
@@ -123,10 +121,8 @@
     text-transform: uppercase;
     margin-bottom: 14px;
   }
-  .card.energy    .card-sector { color: #DCB96E; }
-  .card.media     .card-sector { color: #5A82AF; }
-  .card.cleantech .card-sector { color: #4CAF7D; }
-  .card.hormuz    .card-sector { color: #C94040; }
+  .card.media   .card-sector { color: #5A82AF; }
+  .card.hormuz  .card-sector { color: #C94040; }
 
   .card-title {
     font-size: 17px;
@@ -189,11 +185,6 @@
   }
 
   /* ── Mobile ── */
-  @media (max-width: 880px) {
-    .cards {
-      grid-template-columns: repeat(2, 260px);
-    }
-  }
   @media (max-width: 640px) {
     .cards {
       grid-template-columns: 1fr;
@@ -215,45 +206,32 @@
 <div class="hero">
   <div class="hero-eyebrow">Live Intelligence</div>
   <h1 class="hero-title">Market <strong>Dashboards</strong></h1>
-  <p class="hero-sub">Real-time data · Commodities · Geopolitics · Deals</p>
+  <p class="hero-sub">Streaming · Geopolitics · M&A · Rights</p>
 
   <div class="cards">
 
     <a class="card hormuz" href="/hormuz/">
       <div class="card-sector">Geopolitical Intelligence</div>
       <div class="card-title">Strait of Hormuz</div>
-      <div class="card-desc">Live conflict intelligence, interactive map, GCC military bases, refineries, pipelines, and NASA fire hotspots.</div>
+      <div class="card-desc">Live conflict intelligence, interactive map, GCC military bases, refineries, pipelines, and fire hotspots.</div>
       <div class="card-tags">
         <span class="tag">Conflict Intel</span>
         <span class="tag">Oil &amp; Gas</span>
         <span class="tag">GCC Map</span>
-        <span class="tag">NASA FIRMS</span>
+        <span class="tag">GDACS Fires</span>
       </div>
       <div class="card-arrow">↗</div>
     </a>
 
-    <a class="card energy" href="/energy/">
-      <div class="card-sector">Upstream Energy</div>
-      <div class="card-title">Energy & Commodities</div>
-      <div class="card-desc">Live commodity prices, forward curves, M&A deal flow, earnings, and debt financing activity.</div>
+    <a class="card media" href="/media/">
+      <div class="card-sector">Media & Entertainment</div>
+      <div class="card-title">Media & Streaming</div>
+      <div class="card-desc">Streaming scoreboard, sports broadcast rights, box office, M&A transactions, and financing activity.</div>
       <div class="card-tags">
-        <span class="tag">Crude · Gas · LNG</span>
-        <span class="tag">Forward Curve</span>
+        <span class="tag">Streaming</span>
+        <span class="tag">Sports Rights</span>
         <span class="tag">M&A</span>
         <span class="tag">Earnings</span>
-      </div>
-      <div class="card-arrow">↗</div>
-    </a>
-
-    <a class="card cleantech" href="/cleantech/">
-      <div class="card-sector">Cleantech &amp; Transition</div>
-      <div class="card-title">Energy Transition</div>
-      <div class="card-desc">Carbon markets, RINs, LCFS, battery metals, nuclear, clean energy equities, M&A, and green finance.</div>
-      <div class="card-tags">
-        <span class="tag">Carbon · RINs · LCFS</span>
-        <span class="tag">Battery Metals</span>
-        <span class="tag">Nuclear</span>
-        <span class="tag">Green Finance</span>
       </div>
       <div class="card-arrow">↗</div>
     </a>
