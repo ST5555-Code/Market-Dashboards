@@ -28,12 +28,14 @@ module.exports = async function handler(req, res) {
     });
 
     if (!tokenRes.ok) {
-      return res.status(200).json({ error: `ACLED_AUTH_${tokenRes.status}` });
+      const errBody = await tokenRes.text();
+      return res.status(200).json({ error: `ACLED_AUTH_${tokenRes.status}`, body: errBody.slice(0, 300) });
     }
 
-    const { access_token } = await tokenRes.json();
+    const tokenBody = await tokenRes.json();
+    const { access_token } = tokenBody;
     if (!access_token) {
-      return res.status(200).json({ error: 'ACLED_NO_TOKEN' });
+      return res.status(200).json({ error: 'ACLED_NO_TOKEN', body: JSON.stringify(tokenBody).slice(0, 300) });
     }
 
     // Step 2: fetch conflict events for Gulf + Iran + Iraq + Yemen
@@ -53,7 +55,8 @@ module.exports = async function handler(req, res) {
     });
 
     if (!dataRes.ok) {
-      return res.status(200).json({ error: `ACLED_DATA_${dataRes.status}` });
+      const errBody = await dataRes.text();
+      return res.status(200).json({ error: `ACLED_DATA_${dataRes.status}`, body: errBody.slice(0, 300) });
     }
 
     const body = await dataRes.json();
