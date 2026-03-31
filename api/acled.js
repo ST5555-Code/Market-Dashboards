@@ -1,5 +1,5 @@
 // /api/acled.js — ACLED Armed Conflict Location & Event Data
-// Auth: OAuth password grant (token valid 24h)
+// Auth: credentials passed directly as query params (standard ACLED method)
 // Vercel env vars required: ACLED_EMAIL and ACLED_PASSWORD
 // Register free at: https://acleddata.com/register/
 module.exports = async function handler(req, res) {
@@ -10,58 +10,38 @@ module.exports = async function handler(req, res) {
   const password = (process.env.ACLED_PASSWORD || '').trim();
 
   if (!email || !password) {
-    return res.status(200).json({ error: 'NO_ACLED_CREDS', msg: 'Set ACLED_EMAIL and ACLED_PASSWORD in Vercel env vars' });
+    return res.status(200).json({ error: 'NO_ACLED_CREDS' });
   }
 
   try {
-    // Step 1: get OAuth bearer token
-    const tokenRes = await fetch('https://acleddata.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        username:   email,
-        password:   password,
-        grant_type: 'password',
-        client_id:  'acled',
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
+    // Date range: last 90 days
+    const to   = new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
 
-    if (!tokenRes.ok) {
-      const errBody = await tokenRes.text();
-      return res.status(200).json({ error: `ACLED_AUTH_${tokenRes.status}`, body: errBody.slice(0, 300) });
-    }
-
-    const tokenBody = await tokenRes.json();
-    const { access_token } = tokenBody;
-    if (!access_token) {
-      return res.status(200).json({ error: 'ACLED_NO_TOKEN', body: JSON.stringify(tokenBody).slice(0, 300) });
-    }
-
-    // Step 2: fetch conflict events for Gulf + Iran + Iraq + Yemen
     const params = new URLSearchParams({
-      country: 'Iran|Iraq|Saudi Arabia|Kuwait|United Arab Emirates|Oman|Bahrain|Qatar|Yemen',
-      year:    '2026',
-      limit:   '1000',
-      fields:  'event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|admin1|location|latitude|longitude|fatalities|notes',
+      email,
+      password,
+      _format:          'json',
+      country:          'Iran|Iraq|Saudi Arabia|Kuwait|United Arab Emirates|Oman|Bahrain|Qatar|Yemen',
+      event_date:       `${from}|${to}`,
+      event_date_where: 'BETWEEN',
+      limit:            '1000',
+      fields:           'event_id_cnty|event_date|event_type|sub_event_type|actor1|actor2|country|admin1|location|latitude|longitude|fatalities|notes',
     });
 
-    const dataRes = await fetch(`https://acleddata.com/api/acled/read?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        'Accept': 'application/json',
-      },
+    const r = await fetch(`https://acleddata.com/api/acled/read?${params}`, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!dataRes.ok) {
-      const errBody = await dataRes.text();
-      return res.status(200).json({ error: `ACLED_DATA_${dataRes.status}`, body: errBody.slice(0, 300) });
+    if (!r.ok) {
+      const body = await r.text();
+      return res.status(200).json({ error: `ACLED_HTTP_${r.status}`, body: body.slice(0, 300) });
     }
 
-    const body = await dataRes.json();
+    const data = await r.json();
 
-    const events = (body.data || [])
+    const events = (data.data || [])
       .filter(e => e.latitude && e.longitude)
       .map(e => ({
         id:         e.event_id_cnty,
@@ -83,6 +63,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json(events);
 
   } catch (e) {
-    return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message, cause: e.cause?.message || '' });
+    return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message });
   }
 };
