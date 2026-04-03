@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GLOBAL PRIVATE BANKING INTELLIGENCE</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
 <style>
 :root {
   --red: #DB0011;
@@ -633,6 +634,15 @@ function updateClock() {
 }
 setInterval(updateClock, 1000); updateClock();
 
+// ─── CLIENT-SIDE API RESPONSE CACHE ──────────────────────────────────────────
+const _apiCache = new Map();
+function cachedFetch(url, ttlMs = 30000) {
+  const now = Date.now();
+  const cached = _apiCache.get(url);
+  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
+  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
+}
+
 // ─── YAHOO FINANCE VIA /api/quote — rate-limited queue (max 3 concurrent) ─────
 const _yfQueue = [];
 let _yfRunning = 0;
@@ -655,9 +665,7 @@ function _yfDrain() {
 
 async function _yfFetch(sym) {
   try {
-    const r = await fetch(`/api/quote?sym=${encodeURIComponent(sym)}`, {
-      signal: AbortSignal.timeout(12000)
-    });
+    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
     if (!r.ok) return { sym, ok: false, price: null };
     const data = await r.json();
     const m = data?.chart?.result?.[0]?.meta;
@@ -908,12 +916,19 @@ const RSS_FEEDS = [
 const PB_KEYWORDS = ['wealth','private bank','asset manag','hedge fund','private equity','Goldman','JPMorgan','UBS','HSBC','BlackRock','KKR','Blackstone','interest rate','Federal Reserve','ECB','central bank','inflation','crypto','bitcoin','gold','markets','M&A','merger','acquisition','fund','investor','endowment'];
 async function loadNews() {
   document.getElementById('news-upd').textContent = 'Loading';
-  const proxy = 'https://api.rss2json.com/v1.api.json?rss_url=';
   let allItems = [];
   for (const feed of RSS_FEEDS) {
     try {
-      const r = await fetch(proxy + encodeURIComponent(feed.url), { signal: AbortSignal.timeout(8000) });
-      const data = await r.json();
+      // Try own proxy first
+      let data;
+      try {
+        const r = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, { signal: AbortSignal.timeout(8000) });
+        data = await r.json();
+      } catch {
+        // Fall back to rss2json.com
+        const r2 = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`, { signal: AbortSignal.timeout(8000) });
+        data = await r2.json();
+      }
       if (data.items?.length) {
         allItems.push(...data.items.map(item => ({...item, _tag: feed.tag})));
       }
@@ -927,12 +942,13 @@ async function loadNews() {
   const items = (relevant.length > 0 ? relevant : allItems).slice(0, 20);
   const ul = document.getElementById('news-items');
   if (!items.length) {
-    ul.innerHTML = '<li style="color:var(--muted);font-size:11px;padding:8px 0;">No headlines available. Deploy to HTTPS for live feeds.</li>';
+    ul.innerHTML = '<li style="color:var(--muted);font-size:11px;padding:8px 0;">No headlines available. Deploy to HTTPS for live feeds.</li>'; // static, safe
     setDot('news-dot', false);
     document.getElementById('news-upd').textContent = 'Error';
     return;
   }
-  ul.innerHTML = items.map(item => {
+  const _purify = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize : (s => s);
+  ul.innerHTML = _purify(items.map(item => {
     const d = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
     const titleWords = (item.title||'').split(' ');
     const keyword = PB_KEYWORDS.find(k => item.title?.toLowerCase().includes(k.toLowerCase())) || '';
@@ -944,7 +960,7 @@ async function loadNews() {
         ${keyword ? `<span style="color:var(--gold);font-size:9px;">${keyword}</span>` : ''}
       </div>
     </li>`;
-  }).join('');
+  }).join(''));
   setDot('news-dot', true);
   document.getElementById('news-upd').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   // Set breaking bar
@@ -1009,15 +1025,15 @@ async function init() {
 }
 init();
 
-// Refresh every 5 minutes
-setInterval(() => {
-  loadUS(); loadEurope(); loadAsia(); loadME();
-  loadFX(); loadRates(); loadAlts();
-  loadPBStocks(); loadTicker();
-}, 300000);
+// Refresh market data every 5 minutes — staggered to avoid simultaneous bursts
+setTimeout(() => setInterval(() => { loadUS(); loadEurope(); }, 300000), 0);
+setTimeout(() => setInterval(() => { loadAsia(); loadME(); }, 300000), 5000);
+setTimeout(() => setInterval(() => { loadFX(); loadRates(); }, 300000), 10000);
+setTimeout(() => setInterval(() => { loadAlts(); loadPBStocks(); }, 300000), 15000);
+setTimeout(() => setInterval(loadTicker, 300000), 20000);
 
-// Refresh news every 15 minutes
-setInterval(loadNews, 900000);
+// Refresh news every 15 minutes — offset from market refreshes
+setTimeout(() => setInterval(loadNews, 900000), 25000);
 </script>
 </body>
 </html>

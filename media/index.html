@@ -420,6 +420,7 @@
     .ch-btn { font-size: 11px; padding: 6px 8px; }
   }
 </style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -705,14 +706,14 @@ function initTV() {
     document.getElementById('tv-player-wrap').style.display = 'none';
     document.getElementById('tv-local-fallback').style.display = 'block';
     const linksDiv = document.getElementById('tv-yt-links');
-    linksDiv.innerHTML = TV_CHANNELS.map(ch =>
+    linksDiv.innerHTML = DOMPurify.sanitize(TV_CHANNELS.map(ch =>
       `<a href="${ch.ytUrl}" target="_blank" style="
         background:var(--dark-card); border:1px solid #3a4570; color:var(--white);
         text-decoration:none; padding:7px 14px; border-radius:3px; font-size:11px;
         font-weight:600; letter-spacing:0.5px; display:inline-block;">
         ▶ ${ch.name}
       </a>`
-    ).join('');
+    ).join(''));
   } else {
     // Load first channel
     loadChannel(0);
@@ -772,9 +773,7 @@ function _fsDrain() {
 
 async function _fsFetch(sym) {
   try {
-    const r = await fetch(`/api/quote?sym=${encodeURIComponent(sym)}`, {
-      signal: AbortSignal.timeout(12000)
-    });
+    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
     if (!r.ok) return { sym, price: null, change: null, pct: null };
     const data = await r.json();
     const m = data?.chart?.result?.[0]?.meta;
@@ -806,13 +805,22 @@ async function loadTicker() {
       <span class="${cls}">${pctStr}</span>
     </div>`;
   });
-  wrap.innerHTML = items.join('') + items.join('');
+  wrap.innerHTML = DOMPurify.sanitize(items.join('') + items.join(''));
 }
 
 // =====================
 // RSS NEWS
 // =====================
 const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+// ─── Client-side response cache ─────────────────────────────────────────
+const _apiCache = new Map();
+function cachedFetch(url, ttlMs = 30000) {
+  const now = Date.now();
+  const cached = _apiCache.get(url);
+  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
+  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
+}
 
 const ENT_FEEDS = [
   { url: 'https://variety.com/feed/', name: 'Variety' },
@@ -847,14 +855,27 @@ function timeAgo(pubDate) {
 }
 
 async function fetchFeed(feedObj) {
+  // Try /api/rss proxy first, fall back to rss2json.com
   try {
-    const resp = await fetch(RSS2JSON + encodeURIComponent(feedObj.url));
-    const data = await resp.json();
-    if (data.status !== 'ok') return [];
-    return (data.items || []).map(item => ({
-      title: item.title, link: item.link, pubDate: item.pubDate, source: feedObj.name,
-    }));
-  } catch { return []; }
+    const resp = await fetch(`/api/rss?url=${encodeURIComponent(feedObj.url)}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      return (data.items || []).map(item => ({
+        title: item.title, link: item.link, pubDate: item.pubDate, source: feedObj.name,
+      }));
+    }
+    throw new Error('proxy failed');
+  } catch {
+    // Fallback to rss2json.com
+    try {
+      const resp = await fetch(RSS2JSON + encodeURIComponent(feedObj.url));
+      const data = await resp.json();
+      if (data.status !== 'ok') return [];
+      return (data.items || []).map(item => ({
+        title: item.title, link: item.link, pubDate: item.pubDate, source: feedObj.name,
+      }));
+    } catch { return []; }
+  }
 }
 
 function renderNewsList(items, listId, updateId, filterFn) {
@@ -865,7 +886,7 @@ function renderNewsList(items, listId, updateId, filterFn) {
     list.innerHTML = '<li class="news-loading">No headlines found — feeds may be rate-limited. Refresh in a moment.</li>';
     return;
   }
-  list.innerHTML = filtered.map(item => `
+  list.innerHTML = DOMPurify.sanitize(filtered.map(item => `
     <li class="news-item">
       <a href="${item.link}" target="_blank">${item.title}</a>
       <div class="news-meta">
@@ -874,7 +895,7 @@ function renderNewsList(items, listId, updateId, filterFn) {
         ${getTag(item.title)}
       </div>
     </li>
-  `).join('');
+  `).join(''));
   if (updateId) {
     document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
@@ -886,9 +907,9 @@ async function loadNews() {
   renderNewsList(entItems, 'ma-list', 'ma-update-time', isMA);
   const allBiz = entItems.filter(i => isBiz(i.title)).sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
   if (allBiz.length > 0) {
-    document.getElementById('breaking-text').innerHTML = allBiz.slice(0, 3).map(i =>
+    document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(allBiz.slice(0, 3).map(i =>
       `<a href="${i.link}" target="_blank">${i.title}</a>`
-    ).join(' &nbsp;|&nbsp; ');
+    ).join(' &nbsp;|&nbsp; '));
   }
 }
 
@@ -904,7 +925,7 @@ async function loadSportsNews() {
 // =====================
 const TOP_FEEDS = [
   { url: 'https://news.google.com/rss/search?q=media+entertainment+streaming+M%26A&hl=en&gl=US&ceid=US:en', name: 'Google News' },
-  { url: 'http://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
+  { url: 'https://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
   { url: 'https://www.theguardian.com/world/rss', name: 'Guardian' },
 ];
 
@@ -952,7 +973,7 @@ function loadEarnings() {
     .map(e => { const d = new Date(e.date); return { ...e, days: Math.ceil((d - today) / 86400000), d }; })
     .filter(e => e.days >= 0)
     .sort((a, b) => a.days - b.days);
-  list.innerHTML = upcoming.map(e => {
+  list.innerHTML = DOMPurify.sanitize(upcoming.map(e => {
     const cls = e.days <= 7 ? 'earn-soon' : e.days <= 21 ? 'earn-near' : 'earn-far';
     const label = e.days === 0 ? 'TODAY' : e.days === 1 ? '1 day' : e.days + ' days';
     const dateStr = e.d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -960,7 +981,7 @@ function loadEarnings() {
       <div><div class="earn-co">${e.co}</div><div class="earn-ticker">${e.sym}</div></div>
       <div style="text-align:right"><div class="earn-date">${dateStr}</div><span class="earn-days ${cls}">${label}</span></div>
     </li>`;
-  }).join('');
+  }).join(''));
 }
 
 // =====================
@@ -973,8 +994,8 @@ async function init() {
   await Promise.all([loadNews(), loadBizNews(), loadTopNews()]);
 }
 init();
-setInterval(loadTicker, 60000);
-setInterval(() => { loadNews(); loadBizNews(); loadTopNews(); }, 600000);
+setTimeout(() => setInterval(loadTicker, 60000), 0);
+setTimeout(() => setInterval(() => { loadNews(); loadBizNews(); loadTopNews(); }, 600000), 5000);
 </script>
 </body>
 </html>

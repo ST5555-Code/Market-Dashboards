@@ -3,15 +3,18 @@
 // Vercel env vars required: ACLED_EMAIL and ACLED_PASSWORD
 // Register free at: https://acleddata.com/register/
 // NOTE: account must have API access enabled by ACLED — email access@acleddata.com if getting 403
+
+const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', ORIGIN);
   res.setHeader('Content-Type', 'application/json');
 
   const email    = (process.env.ACLED_EMAIL    || '').trim();
   const password = (process.env.ACLED_PASSWORD || '').trim();
 
   if (!email || !password) {
-    return res.status(200).json({ error: 'NO_ACLED_CREDS' });
+    return res.status(503).json({ error: 'NO_ACLED_CREDS' });
   }
 
   try {
@@ -29,12 +32,11 @@ module.exports = async function handler(req, res) {
     });
 
     if (!tokenRes.ok) {
-      const b = await tokenRes.text();
-      return res.status(200).json({ error: `ACLED_AUTH_${tokenRes.status}`, body: b.slice(0, 200) });
+      return res.status(502).json({ error: `ACLED_AUTH_${tokenRes.status}` });
     }
 
     const { access_token } = await tokenRes.json();
-    if (!access_token) return res.status(200).json({ error: 'ACLED_NO_TOKEN' });
+    if (!access_token) return res.status(502).json({ error: 'ACLED_NO_TOKEN' });
 
     // Step 2: fetch conflict events — multi-country uses :OR:country= syntax per ACLED docs
     const from = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
@@ -56,8 +58,7 @@ module.exports = async function handler(req, res) {
     });
 
     if (!dataRes.ok) {
-      const b = await dataRes.text();
-      return res.status(200).json({ error: `ACLED_DATA_${dataRes.status}`, body: b.slice(0, 200) });
+      return res.status(502).json({ error: `ACLED_DATA_${dataRes.status}` });
     }
 
     const body = await dataRes.json();
@@ -84,6 +85,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json(events);
 
   } catch (e) {
-    return res.status(200).json({ error: 'ACLED_EXCEPTION', msg: e.message });
+    return res.status(502).json({ error: 'ACLED_EXCEPTION', msg: e.message });
   }
 };

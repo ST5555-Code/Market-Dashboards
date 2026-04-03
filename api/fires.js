@@ -1,5 +1,4 @@
 // Vercel Edge Function: NASA FIRMS fire hotspot proxy
-// Runs on Cloudflare edge network — bypasses NASA's Lambda IP blocks
 // Requires FIRMS_MAP_KEY env var
 
 export const config = { runtime: 'edge' };
@@ -7,11 +6,12 @@ export const config = { runtime: 'edge' };
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 export default async function handler(req) {
-  const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
+  const origin = process.env.ALLOWED_ORIGIN || '*';
+  const cors = { 'Access-Control-Allow-Origin': origin, 'Content-Type': 'application/json' };
 
   const key = (process.env.FIRMS_MAP_KEY || '').trim();
   if (!key) {
-    return new Response(JSON.stringify({ error: 'NO_KEY' }), { headers: cors });
+    return new Response(JSON.stringify({ error: 'NO_KEY' }), { status: 503, headers: cors });
   }
 
   try {
@@ -28,10 +28,9 @@ export default async function handler(req) {
     });
 
     if (!r.ok) {
-      const txt = await r.text().catch(() => '');
       return new Response(
-        JSON.stringify({ error: `FIRMS_HTTP_${r.status}`, raw: txt.substring(0, 200) }),
-        { headers: cors }
+        JSON.stringify({ error: `FIRMS_HTTP_${r.status}` }),
+        { status: 502, headers: cors }
       );
     }
 
@@ -39,8 +38,8 @@ export default async function handler(req) {
 
     if (!data.features) {
       return new Response(
-        JSON.stringify({ error: 'FIRMS_NO_FEATURES', raw: JSON.stringify(data).substring(0, 200) }),
-        { headers: cors }
+        JSON.stringify({ error: 'FIRMS_NO_FEATURES' }),
+        { status: 502, headers: cors }
       );
     }
 
@@ -49,18 +48,19 @@ export default async function handler(req) {
       lon:        f.geometry.coordinates[0],
       brightness: f.properties.bright_ti4 || f.properties.brightness || 0,
       confidence: f.properties.confidence || 'n',
-      datetime:   `${f.properties.acq_date} ${String(f.properties.acq_time || '').padStart(4,'0').replace(/(\d{2})(\d{2})/, '$1:$2')} UTC`,
+      datetime:   `${f.properties.acq_date} ${String(f.properties.acq_time ?? '').padStart(4,'0').replace(/(\d{2})(\d{2})/, '$1:$2')} UTC`,
       frp:        f.properties.frp || 0,
     }));
 
     return new Response(JSON.stringify(fires), {
+      status: 200,
       headers: { ...cors, 'Cache-Control': 'public, max-age=900' },
     });
 
   } catch (e) {
     return new Response(
       JSON.stringify({ error: 'FIRMS_EXCEPTION', msg: e.message }),
-      { headers: cors }
+      { status: 502, headers: cors }
     );
   }
 }

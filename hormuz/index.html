@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STRAIT OF HORMUZ — GEOPOLITICAL MONITOR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
 <style>
   :root {
     --oxford:    #1E2846;
@@ -387,6 +388,17 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // =====================
+// CLIENT-SIDE RESPONSE CACHE
+// =====================
+const _apiCache = new Map();
+function cachedFetch(url, ttlMs = 30000) {
+  const now = Date.now();
+  const cached = _apiCache.get(url);
+  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
+  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
+}
+
+// =====================
 // YAHOO FINANCE — rate-limited queue + localStorage cache
 // =====================
 const _yfQueue = [];
@@ -415,9 +427,7 @@ async function _yfFetch(sym) {
   } catch {}
 
   try {
-    const r = await fetch(`/api/quote?sym=${encodeURIComponent(sym)}`, {
-      signal: AbortSignal.timeout(12000)
-    });
+    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
     if (!r.ok) return { sym, ok: false, price: null };
     const data = await r.json();
     const m = data?.chart?.result?.[0]?.meta;
@@ -496,7 +506,7 @@ async function loadTicker() {
     </div>`;
   });
   const all = items.filter(Boolean);
-  document.getElementById('ticker-wrap').innerHTML = all.join('') + all.join('');
+  document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(all.join('') + all.join(''));
 }
 
 // =====================
@@ -513,6 +523,17 @@ async function fetchFeed(feed) {
       return cached.items.map(i => ({ ...i, sourceName: feed.name }));
     }
   } catch {}
+  // Try /api/rss proxy first, fall back to rss2json.com
+  try {
+    const r = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+    if (r.ok) {
+      const d = await r.json();
+      const items = (d.items || []).slice(0, 20);
+      try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items })); } catch {}
+      return items.map(i => ({ ...i, sourceName: feed.name }));
+    }
+  } catch {}
+  // Fallback to rss2json.com
   try {
     const r = await fetch(RSS2JSON + encodeURIComponent(feed.url));
     if (!r.ok) return [];
@@ -561,7 +582,7 @@ function renderNews(items, listId, updateId, filterFn, tagFn, limit=14) {
     : items.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
   filtered = filtered.slice(0, limit);
   if (!filtered.length) { list.innerHTML = '<li class="news-loading">No headlines found — rate-limited. Refresh in a moment.</li>'; return; }
-  list.innerHTML = filtered.map(i => `
+  list.innerHTML = DOMPurify.sanitize(filtered.map(i => `
     <li class="news-item">
       <a href="${i.link}" target="_blank">${i.title}</a>
       <div class="news-meta">
@@ -569,7 +590,7 @@ function renderNews(items, listId, updateId, filterFn, tagFn, limit=14) {
         <span class="news-time">${timeAgo(i.pubDate)}</span>
         ${tagFn ? tagFn(i.title) : ''}
       </div>
-    </li>`).join('');
+    </li>`).join(''));
   if (updateId) document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
@@ -580,8 +601,8 @@ async function loadWarNews() {
   renderNews(all, 'war-list', 'war-update', isWar, getWarTag, 16);
   // Breaking bar
   const top = all.filter(i => isWar(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate)).slice(0,3);
-  if (top.length) document.getElementById('breaking-text').innerHTML =
-    top.map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; ');
+  if (top.length) document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(
+    top.map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '));
 }
 
 async function loadShippingNews() {
@@ -619,6 +640,7 @@ function switchTV(btn, idx) {
 // =====================
 let map;
 const layers = {};
+let loadFIRMS, loadACLED;
 
 function initMap() {
   map = L.map('map', { center: [26.5, 54.5], zoom: 5, zoomControl: true, attributionControl: true });
@@ -938,7 +960,7 @@ function initMap() {
       `GDACS · ${n} fire event${n !== 1 ? 's' : ''} · Gulf & Middle East`;
   }
 
-  async function loadFIRMS() {
+  loadFIRMS = async function() {
     try {
       const cKey = 'gdacs_gulf';
       try {
@@ -947,18 +969,17 @@ function initMap() {
           _renderGDACS(cached.data); return;
         }
       } catch {}
-      const r = await fetch('/api/gdacs', { signal: AbortSignal.timeout(12000) });
+      const r = await cachedFetch('/api/gdacs', 1800000);
       if (!r.ok) return;
       const payload = await r.json();
       if (!Array.isArray(payload)) { console.warn('GDACS:', payload.error || payload); return; }
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
       _renderGDACS(payload);
     } catch (e) { console.warn('GDACS fires:', e.message); }
-  }
+  };
 
   loadFIRMS();
   firmsGroup.addTo(map);
-  setInterval(loadFIRMS, 30 * 60000);
 
   // ── ACLED Armed Conflict Events ──
   // Source: Armed Conflict Location & Event Data (acleddata.com) — free API key required
@@ -997,7 +1018,7 @@ function initMap() {
     console.log(`ACLED: ${events.length} conflict events loaded`);
   }
 
-  async function loadACLED() {
+  loadACLED = async function() {
     try {
       const cKey = 'acled_gulf';
       try {
@@ -1006,7 +1027,7 @@ function initMap() {
           _renderACLED(cached.data); return;
         }
       } catch {}
-      const r = await fetch('/api/acled', { signal: AbortSignal.timeout(15000) });
+      const r = await cachedFetch('/api/acled', 3600000);
       if (!r.ok) return;
       const payload = await r.json();
       if (!Array.isArray(payload)) {
@@ -1017,11 +1038,10 @@ function initMap() {
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
       _renderACLED(payload);
     } catch (e) { console.warn('ACLED:', e.message); }
-  }
+  };
 
   loadACLED();
   acledGroup.addTo(map);
-  setInterval(loadACLED, 60 * 60000);
 
   // Resize fix
   setTimeout(() => map.invalidateSize(), 300);
@@ -1055,15 +1075,19 @@ async function refreshAll() {
 // =====================
 // INIT
 // =====================
+function loadNews() { loadWarNews(); loadShippingNews(); }
 async function init() {
   initTV();
   initMap();
   await Promise.all([ loadCommodities(), loadTicker(), loadWarNews(), loadShippingNews() ]);
+  // Stagger refresh intervals to avoid simultaneous API bursts
+  setTimeout(() => setInterval(loadCommodities, 60000), 0);
+  setTimeout(() => setInterval(loadTicker, 60000), 5000);
+  setTimeout(() => setInterval(loadFIRMS, 1800000), 10000);
+  setTimeout(() => setInterval(loadACLED, 3600000), 15000);
+  setTimeout(() => setInterval(loadNews, 600000), 20000);
 }
 init();
-setInterval(loadCommodities, 60000);
-setInterval(loadTicker, 60000);
-setInterval(() => { loadWarNews(); loadShippingNews(); }, 600000);
 </script>
 </body>
 </html>
