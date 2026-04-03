@@ -4,14 +4,39 @@
 
 const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
-async function fetchOne(sym) {
+const CF_PROXY = 'https://yf-proxy.mktdash.workers.dev';
+
+async function fetchViaAllOrigins(sym) {
   const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`;
   const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yfUrl)}`;
   const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error(`PROXY_${r.status}`);
+  if (!r.ok) throw new Error(`ALLORIGINS_${r.status}`);
   const envelope = await r.json();
-  if (!envelope?.contents) throw new Error('PROXY_EMPTY');
-  return { sym, data: JSON.parse(envelope.contents) };
+  if (!envelope?.contents) throw new Error('ALLORIGINS_EMPTY');
+  return JSON.parse(envelope.contents);
+}
+
+async function fetchViaCF(sym) {
+  const r = await fetch(`${CF_PROXY}/?sym=${encodeURIComponent(sym)}`, {
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!r.ok) throw new Error(`CF_${r.status}`);
+  return r.json();
+}
+
+async function fetchOne(sym) {
+  // Try AllOrigins first; fall back to Cloudflare Worker proxy
+  try {
+    const data = await fetchViaAllOrigins(sym);
+    return { sym, data };
+  } catch (e1) {
+    try {
+      const data = await fetchViaCF(sym);
+      return { sym, data };
+    } catch (e2) {
+      throw new Error(`ALL_FAILED: allorigins=${e1.message} cf=${e2.message}`);
+    }
+  }
 }
 
 // Run fetches with limited concurrency to avoid hammering AllOrigins
