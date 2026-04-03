@@ -51,6 +51,9 @@
     "api/rss.js": {
       "memory": 128,
       "maxDuration": 15
+    },
+    "api/fires.js": {
+      "runtime": "edge"
     }
   }
 }
