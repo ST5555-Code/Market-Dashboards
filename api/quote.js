@@ -8,6 +8,7 @@ const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 // ─── DIRECT YAHOO (crumb auth) ────────────────────────────────────────────────
 let _session = null;
 let _sessionPending = null;
+let _directFailed = false; // skip direct if Yahoo is blocking this Lambda
 
 async function getSession() {
   if (_session && Date.now() - _session.ts < 3_600_000) return _session;
@@ -38,6 +39,7 @@ async function getSession() {
       if (!crumb) throw new Error('Empty crumb');
 
       _session = { cookie, crumb, ts: Date.now() };
+      _directFailed = false;
       return _session;
     } finally {
       _sessionPending = null;
@@ -48,20 +50,20 @@ async function getSession() {
 }
 
 async function fetchDirect(sym) {
+  if (_directFailed) throw new Error('direct_skip');
   const { cookie, crumb } = await getSession();
   const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d&crumb=${encodeURIComponent(crumb)}`;
   const r = await fetch(url, {
     headers: {
-      'User-Agent': UA,
-      'Accept': 'application/json',
-      'Referer': 'https://finance.yahoo.com/',
-      'Origin': 'https://finance.yahoo.com',
+      'User-Agent': UA, 'Accept': 'application/json',
+      'Referer': 'https://finance.yahoo.com/', 'Origin': 'https://finance.yahoo.com',
       'Cookie': cookie,
     },
     signal: AbortSignal.timeout(10000),
   });
   if (r.status === 401 || r.status === 403 || r.status === 429) {
-    _session = null; // force refresh next time
+    _session = null;
+    _directFailed = true;
     throw new Error(`YF_BLOCKED_${r.status}`);
   }
   if (!r.ok) throw new Error(`YF_${r.status}`);

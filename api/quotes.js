@@ -7,6 +7,7 @@ const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 let _session = null;
 let _sessionPending = null;
+let _directFailed = false;
 
 async function getSession() {
   if (_session && Date.now() - _session.ts < 3_600_000) return _session;
@@ -37,6 +38,7 @@ async function getSession() {
       if (!crumb) throw new Error('Empty crumb');
 
       _session = { cookie, crumb, ts: Date.now() };
+      _directFailed = false;
       return _session;
     } finally {
       _sessionPending = null;
@@ -50,10 +52,8 @@ async function fetchDirect(sym, cookie, crumb) {
   const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d&crumb=${encodeURIComponent(crumb)}`;
   const r = await fetch(url, {
     headers: {
-      'User-Agent': UA,
-      'Accept': 'application/json',
-      'Referer': 'https://finance.yahoo.com/',
-      'Origin': 'https://finance.yahoo.com',
+      'User-Agent': UA, 'Accept': 'application/json',
+      'Referer': 'https://finance.yahoo.com/', 'Origin': 'https://finance.yahoo.com',
       'Cookie': cookie,
     },
     signal: AbortSignal.timeout(10000),
@@ -76,14 +76,19 @@ async function fetchViaProxy(sym) {
 }
 
 async function fetchOne(sym, cookie, crumb) {
-  try {
-    return await fetchDirect(sym, cookie, crumb);
-  } catch {
+  // Try direct first (unless we know it's blocked)
+  if (!_directFailed && cookie && crumb) {
     try {
-      return await fetchViaProxy(sym);
+      return await fetchDirect(sym, cookie, crumb);
     } catch (e) {
-      return { sym, error: e.message };
+      if (/BLOCKED/.test(e.message)) _directFailed = true;
     }
+  }
+  // Fallback to AllOrigins
+  try {
+    return await fetchViaProxy(sym);
+  } catch (e) {
+    return { sym, error: e.message };
   }
 }
 
@@ -101,24 +106,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    let cookie, crumb;
-    try {
-      ({ cookie, crumb } = await getSession());
-    } catch {
-      // Session init failed — go straight to AllOrigins for all symbols
-      const results = await Promise.all(syms.map(s => fetchViaProxy(s).catch(e => ({ sym: s, error: e.message }))));
-      const out = {};
-      for (const r of results) out[r.sym] = r.data || { error: r.error };
-      res.setHeader('Cache-Control', 'public, max-age=90');
-      return res.status(200).json(out);
+    // Try to get session — if it fails, go straight to AllOrigins
+    let cookie = null, crumb = null;
+    if (!_directFailed) {
+      try {
+        ({ cookie, crumb } = await getSession());
+      } catch {
+        _directFailed = true;
+      }
     }
 
     const results = await Promise.all(syms.map(s => fetchOne(s, cookie, crumb)));
-
-    // If direct auth was blocked, invalidate session for next request
-    if (results.some(r => r.error && /BLOCKED/.test(r.error))) {
-      _session = null;
-    }
 
     const out = {};
     for (const r of results) out[r.sym] = r.data || { error: r.error };
