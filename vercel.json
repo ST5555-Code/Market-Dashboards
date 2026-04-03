@@ -53,7 +53,8 @@
       "maxDuration": 15
     },
     "api/fires.js": {
-      "runtime": "edge"
+      "memory": 256,
+      "maxDuration": 20
     }
   }
 }
