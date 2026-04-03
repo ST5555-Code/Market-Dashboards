@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=%5EGSPC,%5EIXIC,%5EDJI,%5ERUT,%5EFTSE,%5EGDAXI,%5EFCHI,%5ESTOXX50E">
 <title>GLOBAL PRIVATE BANKING INTELLIGENCE</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
@@ -638,6 +640,7 @@ setInterval(updateClock, 1000); updateClock();
 // ─── SHARED LIBRARY ALIASES ──────────────────────────────────────────────────
 const cachedFetch = Dash.cachedFetch;
 const yf = Dash.yf;
+const yfBatch = Dash.yfBatch;
 
 function fmt(n, dec=2) { if (n==null) return '—'; return n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 function fmtK(n) {
@@ -670,7 +673,7 @@ function setIdx(pid, cid, d) {
 async function loadUS() {
   Dash.time.start('pb:us');
   document.getElementById('us-upd').textContent = 'Loading';
-  const [sp,nas,dji,rut] = await Promise.all([yf('^GSPC'),yf('^IXIC'),yf('^DJI'),yf('^RUT')]);
+  const [sp,nas,dji,rut] = await Dash.yfBatch(['^GSPC','^IXIC','^DJI','^RUT']);
   setIdx('sp500-p','sp500-c',sp); setIdx('nas-p','nas-c',nas);
   setIdx('dji-p','dji-c',dji); setIdx('rut-p','rut-c',rut);
   const ok = [sp,nas,dji,rut].some(x=>x.ok);
@@ -682,7 +685,7 @@ async function loadUS() {
 async function loadEurope() {
   Dash.time.start('pb:europe');
   document.getElementById('eu-upd').textContent = 'Loading';
-  const [ftse,dax,cac,stx] = await Promise.all([yf('^FTSE'),yf('^GDAXI'),yf('^FCHI'),yf('^STOXX50E')]);
+  const [ftse,dax,cac,stx] = await Dash.yfBatch(['^FTSE','^GDAXI','^FCHI','^STOXX50E']);
   setIdx('ftse-p','ftse-c',ftse); setIdx('dax-p','dax-c',dax);
   setIdx('cac-p','cac-c',cac); setIdx('stx-p','stx-c',stx);
   const ok = [ftse,dax,cac,stx].some(x=>x.ok);
@@ -694,7 +697,7 @@ async function loadEurope() {
 async function loadAsia() {
   Dash.time.start('pb:asia');
   document.getElementById('asia-upd').textContent = 'Loading';
-  const [n225,hsi,sse,asx] = await Promise.all([yf('^N225'),yf('^HSI'),yf('000001.SS'),yf('^AXJO')]);
+  const [n225,hsi,sse,asx] = await Dash.yfBatch(['^N225','^HSI','000001.SS','^AXJO']);
   setIdx('n225-p','n225-c',n225); setIdx('hsi-p','hsi-c',hsi);
   setIdx('sse-p','sse-c',sse); setIdx('asx-p','asx-c',asx);
   const ok = [n225,hsi,sse,asx].some(x=>x.ok);
@@ -706,7 +709,7 @@ async function loadAsia() {
 async function loadME() {
   Dash.time.start('pb:me');
   document.getElementById('me-upd').textContent = 'Loading';
-  const [tasi,dfm,adx,eem] = await Promise.all([yf('^TASI.SR'),yf('^DFMGI'),yf('^ADI'),yf('EEM')]);
+  const [tasi,dfm,adx,eem] = await Dash.yfBatch(['^TASI.SR','^DFMGI','^ADI','EEM']);
   setIdx('tasi-p','tasi-c',tasi); setIdx('dfm-p','dfm-c',dfm);
   setIdx('adx-p','adx-c',adx); setIdx('eem-p','eem-c',eem);
   const ok = [tasi,dfm,adx,eem].some(x=>x.ok);
@@ -728,7 +731,7 @@ async function loadFX() {
     {sym:'USDCNH=X', pid:'usdcnh-p', cid:'usdcnh-c', dec:4},
     {sym:'GBPEUR=X', pid:'gbpeur-p', cid:'gbpeur-c', dec:4},
   ];
-  const results = await Promise.all(pairs.map(p => yf(p.sym)));
+  const results = await Dash.yfBatch(pairs.map(p => p.sym));
   let ok = false;
   results.forEach((d, i) => {
     const {pid,cid,dec} = pairs[i];
@@ -761,7 +764,7 @@ async function loadRates() {
     {sym:'TIP',  pid:'tips-p', cid:'tips-c', label:'', dec:2},
     {sym:'DX-Y.NYB', pid:'dxy-p', cid:'dxy-c', label:'', dec:2},
   ];
-  const results = await Promise.all(items.map(i => yf(i.sym)));
+  const results = await Dash.yfBatch(items.map(i => i.sym));
   let ok = false;
   results.forEach((d, i) => {
     const {pid,cid,label,dec} = items[i];
@@ -784,7 +787,7 @@ async function loadRates() {
 async function loadAlts() {
   Dash.time.start('pb:alts');
   document.getElementById('alts-upd').textContent = 'Loading';
-  const [gold,silver,btc,eth] = await Promise.all([yf('GC=F'),yf('SI=F'),yf('BTC-USD'),yf('ETH-USD')]);
+  const [gold,silver,btc,eth] = await Dash.yfBatch(['GC=F','SI=F','BTC-USD','ETH-USD']);
   function setAlt(d, pid, cid, prefix, dec) {
     const pp = document.getElementById(pid);
     const cp = document.getElementById(cid);
@@ -828,7 +831,7 @@ async function loadPBStocks() {
   Dash.time.start('pb:stocks');
   document.getElementById('pb-upd').textContent = 'Loading';
   setDot('pb-dot', null);
-  const results = await Promise.all(PB_STOCKS.map(s => yf(s.sym)));
+  const results = await Dash.yfBatch(PB_STOCKS.map(s => s.sym));
   const tbody = document.getElementById('pb-stocks-body');
   let ok = false;
   tbody.innerHTML = '';
@@ -867,7 +870,7 @@ const TICKER_SYMS = [
 ];
 async function loadTicker() {
   Dash.time.start('pb:ticker');
-  const results = await Promise.all(TICKER_SYMS.map(s => yf(s.sym)));
+  const results = await Dash.yfBatch(TICKER_SYMS.map(s => s.sym));
   const items = results.map((d,i) => {
     const s = TICKER_SYMS[i];
     if (!d.ok) return `<div class="ticker-item"><span class="t-sym">${s.label}</span><span class="t-fl"> N/A</span></div>`;

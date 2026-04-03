@@ -18,6 +18,7 @@
   ],
   "functions": {
     "api/quote.js":  { "memory": 256, "maxDuration": 30 },
+    "api/quotes.js": { "memory": 256, "maxDuration": 30 },
     "api/acled.js":  { "memory": 256, "maxDuration": 30 },
     "api/gdacs.js":  { "memory": 256, "maxDuration": 15 },
     "api/rss.js":    { "memory": 128, "maxDuration": 15 },

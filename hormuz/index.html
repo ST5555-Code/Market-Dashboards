@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=BZ%3DF,CL%3DF,TTF%3DF,RB%3DF,GC%3DF">
 <title>STRAIT OF HORMUZ — GEOPOLITICAL MONITOR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
@@ -385,6 +387,7 @@ const fmt         = Dash.fmt;
 const fmtChg      = Dash.fmtChg;
 const fmtPct      = Dash.fmtPct;
 const cls         = Dash.cls;
+const yfBatch     = Dash.yfBatch;
 
 // =====================
 // CLOCK
@@ -402,9 +405,7 @@ updateClock();
 // =====================
 async function loadCommodities() {
   Dash.time.start('hormuz:loadCommodities');
-  const [brent, wti, ttf, rb, gold] = await Promise.all([
-    yf('BZ=F'), yf('CL=F'), yf('TTF=F'), yf('RB=F'), yf('GC=F')
-  ]);
+  const [brent, wti, ttf, rb, gold] = await yfBatch(['BZ=F', 'CL=F', 'TTF=F', 'RB=F', 'GC=F']);
 
   function set(idP, idC, idPct, d, dec) {
     document.getElementById(idP).textContent = fmt(d.price, dec);
@@ -442,7 +443,7 @@ const TICKER_ITEMS = [
 ];
 async function loadTicker() {
   Dash.time.start('hormuz:loadTicker');
-  const results = await Promise.all(TICKER_ITEMS.map(c => yf(c.sym)));
+  const results = await yfBatch(TICKER_ITEMS.map(c => c.sym));
   const items = results.map((r, i) => {
     const c = TICKER_ITEMS[i];
     const p = r.price ? fmt(r.price, i === 3 ? 3 : i === 4 ? 0 : 2) : '—';

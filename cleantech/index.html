@@ -3,9 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=HG%3DF,NI%3DF,ALI%3DF">
 <title>CLEANTECH &amp; ENERGY TRANSITION MONITOR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script>
+window._loadChartJS = function() {
+  if (window.Chart) return Promise.resolve();
+  return new Promise(function(resolve) {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.integrity = 'sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD';
+    s.crossOrigin = 'anonymous';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+};
+</script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
 <script src="/shared/dash.js"></script>
 <style>
@@ -538,6 +552,7 @@
 // =====================
 const cachedFetch = Dash.cachedFetch;
 const yf = Dash.yf;
+const yfBatch = Dash.yfBatch;
 const fmt = Dash.fmt;
 const fmtChg = Dash.fmtChg;
 const fmtPct = Dash.fmtPct;
@@ -571,7 +586,7 @@ const METALS = [
 ];
 async function loadMetals() {
   Dash.time.start('cleantech:loadMetals');
-  const results = await Promise.all(METALS.map(m => yf(m.sym)));
+  const results = await Dash.yfBatch(METALS.map(m => m.sym));
   results.forEach((r, i) => {
     if (!r.ok) return;
     const m = METALS[i];
@@ -654,7 +669,7 @@ const TICKER_STOCKS = ['ICLN','NEE','CEG','VST','FSLR','ENPH','BEP','NNE','SMR',
 
 async function loadTicker() {
   Dash.time.start('cleantech:loadTicker');
-  const metalResults = await Promise.all(TICKER_METALS.map(c => yf(c.sym)));
+  const metalResults = await Dash.yfBatch(TICKER_METALS.map(c => c.sym));
   const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
 
   const metalItems = metalResults.map((r, i) => {

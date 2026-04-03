@@ -3,9 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=CL%3DF,BZ%3DF,NG%3DF,TTF%3DF,RB%3DF">
 <title>UPSTREAM ENERGY INTELLIGENCE MONITOR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script>
+// Lazy-load Chart.js — only needed for forward curve, not above-the-fold
+window._loadChartJS = function() {
+  if (window.Chart) return Promise.resolve();
+  return new Promise(function(resolve) {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.integrity = 'sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD';
+    s.crossOrigin = 'anonymous';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+};
+</script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
 <script src="/shared/dash.js"></script>
 <style>
@@ -478,6 +493,7 @@
 // =====================
 const cachedFetch = Dash.cachedFetch;
 const yf = Dash.yf;
+const yfBatch = Dash.yfBatch;
 const fetchRSS = Dash.fetchRSS;
 const fmt = Dash.fmt;
 const fmtChg = Dash.fmtChg;
@@ -506,9 +522,7 @@ function sCls(v) { return v > 0 ? 's-up' : v < 0 ? 's-down' : 's-flat'; }
 // =====================
 async function loadCommodities() {
   Dash.time.start('energy:loadCommodities');
-  const [wti, brent, hh, ttf, rb] = await Promise.all([
-    yf('CL=F'), yf('BZ=F'), yf('NG=F'), yf('TTF=F'), yf('RB=F')
-  ]);
+  const [wti, brent, hh, ttf, rb] = await Dash.yfBatch(['CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F']);
 
   function setComm(idPrice, idChg, idPct, data, dec) {
     document.getElementById(idPrice).textContent = fmt(data.price, dec);
@@ -567,7 +581,7 @@ const GAS_FUTURES = [
 async function fetchCurve(contracts) {
   // Pre-fill with fallbacks so chart always renders all 5 points
   const merged = contracts.map(c => ({ label: c.label, price: c.fallback, live: false }));
-  const results = await Promise.all(contracts.map(c => yf(c.sym)));
+  const results = await Dash.yfBatch(contracts.map(c => c.sym));
   results.forEach((r, i) => {
     if (r.price) { merged[i].price = +r.price.toFixed(2); merged[i].live = true; }
   });
@@ -683,6 +697,8 @@ function renderCurve() {
 
 async function loadCurve() {
   Dash.time.start('energy:loadCurve');
+  await window._loadChartJS();
+  if (!window.Chart) return;
   document.getElementById('curve-update').textContent = 'Fetching live prices...';
   // Render immediately with fallback data while live fetch runs
   oilData = { labels: OIL_FUTURES.map(c=>c.label), data: OIL_FUTURES.map(c=>c.fallback), liveCount: 0 };
@@ -769,7 +785,7 @@ const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','EQT','AR
 
 async function loadTicker() {
   Dash.time.start('energy:loadTicker');
-  const commResults = await Promise.all(TICKER_COMMS.map(c => yf(c.sym)));
+  const commResults = await Dash.yfBatch(TICKER_COMMS.map(c => c.sym));
   const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
   const wrap = document.getElementById('ticker-wrap');
 
