@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
 <style>
   :root {
     --oxford: #1E2846;
@@ -473,15 +474,16 @@
 
 <script>
 // =====================
-// CLIENT-SIDE API RESPONSE CACHE
+// SHARED LIBRARY ALIASES
 // =====================
-const _apiCache = new Map();
-function cachedFetch(url, ttlMs = 30000) {
-  const now = Date.now();
-  const cached = _apiCache.get(url);
-  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
-  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
-}
+const cachedFetch = Dash.cachedFetch;
+const yf = Dash.yf;
+const fetchRSS = Dash.fetchRSS;
+const fmt = Dash.fmt;
+const fmtChg = Dash.fmtChg;
+const fmtPct = Dash.fmtPct;
+const cls = Dash.cls;
+const timeAgo = Dash.timeAgo;
 
 // =====================
 // CLOCK
@@ -495,56 +497,15 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // =====================
-// ─── YAHOO FINANCE VIA /api/quote — rate-limited queue (max 3 concurrent) ─────
-const _yfQueue = [];
-let _yfRunning = 0;
-const _YF_CONCURRENCY = 3;
-
-function yf(sym) {
-  return new Promise(resolve => {
-    _yfQueue.push({ sym, resolve });
-    _yfDrain();
-  });
-}
-
-function _yfDrain() {
-  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
-    const { sym, resolve } = _yfQueue.shift();
-    _yfRunning++;
-    _yfFetch(sym).then(result => { resolve(result); _yfRunning--; _yfDrain(); });
-  }
-}
-
-async function _yfFetch(sym) {
-  try {
-    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
-    if (!r.ok) return { sym, ok: false, price: null };
-    const data = await r.json();
-    const m = data?.chart?.result?.[0]?.meta;
-    if (m?.regularMarketPrice) {
-      const price = m.regularMarketPrice;
-      const prev  = m.chartPreviousClose || m.previousClose || price;
-      const chg   = price - prev;
-      const pct   = prev ? (chg / prev * 100) : 0;
-      return { sym, ok:true, price, prev, chg, pct,
-               high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow, mktCap: m.marketCap };
-    }
-    return { sym, ok: false, price: null };
-  } catch {
-    return { sym, ok: false, price: null };
-  }
-}
-
-function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
-function fmtChg(v, dec=2) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(dec); }
-function fmtPct(v) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
-function cls(v) { return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
+// DASHBOARD-SPECIFIC HELPERS
+// =====================
 function sCls(v) { return v > 0 ? 's-up' : v < 0 ? 's-down' : 's-flat'; }
 
 // =====================
 // COMMODITY PRICES
 // =====================
 async function loadCommodities() {
+  Dash.time.start('energy:loadCommodities');
   const [wti, brent, hh, ttf, rb] = await Promise.all([
     yf('CL=F'), yf('BZ=F'), yf('NG=F'), yf('TTF=F'), yf('RB=F')
   ]);
@@ -575,6 +536,7 @@ async function loadCommodities() {
   }
 
   document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  Dash.time.end('energy:loadCommodities');
 }
 
 // =====================
@@ -720,6 +682,7 @@ function renderCurve() {
 }
 
 async function loadCurve() {
+  Dash.time.start('energy:loadCurve');
   document.getElementById('curve-update').textContent = 'Fetching live prices...';
   // Render immediately with fallback data while live fetch runs
   oilData = { labels: OIL_FUTURES.map(c=>c.label), data: OIL_FUTURES.map(c=>c.fallback), liveCount: 0 };
@@ -735,6 +698,7 @@ async function loadCurve() {
     ? `${totalLive}/10 live · ${t} · ~ = static fallback`
     : `Static fallback · ${t} · Live fetch unavailable`;
   renderCurve();
+  Dash.time.end('energy:loadCurve');
 }
 
 // =====================
@@ -766,6 +730,7 @@ const STOCKS = [
 const SECTOR_LABELS = { major: ['sec-major','Major'], gas: ['sec-gas','Gas'], oil: ['sec-oil','Oil'], ofs: ['sec-ofs','OFS'], etf: ['sec-etf','ETF'] };
 
 async function loadStocks() {
+  Dash.time.start('energy:loadStocks');
   const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
   const tbody = document.getElementById('stocks-body');
   tbody.innerHTML = '';
@@ -786,6 +751,7 @@ async function loadStocks() {
     tbody.appendChild(tr);
   });
   document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('energy:loadStocks');
   return results;
 }
 
@@ -802,6 +768,7 @@ const TICKER_COMMS = [
 const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','EQT','AR','FANG','SLB','HAL','XLE','XOP'];
 
 async function loadTicker() {
+  Dash.time.start('energy:loadTicker');
   const commResults = await Promise.all(TICKER_COMMS.map(c => yf(c.sym)));
   const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
   const wrap = document.getElementById('ticker-wrap');
@@ -833,13 +800,12 @@ async function loadTicker() {
 
   const all = [...commItems, ...stockItems];
   wrap.innerHTML = DOMPurify.sanitize(all.join('') + all.join(''));
+  Dash.time.end('energy:loadTicker');
 }
 
 // =====================
 // RSS NEWS
 // =====================
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-
 const ENERGY_FEEDS = [
   { url: 'https://oilprice.com/rss/main', name: 'OilPrice' },
   { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', name: 'CNBC Energy' },
@@ -863,28 +829,8 @@ function getEnergyTag(text) {
   return '<span class="news-tag tag-upstream">E&P</span>';
 }
 
-function timeAgo(d) {
-  const diff = (Date.now() - new Date(d)) / 60000;
-  if (diff < 60) return Math.floor(diff) + 'm ago';
-  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
-  return Math.floor(diff/1440) + 'd ago';
-}
-
 async function fetchFeed(f) {
-  // Try /api/rss proxy first, fall back to rss2json.com
-  try {
-    const r = await fetch(`/api/rss?url=${encodeURIComponent(f.url)}`);
-    if (r.ok) {
-      const d = await r.json();
-      return (d.items || []).map(i => ({ title: i.title, link: i.link, pubDate: i.pubDate, source: f.name }));
-    }
-  } catch { /* fall through to rss2json fallback */ }
-  try {
-    const r = await fetch(RSS2JSON + encodeURIComponent(f.url));
-    const d = await r.json();
-    if (d.status !== 'ok') return [];
-    return (d.items || []).map(i => ({ title: i.title, link: i.link, pubDate: i.pubDate, source: f.name }));
-  } catch { return []; }
+  return Dash.fetchRSS(f.url, f.name);
 }
 
 function renderNews(items, listId, updateId, filterFn, limit=12) {
@@ -917,12 +863,15 @@ const TOP_FEEDS = [
 ];
 
 async function loadTopNews() {
+  Dash.time.start('energy:loadTopNews');
   const results = await Promise.all(TOP_FEEDS.map(fetchFeed));
   const items = [].concat(...results).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
   renderNews(items, 'industry-list', 'industry-update', () => true, 14);
+  Dash.time.end('energy:loadTopNews');
 }
 
 async function loadAllNews() {
+  Dash.time.start('energy:loadAllNews');
   const results = await Promise.all(ENERGY_FEEDS.map(fetchFeed));
   const all = [].concat(...results);
 
@@ -936,6 +885,7 @@ async function loadAllNews() {
     document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(topBiz.slice(0,3)
       .map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '));
   }
+  Dash.time.end('energy:loadAllNews');
 }
 
 // =====================
@@ -1029,21 +979,23 @@ function switchTV(btn, idx) {
   btn.classList.add('active');
 }
 
-async function init() {
-  initTV();
-  loadEarnings();
-  await Promise.all([loadCommodities(), loadTicker(), loadAllNews(), loadTopNews()]);
-  loadCurve(); // Slightly defer to not overload requests
-}
-init();
-loadStocks(); // Load stocks after initial fire
-// Stagger refresh intervals to avoid thundering herd
-setTimeout(() => setInterval(loadCommodities, 60000), 0);
-setTimeout(() => setInterval(loadTicker, 60000), 5000);
-setTimeout(() => setInterval(loadStocks, 60000), 10000);
-setTimeout(() => setInterval(loadAllNews, 600000), 15000);
-setTimeout(() => setInterval(loadTopNews, 600000), 20000);
-setTimeout(() => setInterval(loadCurve, 3600000), 25000);
+// INIT — above-the-fold priority
+initTV();
+loadEarnings();
+// Above the fold — start immediately, don't block
+loadCommodities();
+// Secondary panels — slight delay
+setTimeout(loadTicker, 200);
+setTimeout(loadStocks, 400);
+// Tertiary — deferred
+setTimeout(loadAllNews, 600);
+setTimeout(loadTopNews, 800);
+setTimeout(loadCurve, 1000);
+// Stagger refresh intervals
+Dash.stagger([loadCommodities, loadTicker, loadStocks], 60000, 5000);
+Dash.stagger([loadAllNews, loadTopNews], 600000, 5000);
+// Keep loadCurve on its own long interval
+setTimeout(() => setInterval(loadCurve, 3600000), 15000);
 </script>
 </body>
 </html>

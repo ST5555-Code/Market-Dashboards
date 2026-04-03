@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
 <style>
   :root {
     --oxford:    #1E2846;
@@ -376,6 +377,15 @@
 </div>
 
 <script>
+// ── Aliases from shared library ──
+const cachedFetch = Dash.cachedFetch;
+const yf          = Dash.yf;
+const timeAgo     = Dash.timeAgo;
+const fmt         = Dash.fmt;
+const fmtChg      = Dash.fmtChg;
+const fmtPct      = Dash.fmtPct;
+const cls         = Dash.cls;
+
 // =====================
 // CLOCK
 // =====================
@@ -388,72 +398,10 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // =====================
-// CLIENT-SIDE RESPONSE CACHE
-// =====================
-const _apiCache = new Map();
-function cachedFetch(url, ttlMs = 30000) {
-  const now = Date.now();
-  const cached = _apiCache.get(url);
-  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
-  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
-}
-
-// =====================
-// YAHOO FINANCE — rate-limited queue + localStorage cache
-// =====================
-const _yfQueue = [];
-let _yfRunning = 0;
-const _YF_CONCURRENCY = 3;
-const YF_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-function yf(sym) {
-  return new Promise(resolve => {
-    _yfQueue.push({ sym, resolve });
-    _yfDrain();
-  });
-}
-function _yfDrain() {
-  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
-    const { sym, resolve } = _yfQueue.shift();
-    _yfRunning++;
-    _yfFetch(sym).then(r => { resolve(r); _yfRunning--; _yfDrain(); });
-  }
-}
-async function _yfFetch(sym) {
-  // Check localStorage cache first for instant display
-  try {
-    const cached = JSON.parse(localStorage.getItem('yf_' + sym) || 'null');
-    if (cached && Date.now() - cached.ts < YF_CACHE_TTL) return cached.data;
-  } catch {}
-
-  try {
-    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
-    if (!r.ok) return { sym, ok: false, price: null };
-    const data = await r.json();
-    const m = data?.chart?.result?.[0]?.meta;
-    if (m?.regularMarketPrice) {
-      const price = m.regularMarketPrice;
-      const prev  = m.chartPreviousClose || m.previousClose || price;
-      const chg   = price - prev;
-      const pct   = prev ? (chg / prev * 100) : 0;
-      const result = { sym, ok: true, price, prev, chg, pct,
-                       high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow };
-      try { localStorage.setItem('yf_' + sym, JSON.stringify({ ts: Date.now(), data: result })); } catch {}
-      return result;
-    }
-    return { sym, ok: false, price: null };
-  } catch { return { sym, ok: false, price: null }; }
-}
-
-function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
-function fmtChg(v, dec=2) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(dec); }
-function fmtPct(v) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
-function cls(v) { return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
-
-// =====================
 // COMMODITY PRICES
 // =====================
 async function loadCommodities() {
+  Dash.time.start('hormuz:loadCommodities');
   const [brent, wti, ttf, rb, gold] = await Promise.all([
     yf('BZ=F'), yf('CL=F'), yf('TTF=F'), yf('RB=F'), yf('GC=F')
   ]);
@@ -478,6 +426,7 @@ async function loadCommodities() {
     document.getElementById('spread-sub').className = 'flat';
   }
   document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('hormuz:loadCommodities');
 }
 
 // =====================
@@ -492,6 +441,7 @@ const TICKER_ITEMS = [
   { sym: 'HG=F',  label: 'Copper',   unit: '$/lb'  },
 ];
 async function loadTicker() {
+  Dash.time.start('hormuz:loadTicker');
   const results = await Promise.all(TICKER_ITEMS.map(c => yf(c.sym)));
   const items = results.map((r, i) => {
     const c = TICKER_ITEMS[i];
@@ -507,41 +457,17 @@ async function loadTicker() {
   });
   const all = items.filter(Boolean);
   document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(all.join('') + all.join(''));
+  Dash.time.end('hormuz:loadTicker');
 }
 
 // =====================
-// RSS NEWS — Promise.any() proxy racing for speed
+// RSS NEWS — delegates to Dash.fetchRSS
 // =====================
-const RSS2JSON  = 'https://api.rss2json.com/v1/api.json?rss_url=';
-const RSS_CACHE_TTL = 10 * 60 * 1000;
-
 async function fetchFeed(feed) {
-  const cacheKey = 'rss_' + btoa(feed.url).slice(0,20);
-  try {
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached && Date.now() - cached.ts < RSS_CACHE_TTL) {
-      return cached.items.map(i => ({ ...i, sourceName: feed.name }));
-    }
-  } catch {}
-  // Try /api/rss proxy first, fall back to rss2json.com
-  try {
-    const r = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
-    if (r.ok) {
-      const d = await r.json();
-      const items = (d.items || []).slice(0, 20);
-      try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items })); } catch {}
-      return items.map(i => ({ ...i, sourceName: feed.name }));
-    }
-  } catch {}
-  // Fallback to rss2json.com
-  try {
-    const r = await fetch(RSS2JSON + encodeURIComponent(feed.url));
-    if (!r.ok) return [];
-    const d = await r.json();
-    const items = (d.items || []).slice(0, 20);
-    try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), items })); } catch {}
-    return items.map(i => ({ ...i, sourceName: feed.name }));
-  } catch { return []; }
+  const url  = typeof feed === 'string' ? feed : feed.url;
+  const name = typeof feed === 'string' ? feed : (feed.name || feed.url);
+  const items = await Dash.fetchRSS(url, name);
+  return items.map(i => ({ ...i, sourceName: name }));
 }
 
 const WAR_FEEDS = [
@@ -567,13 +493,6 @@ function getWarTag(t) {
   return '<span class="news-tag tag-war">Intel</span>';
 }
 
-function timeAgo(d) {
-  const diff = (Date.now() - new Date(d)) / 60000;
-  if (diff < 60)   return Math.floor(diff) + 'm ago';
-  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
-  return Math.floor(diff/1440) + 'd ago';
-}
-
 function renderNews(items, listId, updateId, filterFn, tagFn, limit=14) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -595,6 +514,7 @@ function renderNews(items, listId, updateId, filterFn, tagFn, limit=14) {
 }
 
 async function loadWarNews() {
+  Dash.time.start('hormuz:loadWarNews');
   const results = await Promise.all(WAR_FEEDS.map(fetchFeed));
   const all = [].concat(...results);
   const isWar = t => WAR_KW.some(k => t.toLowerCase().includes(k));
@@ -603,13 +523,16 @@ async function loadWarNews() {
   const top = all.filter(i => isWar(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate)).slice(0,3);
   if (top.length) document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(
     top.map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '));
+  Dash.time.end('hormuz:loadWarNews');
 }
 
 async function loadShippingNews() {
+  Dash.time.start('hormuz:loadShippingNews');
   const results = await Promise.all(SHIP_FEEDS.map(fetchFeed));
   const all = [].concat(...results);
   const isShip = t => SHIP_KW.some(k => t.toLowerCase().includes(k));
   renderNews(all, 'ship-list', 'ship-update', isShip, getWarTag, 10);
+  Dash.time.end('hormuz:loadShippingNews');
 }
 
 // =====================
@@ -961,24 +884,25 @@ function initMap() {
   }
 
   loadFIRMS = async function() {
+    Dash.time.start('hormuz:loadFIRMS');
     try {
       const cKey = 'gdacs_gulf';
       try {
         const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
         if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 30 * 60000) {
-          _renderGDACS(cached.data); return;
+          _renderGDACS(cached.data); Dash.time.end('hormuz:loadFIRMS'); return;
         }
       } catch {}
       const r = await cachedFetch('/api/gdacs', 1800000);
-      if (!r.ok) return;
+      if (!r.ok) { Dash.time.end('hormuz:loadFIRMS'); return; }
       const payload = await r.json();
-      if (!Array.isArray(payload)) { console.warn('GDACS:', payload.error || payload); return; }
+      if (!Array.isArray(payload)) { console.warn('GDACS:', payload.error || payload); Dash.time.end('hormuz:loadFIRMS'); return; }
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
       _renderGDACS(payload);
     } catch (e) { console.warn('GDACS fires:', e.message); }
+    Dash.time.end('hormuz:loadFIRMS');
   };
 
-  loadFIRMS();
   firmsGroup.addTo(map);
 
   // ── ACLED Armed Conflict Events ──
@@ -1019,28 +943,29 @@ function initMap() {
   }
 
   loadACLED = async function() {
+    Dash.time.start('hormuz:loadACLED');
     try {
       const cKey = 'acled_gulf';
       try {
         const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
         if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 60 * 60000) {
-          _renderACLED(cached.data); return;
+          _renderACLED(cached.data); Dash.time.end('hormuz:loadACLED'); return;
         }
       } catch {}
       const r = await cachedFetch('/api/acled', 3600000);
-      if (!r.ok) return;
+      if (!r.ok) { Dash.time.end('hormuz:loadACLED'); return; }
       const payload = await r.json();
       if (!Array.isArray(payload)) {
         // NO_ACLED_CREDS is expected until key is set — silent fail
         if (payload.error !== 'NO_ACLED_CREDS') console.warn('ACLED:', payload.error || payload);
-        return;
+        Dash.time.end('hormuz:loadACLED'); return;
       }
       try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
       _renderACLED(payload);
     } catch (e) { console.warn('ACLED:', e.message); }
+    Dash.time.end('hormuz:loadACLED');
   };
 
-  loadACLED();
   acledGroup.addTo(map);
 
   // Resize fix
@@ -1075,17 +1000,23 @@ async function refreshAll() {
 // =====================
 // INIT
 // =====================
-function loadNews() { loadWarNews(); loadShippingNews(); }
-async function init() {
+function init() {
   initTV();
+  // Above-the-fold first: price strip + map shell
+  loadCommodities();
   initMap();
-  await Promise.all([ loadCommodities(), loadTicker(), loadWarNews(), loadShippingNews() ]);
-  // Stagger refresh intervals to avoid simultaneous API bursts
-  setTimeout(() => setInterval(loadCommodities, 60000), 0);
-  setTimeout(() => setInterval(loadTicker, 60000), 5000);
-  setTimeout(() => setInterval(loadFIRMS, 1800000), 10000);
-  setTimeout(() => setInterval(loadACLED, 3600000), 15000);
-  setTimeout(() => setInterval(loadNews, 600000), 20000);
+  // Defer below-the-fold content
+  setTimeout(loadTicker, 200);
+  setTimeout(loadFIRMS, 400);
+  setTimeout(loadACLED, 600);
+  setTimeout(loadWarNews, 800);
+  setTimeout(loadShippingNews, 1000);
+
+  // Staggered refresh intervals via Dash.stagger
+  Dash.stagger([loadCommodities, loadTicker], 60000, 5000);
+  Dash.stagger([loadFIRMS], 1800000, 0);
+  Dash.stagger([loadACLED], 3600000, 0);
+  Dash.stagger([loadWarNews, loadShippingNews], 600000, 5000);
 }
 init();
 </script>

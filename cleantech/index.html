@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
 <style>
   :root {
     --oxford:    #1E2846;
@@ -533,15 +534,18 @@
 
 <script>
 // =====================
-// CLIENT-SIDE API CACHE
+// SHARED LIBRARY ALIASES
 // =====================
-const _apiCache = new Map();
-function cachedFetch(url, ttlMs = 30000) {
-  const now = Date.now();
-  const cached = _apiCache.get(url);
-  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
-  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
-}
+const cachedFetch = Dash.cachedFetch;
+const yf = Dash.yf;
+const fmt = Dash.fmt;
+const fmtChg = Dash.fmtChg;
+const fmtPct = Dash.fmtPct;
+const cls = Dash.cls;
+const timeAgo = Dash.timeAgo;
+
+// Dashboard-specific helper (stock table uses s-up/s-down/s-flat classes)
+function sCls(v) { return v > 0 ? 's-up'  : v < 0 ? 's-down' : 's-flat'; }
 
 // =====================
 // CLOCK
@@ -555,50 +559,6 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // =====================
-// YAHOO FINANCE — rate-limited queue
-// =====================
-const _yfQueue = [];
-let _yfRunning = 0;
-const _YF_CONCURRENCY = 3;
-
-function yf(sym) {
-  return new Promise(resolve => {
-    _yfQueue.push({ sym, resolve });
-    _yfDrain();
-  });
-}
-function _yfDrain() {
-  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
-    const { sym, resolve } = _yfQueue.shift();
-    _yfRunning++;
-    _yfFetch(sym).then(result => { resolve(result); _yfRunning--; _yfDrain(); });
-  }
-}
-async function _yfFetch(sym) {
-  try {
-    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
-    if (!r.ok) return { sym, ok: false, price: null };
-    const data = await r.json();
-    const m = data?.chart?.result?.[0]?.meta;
-    if (m?.regularMarketPrice) {
-      const price = m.regularMarketPrice;
-      const prev  = m.chartPreviousClose || m.previousClose || price;
-      const chg   = price - prev;
-      const pct   = prev ? (chg / prev * 100) : 0;
-      return { sym, ok: true, price, prev, chg, pct,
-               high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow };
-    }
-    return { sym, ok: false, price: null };
-  } catch { return { sym, ok: false, price: null }; }
-}
-
-function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
-function fmtChg(v, dec=2) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(dec); }
-function fmtPct(v) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
-function cls(v)  { return v > 0 ? 'up'    : v < 0 ? 'down'   : 'flat'; }
-function sCls(v) { return v > 0 ? 's-up'  : v < 0 ? 's-down' : 's-flat'; }
-
-// =====================
 // BATTERY METALS
 // =====================
 const METALS = [
@@ -610,6 +570,7 @@ const METALS = [
   { sym: 'CCJ',   elP: 'm-ccj',  elC: 'm-ccj-chg',  elPct: 'm-ccj-pct',  dec: 2 },
 ];
 async function loadMetals() {
+  Dash.time.start('cleantech:loadMetals');
   const results = await Promise.all(METALS.map(m => yf(m.sym)));
   results.forEach((r, i) => {
     if (!r.ok) return;
@@ -621,6 +582,7 @@ async function loadMetals() {
     ep.textContent = fmtPct(r.pct);        ep.className = cls(r.pct);
   });
   document.getElementById('metals-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('cleantech:loadMetals');
 }
 
 // =====================
@@ -657,6 +619,7 @@ const SECTOR_LABELS = {
   etf:     ['sec-etf',     'ETF'],
 };
 async function loadStocks() {
+  Dash.time.start('cleantech:loadStocks');
   const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
   const tbody = document.getElementById('stocks-body');
   tbody.innerHTML = '';
@@ -676,6 +639,7 @@ async function loadStocks() {
     tbody.appendChild(tr);
   });
   document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('cleantech:loadStocks');
 }
 
 // =====================
@@ -689,6 +653,7 @@ const TICKER_METALS = [
 const TICKER_STOCKS = ['ICLN','NEE','CEG','VST','FSLR','ENPH','BEP','NNE','SMR','OKLO','BE','ALB','CCJ'];
 
 async function loadTicker() {
+  Dash.time.start('cleantech:loadTicker');
   const metalResults = await Promise.all(TICKER_METALS.map(c => yf(c.sym)));
   const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
 
@@ -719,13 +684,12 @@ async function loadTicker() {
 
   const all = [...metalItems, ...stockItems];
   document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(all.join('') + all.join(''), { ADD_ATTR: ['target'] });
+  Dash.time.end('cleantech:loadTicker');
 }
 
 // =====================
 // RSS NEWS
 // =====================
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-
 const TOP_FEEDS = [
   { url: 'https://news.google.com/rss/search?q=clean+energy+climate+EV+solar&hl=en&gl=US&ceid=US:en', name: 'Google News' },
   { url: 'https://feeds.bbci.co.uk/news/rss.xml',        name: 'BBC' },
@@ -765,28 +729,8 @@ function getCTTag(text) {
   return '<span class="news-tag tag-carbon">Cleantech</span>';
 }
 
-function timeAgo(d) {
-  const diff = (Date.now() - new Date(d)) / 60000;
-  if (diff < 60)   return Math.floor(diff) + 'm ago';
-  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
-  return Math.floor(diff/1440) + 'd ago';
-}
-
 async function fetchFeed(f) {
-  // Try /api/rss proxy first, fall back to rss2json.com
-  try {
-    const r = await fetch(`/api/rss?url=${encodeURIComponent(f.url)}`);
-    if (r.ok) {
-      const d = await r.json();
-      return (d.items || []).map(i => ({ title: i.title, link: i.link, pubDate: i.pubDate, source: f.name }));
-    }
-  } catch { /* fall through to rss2json fallback */ }
-  try {
-    const r = await fetch(RSS2JSON + encodeURIComponent(f.url));
-    const d = await r.json();
-    if (d.status !== 'ok') return [];
-    return (d.items || []).map(i => ({ title: i.title, link: i.link, pubDate: i.pubDate, source: f.name }));
-  } catch { return []; }
+  return Dash.fetchRSS(f.url, f.name);
 }
 
 function renderNews(items, listId, updateId, filterFn, tagFn, limit=12) {
@@ -812,12 +756,15 @@ function renderNews(items, listId, updateId, filterFn, tagFn, limit=12) {
 }
 
 async function loadTopNews() {
+  Dash.time.start('cleantech:loadTopNews');
   const results = await Promise.all(TOP_FEEDS.map(fetchFeed));
   const items = [].concat(...results);
   renderNews(items, 'top-list', 'top-update', null, null, 14);
+  Dash.time.end('cleantech:loadTopNews');
 }
 
 async function loadCleantechNews() {
+  Dash.time.start('cleantech:loadCleantechNews');
   const results = await Promise.all(CT_FEEDS.map(fetchFeed));
   const all = [].concat(...results);
   renderNews(all, 'ct-list',  'ct-update',  isCT,      getCTTag, 14);
@@ -829,13 +776,16 @@ async function loadCleantechNews() {
     document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(top3.map(i =>
       `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '), { ADD_ATTR: ['target'] });
   }
+  Dash.time.end('cleantech:loadCleantechNews');
 }
 
 async function loadNuclearNews() {
+  Dash.time.start('cleantech:loadNuclearNews');
   const nucResults = await Promise.all(NUC_FEEDS.map(fetchFeed));
   const ctResults  = await Promise.all(CT_FEEDS.map(fetchFeed));
   const all = [...[].concat(...nucResults), ...[].concat(...ctResults).filter(i => isNuclear(i.title))];
   renderNews(all, 'nuc-list', 'nuc-update', isNuclear, getCTTag, 14);
+  Dash.time.end('cleantech:loadNuclearNews');
 }
 
 // =====================
@@ -880,21 +830,19 @@ async function refreshAll() {
 }
 
 // =====================
-// INIT
+// INIT — above-the-fold first
 // =====================
-async function init() {
-  initTV();
-  await Promise.all([loadTopNews(), loadCleantechNews(), loadNuclearNews(), loadMetals(), loadTicker()]);
-}
-init();
-// Stagger intervals so they don't all fire at once
-setTimeout(() => setInterval(() => { loadMetals(); }, 60000), 0);
-setTimeout(() => setInterval(() => { loadTicker(); }, 60000), 5000);
-setTimeout(() => setInterval(() => { loadStocks(); }, 60000), 10000);
-setTimeout(() => setInterval(() => { loadTopNews(); }, 600000), 0);
-setTimeout(() => setInterval(() => { loadCleantechNews(); }, 600000), 15000);
-setTimeout(() => setInterval(() => { loadNuclearNews(); }, 600000), 30000);
-loadStocks();
+initTV();
+loadMetals(); // above the fold
+setTimeout(loadTicker, 200);
+setTimeout(loadStocks, 400);
+setTimeout(loadTopNews, 600);
+setTimeout(loadCleantechNews, 800);
+setTimeout(loadNuclearNews, 1000);
+
+// Stagger refresh intervals
+Dash.stagger([loadMetals, loadTicker, loadStocks], 60000, 5000);
+Dash.stagger([loadTopNews, loadCleantechNews, loadNuclearNews], 600000, 5000);
 </script>
 </body>
 </html>

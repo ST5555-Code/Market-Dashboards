@@ -6,6 +6,7 @@
 <title>GLOBAL PRIVATE BANKING INTELLIGENCE</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
 <style>
 :root {
   --red: #DB0011;
@@ -634,54 +635,9 @@ function updateClock() {
 }
 setInterval(updateClock, 1000); updateClock();
 
-// ─── CLIENT-SIDE API RESPONSE CACHE ──────────────────────────────────────────
-const _apiCache = new Map();
-function cachedFetch(url, ttlMs = 30000) {
-  const now = Date.now();
-  const cached = _apiCache.get(url);
-  if (cached && now - cached.ts < ttlMs) return Promise.resolve(cached.resp.clone());
-  return fetch(url).then(r => { _apiCache.set(url, { resp: r.clone(), ts: now }); return r; });
-}
-
-// ─── YAHOO FINANCE VIA /api/quote — rate-limited queue (max 3 concurrent) ─────
-const _yfQueue = [];
-let _yfRunning = 0;
-const _YF_CONCURRENCY = 3;
-
-function yf(sym) {
-  return new Promise(resolve => {
-    _yfQueue.push({ sym, resolve });
-    _yfDrain();
-  });
-}
-
-function _yfDrain() {
-  while (_yfRunning < _YF_CONCURRENCY && _yfQueue.length > 0) {
-    const { sym, resolve } = _yfQueue.shift();
-    _yfRunning++;
-    _yfFetch(sym).then(result => { resolve(result); _yfRunning--; _yfDrain(); });
-  }
-}
-
-async function _yfFetch(sym) {
-  try {
-    const r = await cachedFetch(`/api/quote?sym=${encodeURIComponent(sym)}`, 30000);
-    if (!r.ok) return { sym, ok: false, price: null };
-    const data = await r.json();
-    const m = data?.chart?.result?.[0]?.meta;
-    if (m?.regularMarketPrice) {
-      const price = m.regularMarketPrice;
-      const prev  = m.chartPreviousClose || m.previousClose || price;
-      const chg   = price - prev;
-      const pct   = prev ? (chg / prev * 100) : 0;
-      return { sym, ok:true, price, prev, chg, pct,
-               high52: m.fiftyTwoWeekHigh, low52: m.fiftyTwoWeekLow, mktCap: m.marketCap };
-    }
-    return { sym, ok: false, price: null };
-  } catch {
-    return { sym, ok: false, price: null };
-  }
-}
+// ─── SHARED LIBRARY ALIASES ──────────────────────────────────────────────────
+const cachedFetch = Dash.cachedFetch;
+const yf = Dash.yf;
 
 function fmt(n, dec=2) { if (n==null) return '—'; return n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 function fmtK(n) {
@@ -712,46 +668,55 @@ function setIdx(pid, cid, d) {
 
 // ─── LOAD US INDICES ──────────────────────────────────────────────────────────
 async function loadUS() {
+  Dash.time.start('pb:us');
   document.getElementById('us-upd').textContent = 'Loading';
   const [sp,nas,dji,rut] = await Promise.all([yf('^GSPC'),yf('^IXIC'),yf('^DJI'),yf('^RUT')]);
   setIdx('sp500-p','sp500-c',sp); setIdx('nas-p','nas-c',nas);
   setIdx('dji-p','dji-c',dji); setIdx('rut-p','rut-c',rut);
   const ok = [sp,nas,dji,rut].some(x=>x.ok);
   setDot('us-dot',ok); document.getElementById('us-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:us');
 }
 
 // ─── LOAD EUROPE ─────────────────────────────────────────────────────────────
 async function loadEurope() {
+  Dash.time.start('pb:europe');
   document.getElementById('eu-upd').textContent = 'Loading';
   const [ftse,dax,cac,stx] = await Promise.all([yf('^FTSE'),yf('^GDAXI'),yf('^FCHI'),yf('^STOXX50E')]);
   setIdx('ftse-p','ftse-c',ftse); setIdx('dax-p','dax-c',dax);
   setIdx('cac-p','cac-c',cac); setIdx('stx-p','stx-c',stx);
   const ok = [ftse,dax,cac,stx].some(x=>x.ok);
   setDot('eu-dot',ok); document.getElementById('eu-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:europe');
 }
 
 // ─── LOAD ASIA ────────────────────────────────────────────────────────────────
 async function loadAsia() {
+  Dash.time.start('pb:asia');
   document.getElementById('asia-upd').textContent = 'Loading';
   const [n225,hsi,sse,asx] = await Promise.all([yf('^N225'),yf('^HSI'),yf('000001.SS'),yf('^AXJO')]);
   setIdx('n225-p','n225-c',n225); setIdx('hsi-p','hsi-c',hsi);
   setIdx('sse-p','sse-c',sse); setIdx('asx-p','asx-c',asx);
   const ok = [n225,hsi,sse,asx].some(x=>x.ok);
   setDot('asia-dot',ok); document.getElementById('asia-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:asia');
 }
 
 // ─── LOAD MIDDLE EAST ─────────────────────────────────────────────────────────
 async function loadME() {
+  Dash.time.start('pb:me');
   document.getElementById('me-upd').textContent = 'Loading';
   const [tasi,dfm,adx,eem] = await Promise.all([yf('^TASI.SR'),yf('^DFMGI'),yf('^ADI'),yf('EEM')]);
   setIdx('tasi-p','tasi-c',tasi); setIdx('dfm-p','dfm-c',dfm);
   setIdx('adx-p','adx-c',adx); setIdx('eem-p','eem-c',eem);
   const ok = [tasi,dfm,adx,eem].some(x=>x.ok);
   setDot('me-dot',ok); document.getElementById('me-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:me');
 }
 
 // ─── FX RATES ─────────────────────────────────────────────────────────────────
 async function loadFX() {
+  Dash.time.start('pb:fx');
   document.getElementById('fx-upd').textContent = 'Loading';
   const pairs = [
     {sym:'EURUSD=X', pid:'eurusd-p', cid:'eurusd-c', dec:4},
@@ -779,10 +744,12 @@ async function loadFX() {
   });
   setDot('fx-dot',ok);
   document.getElementById('fx-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:fx');
 }
 
 // ─── RATES ─────────────────────────────────────────────────────────────────────
 async function loadRates() {
+  Dash.time.start('pb:rates');
   document.getElementById('rates-upd').textContent = 'Loading';
   const items = [
     {sym:'^IRX', pid:'us2y-p', cid:'us2y-c', label:'%', dec:3},
@@ -810,10 +777,12 @@ async function loadRates() {
   });
   setDot('rates-dot',ok);
   document.getElementById('rates-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:rates');
 }
 
 // ─── SAFE HAVEN & CRYPTO ─────────────────────────────────────────────────────
 async function loadAlts() {
+  Dash.time.start('pb:alts');
   document.getElementById('alts-upd').textContent = 'Loading';
   const [gold,silver,btc,eth] = await Promise.all([yf('GC=F'),yf('SI=F'),yf('BTC-USD'),yf('ETH-USD')]);
   function setAlt(d, pid, cid, prefix, dec) {
@@ -833,6 +802,7 @@ async function loadAlts() {
   const ok = [gold,silver,btc,eth].some(x=>x.ok);
   setDot('alts-dot',ok);
   document.getElementById('alts-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error';
+  Dash.time.end('pb:alts');
 }
 
 // ─── PB STOCKS ─────────────────────────────────────────────────────────────────
@@ -855,6 +825,7 @@ const PB_STOCKS = [
 ];
 
 async function loadPBStocks() {
+  Dash.time.start('pb:stocks');
   document.getElementById('pb-upd').textContent = 'Loading';
   setDot('pb-dot', null);
   const results = await Promise.all(PB_STOCKS.map(s => yf(s.sym)));
@@ -881,6 +852,7 @@ async function loadPBStocks() {
   });
   setDot('pb-dot', ok);
   document.getElementById('pb-upd').textContent = ok ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Error — deploy to HTTPS';
+  Dash.time.end('pb:stocks');
 }
 
 // ─── TICKER ───────────────────────────────────────────────────────────────────
@@ -894,6 +866,7 @@ const TICKER_SYMS = [
   {sym:'EURUSD=X',label:'EUR/USD'},{sym:'^TNX',label:'US10Y'},
 ];
 async function loadTicker() {
+  Dash.time.start('pb:ticker');
   const results = await Promise.all(TICKER_SYMS.map(s => yf(s.sym)));
   const items = results.map((d,i) => {
     const s = TICKER_SYMS[i];
@@ -905,6 +878,7 @@ async function loadTicker() {
   }).join('');
   const wrap = document.getElementById('ticker-wrap');
   wrap.innerHTML = items + items; // duplicate for seamless loop
+  Dash.time.end('pb:ticker');
 }
 
 // ─── NEWS RSS ─────────────────────────────────────────────────────────────────
@@ -915,25 +889,12 @@ const RSS_FEEDS = [
 ];
 const PB_KEYWORDS = ['wealth','private bank','asset manag','hedge fund','private equity','Goldman','JPMorgan','UBS','HSBC','BlackRock','KKR','Blackstone','interest rate','Federal Reserve','ECB','central bank','inflation','crypto','bitcoin','gold','markets','M&A','merger','acquisition','fund','investor','endowment'];
 async function loadNews() {
+  Dash.time.start('pb:news');
   document.getElementById('news-upd').textContent = 'Loading';
-  let allItems = [];
-  for (const feed of RSS_FEEDS) {
-    try {
-      // Try own proxy first
-      let data;
-      try {
-        const r = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, { signal: AbortSignal.timeout(8000) });
-        data = await r.json();
-      } catch {
-        // Fall back to rss2json.com
-        const r2 = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`, { signal: AbortSignal.timeout(8000) });
-        data = await r2.json();
-      }
-      if (data.items?.length) {
-        allItems.push(...data.items.map(item => ({...item, _tag: feed.tag})));
-      }
-    } catch { continue; }
-  }
+  const feedResults = await Promise.all(
+    RSS_FEEDS.map(feed => Dash.fetchRSS(feed.url, feed.tag))
+  );
+  let allItems = feedResults.flat();
   // Filter for PB-relevant news
   const relevant = allItems.filter(item => {
     const text = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
@@ -945,6 +906,7 @@ async function loadNews() {
     ul.innerHTML = '<li style="color:var(--muted);font-size:11px;padding:8px 0;">No headlines available. Deploy to HTTPS for live feeds.</li>'; // static, safe
     setDot('news-dot', false);
     document.getElementById('news-upd').textContent = 'Error';
+    Dash.time.end('pb:news');
     return;
   }
   const _purify = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize : (s => s);
@@ -969,6 +931,7 @@ async function loadNews() {
     document.getElementById('breaking-link').href = items[0].link || '#';
     document.getElementById('breaking-link').setAttribute('target','_blank');
   }
+  Dash.time.end('pb:news');
 }
 
 // ─── LIVE TV ─────────────────────────────────────────────────────────────────
@@ -1013,27 +976,27 @@ async function refreshAll() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-async function init() {
+function init() {
   if (window.location.protocol === 'file:') {
     document.getElementById('local-banner').style.display = 'block';
   }
   initTV();
+  // News fires immediately alongside above-the-fold
   loadNews();
-  await Promise.all([loadUS(), loadEurope(), loadAsia(), loadME(),
-                     loadFX(), loadRates(), loadAlts(), loadPBStocks()]);
-  loadTicker();
+  // Above the fold — US and Europe indices are most prominent
+  loadUS();
+  loadEurope();
+  // Secondary panels
+  setTimeout(() => { loadAsia(); loadME(); }, 200);
+  setTimeout(() => { loadFX(); loadRates(); }, 400);
+  setTimeout(() => { loadAlts(); loadPBStocks(); }, 600);
+  setTimeout(loadTicker, 800);
 }
 init();
 
 // Refresh market data every 5 minutes — staggered to avoid simultaneous bursts
-setTimeout(() => setInterval(() => { loadUS(); loadEurope(); }, 300000), 0);
-setTimeout(() => setInterval(() => { loadAsia(); loadME(); }, 300000), 5000);
-setTimeout(() => setInterval(() => { loadFX(); loadRates(); }, 300000), 10000);
-setTimeout(() => setInterval(() => { loadAlts(); loadPBStocks(); }, 300000), 15000);
-setTimeout(() => setInterval(loadTicker, 300000), 20000);
-
-// Refresh news every 15 minutes — offset from market refreshes
-setTimeout(() => setInterval(loadNews, 900000), 25000);
+Dash.stagger([() => { loadUS(); loadEurope(); }, () => { loadAsia(); loadME(); }, () => { loadFX(); loadRates(); }, () => { loadAlts(); loadPBStocks(); }, loadTicker], 300000, 5000);
+Dash.stagger([loadNews], 900000, 0);
 </script>
 </body>
 </html>
