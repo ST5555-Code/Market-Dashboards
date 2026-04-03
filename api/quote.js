@@ -5,7 +5,7 @@
 const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 async function fetchViaProxy(sym) {
-  const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d`;
+  const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`;
   const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yfUrl)}`;
   const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error(`PROXY_${r.status}`);
