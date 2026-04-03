@@ -154,26 +154,27 @@ window._loadChartJS = function() {
   .chart-tab.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
   .chart-status { font-size: 10px; color: var(--midscale); padding: 4px 12px 0; }
 
-  /* STOCKS TABLE */
-  .stocks-table { width: 100%; border-collapse: collapse; }
-  .stocks-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 8px; text-align: right; border-bottom: 1px solid #2a3560; white-space: nowrap; }
-  .stocks-table th:first-child, .stocks-table th:nth-child(2) { text-align: left; }
-  .stocks-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; text-align: right; white-space: nowrap; }
-  .stocks-table td:first-child, .stocks-table td:nth-child(2) { text-align: left; }
-  .stocks-table tr:last-child td { border-bottom: none; }
-  .stocks-table tr:hover { background: #1a2040; }
-  .s-ticker { font-weight: 700; color: var(--glacier); }
-  .s-name { color: var(--midscale); font-size: 10px; }
-  .s-price { color: var(--white); font-weight: 600; }
+  /* STOCKS — TWO-COLUMN LAYOUT */
+  .stocks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; padding: 0 12px 8px; }
+  @media (max-width: 900px) { .stocks-grid { grid-template-columns: 1fr; } }
+  .stocks-col table { width: 100%; border-collapse: collapse; }
+  .sector-divider td { padding: 6px 0 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #2a3560; }
+  .sector-divider.sec-major td { color: var(--glacier); border-color: #1a2d3d; }
+  .sector-divider.sec-oil td   { color: var(--sandstone); border-color: #2a2010; }
+  .sector-divider.sec-gas td   { color: var(--turquoise); border-color: #1a3028; }
+  .sector-divider.sec-ofs td   { color: #9a85d0; border-color: #25203a; }
+  .sector-divider.sec-etf td   { color: var(--midscale); border-color: #2a2a2a; }
+  .stock-row td { padding: 3px 0; font-size: 11px; white-space: nowrap; }
+  .stock-row:hover td { background: #1a2040; }
+  .stock-row .sr-ticker { font-weight: 700; color: var(--glacier); width: 48px; }
+  .stock-row .sr-name   { color: var(--midscale); font-size: 10px; }
+  .stock-row .sr-price  { color: var(--white); font-weight: 600; text-align: right; }
+  .stock-row .sr-pct    { text-align: right; width: 60px; font-weight: 600; }
+  .stock-row .sr-range  { text-align: right; color: var(--midscale); font-size: 10px; width: 52px; }
+  .stock-row .sr-mcap   { text-align: right; color: var(--midscale); font-size: 10px; width: 56px; }
   .s-up { color: var(--turquoise); }
   .s-down { color: var(--maroon); }
   .s-flat { color: var(--midscale); }
-  .s-sector { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; }
-  .sec-major { background: #1a2d3d; color: var(--glacier); }
-  .sec-gas { background: #1a3028; color: var(--turquoise); }
-  .sec-oil { background: #2a2010; color: var(--sandstone); }
-  .sec-ofs { background: #25203a; color: #9a85d0; }
-  .sec-etf { background: #2a2a2a; color: var(--midscale); }
 
   /* M&A TABLE */
   .deal-table { width: 100%; border-collapse: collapse; }
@@ -457,24 +458,8 @@ window._loadChartJS = function() {
       <div class="panel-title">E&P &amp; Energy Stocks — Live</div>
       <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
     </div>
-    <div style="overflow-x:auto;">
-      <table class="stocks-table">
-        <thead>
-          <tr>
-            <th>Ticker</th>
-            <th>Company</th>
-            <th>Sector</th>
-            <th>Price</th>
-            <th>Chg</th>
-            <th>% Chg</th>
-            <th>52W Hi</th>
-            <th>52W Lo</th>
-          </tr>
-        </thead>
-        <tbody id="stocks-body">
-          <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--midscale)">Loading stock data...</td></tr>
-        </tbody>
-      </table>
+    <div id="stocks-grid" class="stocks-grid">
+      <div class="stocks-col" style="text-align:center;padding:20px;color:var(--midscale);grid-column:1/-1;">Loading stock data...</div>
     </div>
     <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance Direct · Refreshes every 60s · ~ = approx</div>
   </div>
@@ -743,29 +728,72 @@ const STOCKS = [
   { sym: 'XOP',  name: 'SPDR Oil & Gas E&P',  sector: 'etf'   },
 ];
 
-const SECTOR_LABELS = { major: ['sec-major','Major'], gas: ['sec-gas','Gas'], oil: ['sec-oil','Oil'], ofs: ['sec-ofs','OFS'], etf: ['sec-etf','ETF'] };
+// Column layout: left = majors + oil, right = gas + ofs + etf
+const LEFT_SECTORS  = ['major','oil'];
+const RIGHT_SECTORS = ['gas','ofs','etf'];
+const SECTOR_META = {
+  major: { cls: 'sec-major', label: 'Majors' },
+  oil:   { cls: 'sec-oil',   label: 'Oil E&P' },
+  gas:   { cls: 'sec-gas',   label: 'Gas E&P' },
+  ofs:   { cls: 'sec-ofs',   label: 'Oilfield Services' },
+  etf:   { cls: 'sec-etf',   label: 'ETFs' },
+};
+
+function fmtMcap(v) {
+  if (!v) return '—';
+  if (v >= 1e12) return '$' + (v/1e12).toFixed(1) + 'T';
+  if (v >= 1e9)  return '$' + (v/1e9).toFixed(0) + 'B';
+  if (v >= 1e6)  return '$' + (v/1e6).toFixed(0) + 'M';
+  return '$' + v.toFixed(0);
+}
+
+function buildColHTML(sectors, stocks, resultMap) {
+  let html = '<table>';
+  sectors.forEach(sec => {
+    const m = SECTOR_META[sec];
+    const items = stocks.filter(s => s.sector === sec);
+    if (!items.length) return;
+    html += `<tr class="sector-divider ${m.cls}"><td colspan="6">${m.label}</td></tr>`;
+    html += `<tr style="font-size:8px;color:var(--midscale);text-transform:uppercase;letter-spacing:1px;">
+      <td style="padding:2px 0;">Ticker</td><td></td>
+      <td style="text-align:right;padding:2px 4px;">Price</td>
+      <td style="text-align:right;padding:2px 4px;">Day %</td>
+      <td style="text-align:right;padding:2px 4px;">52W H/L</td>
+      <td style="text-align:right;padding:2px 4px;">Mkt Cap</td></tr>`;
+    items.forEach(s => {
+      const r = resultMap[s.sym] || {};
+      const p = r.price ? '$'+fmt(r.price) : '—';
+      const pct = fmtPct(r.pct);
+      const hi = r.high52 ? '$'+fmt(r.high52,0) : '—';
+      const lo = r.low52  ? '$'+fmt(r.low52,0)  : '—';
+      const mc = fmtMcap(r.mktCap);
+      html += `<tr class="stock-row">
+        <td class="sr-ticker"><a href="https://finance.yahoo.com/quote/${s.sym}" target="_blank" style="color:var(--glacier);text-decoration:none;">${s.sym}</a></td>
+        <td class="sr-name">${s.name}</td>
+        <td class="sr-price">${p}</td>
+        <td class="sr-pct ${sCls(r.pct)}">${pct}</td>
+        <td class="sr-range">${hi} / ${lo}</td>
+        <td class="sr-mcap">${mc}</td>
+      </tr>`;
+    });
+  });
+  html += '</table>';
+  return html;
+}
 
 async function loadStocks() {
   Dash.time.start('energy:loadStocks');
   const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
-  const tbody = document.getElementById('stocks-body');
-  tbody.innerHTML = '';
-  results.forEach((r, i) => {
-    const s = STOCKS[i];
-    const [secCls, secLabel] = SECTOR_LABELS[s.sector] || ['sec-etf','—'];
-    const tr = document.createElement('tr');
-    tr.innerHTML = DOMPurify.sanitize(`
-      <td><span class="s-ticker">${s.sym}</span></td>
-      <td><span class="s-name">${s.name}</span></td>
-      <td><span class="s-sector ${secCls}">${secLabel}</span></td>
-      <td class="s-price">${r.price ? '$'+fmt(r.price) : '—'}</td>
-      <td class="${sCls(r.chg)}">${fmtChg(r.chg)}</td>
-      <td class="${sCls(r.pct)}">${fmtPct(r.pct)}</td>
-      <td class="s-flat">${r.high52 ? '$'+fmt(r.high52) : '—'}</td>
-      <td class="s-flat">${r.low52  ? '$'+fmt(r.low52)  : '—'}</td>
-    `);
-    tbody.appendChild(tr);
-  });
+  const resultMap = {};
+  results.forEach((r, i) => { resultMap[STOCKS[i].sym] = r; });
+
+  const grid = document.getElementById('stocks-grid');
+  grid.innerHTML = DOMPurify.sanitize(
+    '<div class="stocks-col">' + buildColHTML(LEFT_SECTORS, STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(RIGHT_SECTORS, STOCKS, resultMap) + '</div>',
+    { ADD_ATTR: ['target'] }
+  );
+
   document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
   Dash.time.end('energy:loadStocks');
   return results;
