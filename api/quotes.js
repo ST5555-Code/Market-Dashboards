@@ -1,6 +1,6 @@
 // /api/quotes.js — Batch Yahoo Finance proxy
 // Accepts comma-separated symbols: /api/quotes?syms=CL=F,BZ=F,NG=F
-// One Lambda invocation, one session, parallel Yahoo fetches.
+// Tries direct crumb auth first, falls back to AllOrigins per-symbol if blocked.
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
@@ -17,9 +17,8 @@ async function getSession() {
       const fcResp = await fetch('https://fc.yahoo.com', {
         headers: { 'User-Agent': UA, 'Accept': '*/*' },
         redirect: 'follow',
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(8000),
       });
-
       let cookieParts = [];
       if (typeof fcResp.headers.getSetCookie === 'function') {
         cookieParts = fcResp.headers.getSetCookie().map(c => c.split(';')[0]);
@@ -31,7 +30,7 @@ async function getSession() {
 
       const crumbResp = await fetch('https://query2.finance.yahoo.com/v1/test/getcrumb', {
         headers: { 'User-Agent': UA, 'Cookie': cookie },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(8000),
       });
       if (!crumbResp.ok) throw new Error(`Crumb failed: ${crumbResp.status}`);
       const crumb = await crumbResp.text();
@@ -47,25 +46,44 @@ async function getSession() {
   return _sessionPending;
 }
 
-async function fetchOne(sym, cookie, crumb) {
+async function fetchDirect(sym, cookie, crumb) {
   const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d&crumb=${encodeURIComponent(crumb)}`;
+  const r = await fetch(url, {
+    headers: {
+      'User-Agent': UA,
+      'Accept': 'application/json',
+      'Referer': 'https://finance.yahoo.com/',
+      'Origin': 'https://finance.yahoo.com',
+      'Cookie': cookie,
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (r.status === 401 || r.status === 403 || r.status === 429) {
+    throw new Error(`BLOCKED_${r.status}`);
+  }
+  if (!r.ok) throw new Error(`YF_${r.status}`);
+  return { sym, data: await r.json() };
+}
+
+async function fetchViaProxy(sym) {
+  const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yfUrl)}`;
+  const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+  if (!r.ok) throw new Error(`PROXY_${r.status}`);
+  const envelope = await r.json();
+  if (!envelope?.contents) throw new Error('PROXY_EMPTY');
+  return { sym, data: JSON.parse(envelope.contents) };
+}
+
+async function fetchOne(sym, cookie, crumb) {
   try {
-    const r = await fetch(url, {
-      headers: {
-        'User-Agent': UA,
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://finance.yahoo.com/',
-        'Origin': 'https://finance.yahoo.com',
-        'Cookie': cookie,
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!r.ok) return { sym, error: `YF_${r.status}` };
-    const data = await r.json();
-    return { sym, data };
-  } catch (e) {
-    return { sym, error: e.message };
+    return await fetchDirect(sym, cookie, crumb);
+  } catch {
+    try {
+      return await fetchViaProxy(sym);
+    } catch (e) {
+      return { sym, error: e.message };
+    }
   }
 }
 
@@ -83,26 +101,27 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    let { cookie, crumb } = await getSession();
-
-    // Fetch all symbols in parallel within this single Lambda
-    let results = await Promise.all(syms.map(s => fetchOne(s, cookie, crumb)));
-
-    // If any got 401/403/429, refresh session and retry failed ones
-    const failed = results.filter(r => r.error && /YF_(401|403|429)/.test(r.error));
-    if (failed.length > 0) {
-      _session = null;
+    let cookie, crumb;
+    try {
       ({ cookie, crumb } = await getSession());
-      const retried = await Promise.all(failed.map(f => fetchOne(f.sym, cookie, crumb)));
-      const retryMap = Object.fromEntries(retried.map(r => [r.sym, r]));
-      results = results.map(r => retryMap[r.sym] || r);
+    } catch {
+      // Session init failed — go straight to AllOrigins for all symbols
+      const results = await Promise.all(syms.map(s => fetchViaProxy(s).catch(e => ({ sym: s, error: e.message }))));
+      const out = {};
+      for (const r of results) out[r.sym] = r.data || { error: r.error };
+      res.setHeader('Cache-Control', 'public, max-age=90');
+      return res.status(200).json(out);
     }
 
-    // Build response keyed by symbol
-    const out = {};
-    for (const r of results) {
-      out[r.sym] = r.data || { error: r.error };
+    const results = await Promise.all(syms.map(s => fetchOne(s, cookie, crumb)));
+
+    // If direct auth was blocked, invalidate session for next request
+    if (results.some(r => r.error && /BLOCKED/.test(r.error))) {
+      _session = null;
     }
+
+    const out = {};
+    for (const r of results) out[r.sym] = r.data || { error: r.error };
 
     res.setHeader('Cache-Control', 'public, max-age=90');
     return res.status(200).json(out);
