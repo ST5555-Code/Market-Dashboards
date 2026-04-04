@@ -58,6 +58,9 @@ window._loadChartJS = function() {
   .breaking-text a { color: var(--white); text-decoration: none; }
   .breaking-text a:hover { text-decoration: underline; }
 
+  /* VERCEL TOOLBAR — hide */
+  vercel-toolbar, #__vercel_toolbar, #vercel-live-feedback, #vercel-speed-insights { display: none !important; }
+
   /* TICKER */
   .ticker-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 6px 0; overflow: hidden; }
   .ticker-wrap { display: flex; animation: ticker-scroll 70s linear infinite; width: max-content; }
@@ -279,13 +282,16 @@ window._loadChartJS = function() {
 </div>
 
 <!-- EIA WEEKLY FUNDAMENTALS BAND -->
-<div class="panel" style="margin:2px 2px 0;border-radius:0;">
-  <div class="panel-header">
-    <div class="panel-title">EIA Weekly Fundamentals</div>
-    <div class="panel-sub"><span id="eia-update">Loading...</span><button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button></div>
+<div class="panel" style="margin:2px 2px 0;border-radius:0;padding-bottom:6px;">
+  <div class="panel-header" style="padding-bottom:4px;">
+    <div class="panel-title">EIA Weekly Fundamentals <span id="eia-report-badge" style="font-size:9px;font-weight:400;color:var(--midscale);margin-left:6px;">EIA WPSR · Loading...</span></div>
+    <div class="panel-sub" style="gap:10px;">
+      <span style="font-size:9px;color:var(--midscale);">Released Wed ~10:30am ET · Cached 6h</span>
+      <span id="eia-update">Loading...</span>
+      <button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button>
+    </div>
   </div>
-  <span class="eia-badge" id="eia-report-badge">EIA WPSR · Loading...</span>
-  <div class="eia-grid">
+  <div class="eia-grid" style="margin-top:4px;">
     <div class="eia-card stocks">
       <div class="eia-label">US Crude Stocks (ex-SPR)</div>
       <div><span class="eia-value" id="eia-stocks">--</span><span class="eia-unit">MMBbl</span></div>
@@ -302,7 +308,6 @@ window._loadChartJS = function() {
       <div class="eia-chg flat" id="eia-refine-sub">Net weekly inputs</div>
     </div>
   </div>
-  <div class="source-note" style="margin-top:8px;">Source: EIA Weekly Petroleum Status Report (WPSR) · Released every Wednesday ~10:30am ET · Cached 6h</div>
 </div>
 
 <!-- ROW 1: Commodity Prices | Energy Business News | TV -->
@@ -935,39 +940,18 @@ async function loadMarketIndicators() {
   if (el) el.innerHTML = DOMPurify.sanitize(html);
 }
 
-const TICKER_COMMS = [
-  { sym: 'CL=F', label: 'WTI', unit: '$/bbl' },
-  { sym: 'BZ=F', label: 'Brent', unit: '$/bbl' },
-  { sym: 'NG=F', label: 'HH Gas', unit: '$/MMBtu' },
-  { sym: 'TTF=F', label: 'TTF', unit: '$/MMBtu' },
-  { sym: 'RB=F', label: 'RBOB', unit: '$/gal' },
-];
-const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','EQT','AR','FANG','SLB','HAL','XLE','XOP'];
+const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','PXD','FANG','EQT','AR','RRC','SWN','SLB','HAL','BKR','NOV','XLE','XOP','OIH'];
 
 async function loadTicker() {
   Dash.time.start('energy:loadTicker');
-  const commResults = await Dash.yfBatch(TICKER_COMMS.map(c => c.sym));
-  const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
+  const results = await Dash.yfBatch(TICKER_STOCKS);
   const wrap = document.getElementById('ticker-wrap');
 
-  const commItems = commResults.map((r, i) => {
-    const c = TICKER_COMMS[i];
-    const p = r.price ? fmt(r.price, i < 3 ? 2 : 3) : '—';
-    const pct = fmtPct(r.pct);
-    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
-    return `<div class="ticker-item">
-      <span class="tick-label">${c.label}</span>
-      <span class="tick-price">$${p}</span>
-      <span class="tick-unit">${c.unit}</span>
-      <span class="${tcls}">${pct}</span>
-    </div>`;
-  });
-
-  const stockItems = stockResults.map((r, i) => {
+  const items = results.map((r, i) => {
     const sym = TICKER_STOCKS[i];
-    const p = r.price ? '$'+fmt(r.price) : '—';
-    const pct = fmtPct(r.pct);
-    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
+    const p = r?.price ? '$' + fmt(r.price) : '—';
+    const pct = fmtPct(r?.pct);
+    const tcls = r?.pct > 0 ? 'tick-up' : r?.pct < 0 ? 'tick-down' : 'tick-flat';
     return `<div class="ticker-item">
       <a href="https://finance.yahoo.com/quote/${sym}" target="_blank">${sym}</a>
       <span class="tick-price">${p}</span>
@@ -975,8 +959,7 @@ async function loadTicker() {
     </div>`;
   });
 
-  const all = [...commItems, ...stockItems];
-  wrap.innerHTML = DOMPurify.sanitize(all.join('') + all.join(''));
+  wrap.innerHTML = DOMPurify.sanitize(items.join('') + items.join(''));
   Dash.time.end('energy:loadTicker');
 }
 
