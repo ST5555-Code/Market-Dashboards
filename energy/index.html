@@ -116,6 +116,21 @@ window._loadChartJS = function() {
   .comm-sub { font-size: 10px; color: var(--midscale); margin-top: 2px; }
   .source-note { font-size: 9px; color: var(--midscale); margin-top: 10px; border-top: 1px solid #2a3560; padding-top: 6px; }
 
+  /* EIA FUNDAMENTALS */
+  .eia-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .eia-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid #5a4a8a; }
+  .eia-card.stocks  { border-left-color: var(--sandstone); }
+  .eia-card.prod    { border-left-color: var(--turquoise); }
+  .eia-card.refine  { border-left-color: var(--glacier); }
+  .eia-label { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .eia-value { font-size: 18px; font-weight: 700; color: var(--white); }
+  .eia-unit  { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .eia-chg   { font-size: 11px; margin-top: 3px; font-weight: 600; }
+  .eia-chg.build { color: var(--maroon); }   /* build = bearish */
+  .eia-chg.draw  { color: var(--turquoise); } /* draw  = bullish */
+  .eia-chg.flat  { color: var(--midscale); }
+  .eia-badge { display: inline-block; font-size: 9px; color: var(--midscale); background: #1a2040; border-radius: 2px; padding: 2px 6px; margin-bottom: 6px; }
+
   /* NEWS */
   .news-list { list-style: none; }
   .news-item { padding: 7px 0; border-bottom: 1px solid #1a2040; display: flex; flex-direction: column; gap: 3px; }
@@ -372,6 +387,33 @@ window._loadChartJS = function() {
     <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX December futures · Spot + Dec '26/'27/'28/'29 · Exchange-traded forward prices · Refresh for latest</div>
   </div>
 
+</div>
+
+<!-- EIA WEEKLY FUNDAMENTALS -->
+<div class="panel" style="margin:0 0 10px 0;">
+  <div class="panel-header">
+    <div class="panel-title">EIA Weekly Fundamentals</div>
+    <div class="panel-sub"><span id="eia-update">Loading...</span><button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button></div>
+  </div>
+  <span class="eia-badge" id="eia-report-badge">EIA WPSR · Loading...</span>
+  <div class="eia-grid">
+    <div class="eia-card stocks">
+      <div class="eia-label">US Crude Stocks (ex-SPR)</div>
+      <div><span class="eia-value" id="eia-stocks">--</span><span class="eia-unit">MMBbl</span></div>
+      <div class="eia-chg flat" id="eia-stocks-chg">-- w/w</div>
+    </div>
+    <div class="eia-card prod">
+      <div class="eia-label">US Crude Production</div>
+      <div><span class="eia-value" id="eia-prod">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-prod-sub">Weekly estimate</div>
+    </div>
+    <div class="eia-card refine">
+      <div class="eia-label">Refinery Crude Inputs</div>
+      <div><span class="eia-value" id="eia-refine">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-refine-sub">Net weekly inputs</div>
+    </div>
+  </div>
+  <div class="source-note" style="margin-top:8px;">Source: EIA Weekly Petroleum Status Report (WPSR) · Released every Wednesday ~10:30am ET · Cached 6h</div>
 </div>
 
 <!-- ROW 3: Earnings | M&A | Financing -->
@@ -932,6 +974,56 @@ async function loadAllNews() {
 }
 
 // =====================
+// EIA FUNDAMENTALS
+// =====================
+async function loadEIA() {
+  try {
+    const r = await fetch('/api/eia');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+
+    // Crude stocks
+    if (d.crudeStocks?.value != null) {
+      document.getElementById('eia-stocks').textContent = (d.crudeStocks.value / 1000).toFixed(1);
+      const chg = d.crudeStocks.chg;
+      const el  = document.getElementById('eia-stocks-chg');
+      if (chg != null) {
+        const sign  = chg >= 0 ? '+' : '';
+        const label = chg >= 0 ? 'build ▲ bearish' : 'draw ▼ bullish';
+        el.textContent  = `${sign}${(chg / 1000).toFixed(2)} MMBbl w/w · ${label}`;
+        el.className    = `eia-chg ${chg > 0 ? 'build' : chg < 0 ? 'draw' : 'flat'}`;
+      }
+    }
+
+    // Production
+    if (d.crudeProduction?.value != null) {
+      document.getElementById('eia-prod').textContent = d.crudeProduction.value.toLocaleString();
+    }
+
+    // Refinery inputs
+    if (d.refineryInputs?.value != null) {
+      document.getElementById('eia-refine').textContent = d.refineryInputs.value.toLocaleString();
+    }
+
+    // Report date badge
+    if (d.reportDate) {
+      const rpt  = new Date(d.reportDate + 'T12:00:00Z');
+      const next = new Date(d.nextReport  + 'T12:00:00Z');
+      const fmt  = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('eia-report-badge').textContent =
+        `EIA WPSR · ${fmt(rpt)} · Next: ${fmt(next)}`;
+    }
+
+    document.getElementById('eia-update').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  } catch (e) {
+    document.getElementById('eia-update').textContent = 'EIA data unavailable';
+    console.warn('EIA fetch failed:', e.message);
+  }
+}
+
+// =====================
 // EARNINGS
 // =====================
 const EARNINGS = [
@@ -988,6 +1080,7 @@ async function refreshAll() {
   await sleep(300);
   loadAllNews();
   loadTicker();
+  loadEIA();
   if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
 }
 
@@ -1034,11 +1127,14 @@ setTimeout(loadStocks, 400);
 setTimeout(loadAllNews, 600);
 setTimeout(loadTopNews, 800);
 setTimeout(loadCurve, 1000);
+setTimeout(loadEIA, 1200);  // EIA data — cached 6h, no need to rush
 // Stagger refresh intervals
 Dash.stagger([loadCommodities, loadTicker, loadStocks], 60000, 5000);
 Dash.stagger([loadAllNews, loadTopNews], 600000, 5000);
 // Keep loadCurve on its own long interval
 setTimeout(() => setInterval(loadCurve, 3600000), 15000);
+// EIA refreshes every 6 hours (matches server cache)
+setTimeout(() => setInterval(loadEIA, 21600000), 15000);
 </script>
 </body>
 </html>
