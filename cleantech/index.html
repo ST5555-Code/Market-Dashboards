@@ -331,59 +331,72 @@ window._loadChartJS = function() {
       <div class="panel-title">Carbon &amp; Credit Markets</div>
       <div class="panel-sub"><span style="font-size:9px;color:var(--midscale);">CARB · EPA · ICE · ~ = weekly manual</span><button class="refresh-btn" title="Static data — update manually">↻</button></div>
     </div>
-    <div class="panel-body">
-      <div class="carbon-section-hdr">Compliance Carbon</div>
-      <div class="carbon-grid">
-        <div class="carbon-card compliance">
-          <div class="carbon-name">EU ETS (EUA) <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">€65.20</span><span class="carbon-unit">/tCO₂</span></div>
-          <div class="carbon-meta"><span>ICE Front Month</span><span class="carbon-src"><a href="https://www.theice.com/products/197/EUA-Futures" target="_blank">ICE ↗</a></span></div>
-        </div>
-        <div class="carbon-card compliance">
-          <div class="carbon-name">CA LCFS Credit <span class="tag-live">Wk Mar 16</span></div>
-          <div><span class="carbon-price" id="c-lcfs">$66.41</span><span class="carbon-unit">/MT</span></div>
-          <div class="carbon-meta"><span>Range $54.75–72.50</span><span class="carbon-src"><a href="https://ww2.arb.ca.gov/resources/documents/weekly-lcfs-credit-transfer-activity-reports" target="_blank">CARB ↗</a></span></div>
-        </div>
-        <div class="carbon-card compliance">
-          <div class="carbon-name">RGGI Allowance <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$15.48</span><span class="carbon-unit">/short ton</span></div>
-          <div class="carbon-meta"><span>Regional GHG Initiative</span><span class="carbon-src"><a href="https://www.rggi.org/allowance-tracking" target="_blank">RGGI ↗</a></span></div>
-        </div>
-      </div>
+    <div class="panel-body" style="padding:8px 12px 6px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px;">
 
-      <div class="carbon-section-hdr" style="margin-top:14px;">Renewable Fuel Standard (RFS)</div>
-      <div class="carbon-grid">
-        <div class="carbon-card rfs">
-          <div class="carbon-name">RIN D3 · Cellulosic <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$3.22</span><span class="carbon-unit">/RIN</span></div>
-          <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
+        <!-- Compliance Carbon -->
+        <div>
+          <div class="carbon-section-hdr">Compliance Carbon</div>
+          <div class="carbon-grid">
+            <div class="carbon-card compliance">
+              <div class="carbon-name">EU ETS (EUA) <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">€65.20</span><span class="carbon-unit">/tCO₂</span></div>
+              <div class="carbon-meta"><span>ICE Front Month</span><span class="carbon-src"><a href="https://www.theice.com/products/197/EUA-Futures" target="_blank">ICE ↗</a></span></div>
+            </div>
+            <div class="carbon-card compliance">
+              <div class="carbon-name">CA LCFS Credit <span class="tag-live">Wk Mar 16</span></div>
+              <div><span class="carbon-price" id="c-lcfs">$66.41</span><span class="carbon-unit">/MT</span></div>
+              <div class="carbon-meta"><span>Range $54.75–72.50</span><span class="carbon-src"><a href="https://ww2.arb.ca.gov/resources/documents/weekly-lcfs-credit-transfer-activity-reports" target="_blank">CARB ↗</a></span></div>
+            </div>
+            <div class="carbon-card compliance">
+              <div class="carbon-name">RGGI Allowance <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$15.48</span><span class="carbon-unit">/short ton</span></div>
+              <div class="carbon-meta"><span>Regional GHG Initiative</span><span class="carbon-src"><a href="https://www.rggi.org/allowance-tracking" target="_blank">RGGI ↗</a></span></div>
+            </div>
+          </div>
         </div>
-        <div class="carbon-card rfs">
-          <div class="carbon-name">RIN D4 · Bio-Diesel <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$1.68</span><span class="carbon-unit">/RIN</span></div>
-          <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
-        </div>
-        <div class="carbon-card rfs">
-          <div class="carbon-name">RIN D6 · Ethanol <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$0.89</span><span class="carbon-unit">/RIN</span></div>
-          <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
-        </div>
-      </div>
 
-      <div class="carbon-section-hdr" style="margin-top:14px;">Voluntary Carbon</div>
-      <div class="carbon-grid">
-        <div class="carbon-card voluntary">
-          <div class="carbon-name">Gold Standard VCU <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$6.50</span><span class="carbon-unit">/tCO₂</span></div>
-          <div class="carbon-meta"><span class="carbon-src"><a href="https://gsf.gold-standard.org/" target="_blank">GS ↗</a></span></div>
+        <!-- Renewable Fuel Standard -->
+        <div>
+          <div class="carbon-section-hdr">Renewable Fuel Standard (RFS)</div>
+          <div class="carbon-grid">
+            <div class="carbon-card rfs">
+              <div class="carbon-name">RIN D3 · Cellulosic <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$3.22</span><span class="carbon-unit">/RIN</span></div>
+              <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
+            </div>
+            <div class="carbon-card rfs">
+              <div class="carbon-name">RIN D4 · Bio-Diesel <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$1.68</span><span class="carbon-unit">/RIN</span></div>
+              <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
+            </div>
+            <div class="carbon-card rfs">
+              <div class="carbon-name">RIN D6 · Ethanol <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$0.89</span><span class="carbon-unit">/RIN</span></div>
+              <div class="carbon-meta"><span class="carbon-src"><a href="https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information" target="_blank">EPA EMTS ↗</a></span></div>
+            </div>
+          </div>
         </div>
-        <div class="carbon-card voluntary">
-          <div class="carbon-name">CBL Nature VCM <span class="tag-approx">~</span></div>
-          <div><span class="carbon-price">$4.10</span><span class="carbon-unit">/tCO₂</span></div>
-          <div class="carbon-meta"><span class="carbon-src"><a href="https://www.cblmarkets.com/" target="_blank">CBL ↗</a></span></div>
+
+        <!-- Voluntary Carbon -->
+        <div>
+          <div class="carbon-section-hdr">Voluntary Carbon</div>
+          <div class="carbon-grid">
+            <div class="carbon-card voluntary">
+              <div class="carbon-name">Gold Standard VCU <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$6.50</span><span class="carbon-unit">/tCO₂</span></div>
+              <div class="carbon-meta"><span class="carbon-src"><a href="https://gsf.gold-standard.org/" target="_blank">GS ↗</a></span></div>
+            </div>
+            <div class="carbon-card voluntary">
+              <div class="carbon-name">CBL Nature VCM <span class="tag-approx">~</span></div>
+              <div><span class="carbon-price">$4.10</span><span class="carbon-unit">/tCO₂</span></div>
+              <div class="carbon-meta"><span class="carbon-src"><a href="https://www.cblmarkets.com/" target="_blank">CBL ↗</a></span></div>
+            </div>
+          </div>
         </div>
+
       </div>
-      <div class="source-note">~ = weekly manual update · CARB weekly xlsx · EPA EMTS · ICE · RGGI</div>
+      <div class="source-note" style="margin-top:6px;">~ = weekly manual update · CARB weekly xlsx · EPA EMTS · ICE · RGGI</div>
     </div>
   </div>
 
