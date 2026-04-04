@@ -262,63 +262,8 @@ window._loadChartJS = function() {
   </div>
 </div>
 
-<!-- ROW 1: Industry News | Energy Business News | TV -->
+<!-- ROW 1: Commodity Prices | Energy Business News | TV -->
 <div class="row-3col">
-
-  <!-- INDUSTRY NEWS -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Top News</div>
-      <div class="panel-sub"><span id="industry-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
-    </div>
-    <div class="panel-body-scroll">
-      <ul class="news-list" id="industry-list">
-        <li class="news-loading">Fetching industry news...</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- ENERGY BUSINESS NEWS -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Energy Business News</div>
-      <div class="panel-sub"><span id="news-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
-    </div>
-    <div class="panel-body-scroll">
-      <ul class="news-list" id="news-list">
-        <li class="news-loading">Fetching live energy headlines...</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- LIVE TV -->
-  <div class="panel panel-tv">
-    <div class="panel-header">
-      <div class="panel-title">Live TV</div>
-      <div class="panel-sub" id="tv-now-channel">Bloomberg Television</div>
-    </div>
-    <div class="tv-wrap" id="tv-player-wrap">
-      <iframe id="tv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-      <div class="tv-overlay-label">● LIVE</div>
-    </div>
-    <div id="tv-local-fallback" style="display:none; padding:20px 12px; text-align:center; background:#0a0f1e;">
-      <div style="color:var(--sandstone);font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">LIVE TV</div>
-      <div style="color:var(--midscale);font-size:10px;margin-bottom:14px;line-height:1.6;">Player loading — or click a channel below to open on YouTube.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;" id="tv-yt-links"></div>
-    </div>
-    <div class="tv-ch-bar">
-      <button class="tv-ch-btn active" onclick="switchTV(this,0)">Bloomberg</button>
-      <button class="tv-ch-btn" onclick="switchTV(this,1)">CNBC</button>
-      <button class="tv-ch-btn" onclick="switchTV(this,2)">Al Jazeera</button>
-      <button class="tv-ch-btn" onclick="switchTV(this,3)">Sky News</button>
-    </div>
-    <div style="font-size:9px;color:var(--midscale);padding:5px 10px;">Auto-muted on load · Click unmute in player · Refresh if stream blank</div>
-  </div>
-
-</div>
-
-<!-- ROW 2: Commodity Prices | Forward Curve -->
-<div class="row-comm-curve">
 
   <!-- COMMODITY PRICES -->
   <div class="panel">
@@ -368,7 +313,47 @@ window._loadChartJS = function() {
     </div>
   </div>
 
-  <!-- FORWARD CURVE -->
+  <!-- ENERGY BUSINESS NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Energy Business News</div>
+      <div class="panel-sub"><span id="news-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="news-list">
+        <li class="news-loading">Fetching live energy headlines...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- LIVE TV -->
+  <div class="panel panel-tv">
+    <div class="panel-header">
+      <div class="panel-title">Live TV</div>
+      <div class="panel-sub" id="tv-now-channel">Bloomberg Television</div>
+    </div>
+    <div class="tv-wrap" id="tv-player-wrap">
+      <iframe id="tv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="tv-overlay-label">● LIVE</div>
+    </div>
+    <div id="tv-local-fallback" style="display:none; padding:20px 12px; text-align:center; background:#0a0f1e;">
+      <div style="color:var(--sandstone);font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">LIVE TV</div>
+      <div style="color:var(--midscale);font-size:10px;margin-bottom:14px;line-height:1.6;">Player loading — or click a channel below to open on YouTube.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;" id="tv-yt-links"></div>
+    </div>
+    <div class="tv-ch-bar">
+      <button class="tv-ch-btn active" onclick="switchTV(this,0)">Bloomberg</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,1)">CNBC</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,2)">Al Jazeera</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,3)">Sky News</button>
+    </div>
+    <div style="font-size:9px;color:var(--midscale);padding:5px 10px;">Auto-muted on load · Click unmute in player · Refresh if stream blank</div>
+  </div>
+
+</div>
+
+<!-- ROW 2: Forward Curve (full width) -->
+<div class="row-full">
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title">Forward Price Curve</div>
@@ -386,7 +371,6 @@ window._loadChartJS = function() {
     </div>
     <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX December futures · Spot + Dec '26/'27/'28/'29 · Exchange-traded forward prices · Refresh for latest</div>
   </div>
-
 </div>
 
 <!-- EIA WEEKLY FUNDAMENTALS -->
@@ -1125,12 +1109,11 @@ setTimeout(loadTicker, 200);
 setTimeout(loadStocks, 400);
 // Tertiary — deferred
 setTimeout(loadAllNews, 600);
-setTimeout(loadTopNews, 800);
-setTimeout(loadCurve, 1000);
+setTimeout(loadCurve, 800);
 setTimeout(loadEIA, 1200);  // EIA data — cached 6h, no need to rush
 // Stagger refresh intervals
 Dash.stagger([loadCommodities, loadTicker, loadStocks], 60000, 5000);
-Dash.stagger([loadAllNews, loadTopNews], 600000, 5000);
+Dash.stagger([loadAllNews], 600000, 5000);
 // Keep loadCurve on its own long interval
 setTimeout(() => setInterval(loadCurve, 3600000), 15000);
 // EIA refreshes every 6 hours (matches server cache)
