@@ -571,34 +571,44 @@ let oilData = { labels: [], data: [] };
 let gasData = { labels: [], data: [] };
 let activeView = 'oil';
 
-// WTI and HH futures — Spot + Dec strips through Dec 2029
-// Static fallback prices (Python/yfinance as of 2026-03-29) — live fetch overlays on load
+// WTI and HH futures — Spot + quarterly strip (Mar/Jun/Sep/Dec) years 1-2, Dec-only years 3-4
 const OIL_FUTURES = [
-  { sym: 'CL=F',      label: 'Spot',    fallback: 68.99 },
-  { sym: 'CLZ26.NYM', label: 'Dec\'26', fallback: 77.36 },
-  { sym: 'CLZ27.NYM', label: 'Dec\'27', fallback: 71.76 },
-  { sym: 'CLZ28.NYM', label: 'Dec\'28', fallback: 69.32 },
-  { sym: 'CLZ29.NYM', label: 'Dec\'29', fallback: 67.22 },
+  { sym: 'CL=F',      label: 'Spot'    },
+  { sym: 'CLM26.NYM', label: 'Jun\'26' },
+  { sym: 'CLU26.NYM', label: 'Sep\'26' },
+  { sym: 'CLZ26.NYM', label: 'Dec\'26' },
+  { sym: 'CLH27.NYM', label: 'Mar\'27' },
+  { sym: 'CLM27.NYM', label: 'Jun\'27' },
+  { sym: 'CLU27.NYM', label: 'Sep\'27' },
+  { sym: 'CLZ27.NYM', label: 'Dec\'27' },
+  { sym: 'CLZ28.NYM', label: 'Dec\'28' },
+  { sym: 'CLZ29.NYM', label: 'Dec\'29' },
 ];
 const GAS_FUTURES = [
-  { sym: 'NG=F',      label: 'Spot',    fallback: 3.03 },
-  { sym: 'NGZ26.NYM', label: 'Dec\'26', fallback: 4.72 },
-  { sym: 'NGZ27.NYM', label: 'Dec\'27', fallback: 4.70 },
-  { sym: 'NGZ28.NYM', label: 'Dec\'28', fallback: 4.58 },
-  { sym: 'NGZ29.NYM', label: 'Dec\'29', fallback: 4.34 },
+  { sym: 'NG=F',      label: 'Spot'    },
+  { sym: 'NGM26.NYM', label: 'Jun\'26' },
+  { sym: 'NGU26.NYM', label: 'Sep\'26' },
+  { sym: 'NGZ26.NYM', label: 'Dec\'26' },
+  { sym: 'NGH27.NYM', label: 'Mar\'27' },
+  { sym: 'NGM27.NYM', label: 'Jun\'27' },
+  { sym: 'NGU27.NYM', label: 'Sep\'27' },
+  { sym: 'NGZ27.NYM', label: 'Dec\'27' },
+  { sym: 'NGZ28.NYM', label: 'Dec\'28' },
+  { sym: 'NGZ29.NYM', label: 'Dec\'29' },
 ];
 
 async function fetchCurve(contracts) {
-  // Pre-fill with fallbacks so chart always renders all 5 points
-  const merged = contracts.map(c => ({ label: c.label, price: c.fallback, live: false }));
   const results = await Dash.yfBatch(contracts.map(c => c.sym));
-  results.forEach((r, i) => {
-    if (r.price) { merged[i].price = +r.price.toFixed(2); merged[i].live = true; }
-  });
+  const merged = contracts.map((c, i) => ({
+    label:    c.label,
+    price:    results[i]?.price ? +results[i].price.toFixed(2) : null,
+    live:     !!results[i]?.price,
+  }));
   return {
     labels:    merged.map(m => m.label),
-    data:      merged.map(m => m.price),
-    liveCount: merged.filter(m => m.live).length
+    data:      merged.map(m => m.price),   // null = no data, Chart.js skips the point
+    liveCount: merged.filter(m => m.live).length,
+    total:     merged.length,
   };
 }
 
@@ -653,6 +663,7 @@ function renderCurve() {
       pointRadius: 4,
       pointBackgroundColor: '#DCB96E',
       tension: 0.3,
+      spanGaps: false,
       fill: true,
     }]);
   } else if (activeView === 'gas') {
@@ -665,6 +676,7 @@ function renderCurve() {
       pointRadius: 4,
       pointBackgroundColor: '#50AF8C',
       tension: 0.3,
+      spanGaps: false,
       fill: true,
     }]);
   } else {
@@ -705,25 +717,55 @@ function renderCurve() {
   }
 }
 
+function setCurveNotice(type, msg) {
+  // type: 'none' | 'partial' | 'error'
+  let el = document.getElementById('curve-notice');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'curve-notice';
+    const chartWrap = document.querySelector('.chart-wrap');
+    if (chartWrap) chartWrap.parentNode.insertBefore(el, chartWrap);
+  }
+  const styles = {
+    none:    '',
+    partial: 'background:#1a2a1a;border:1px solid #2a5a2a;color:#50AF8C;font-size:10px;padding:4px 10px;border-radius:3px;margin:4px 12px 0;',
+    error:   'background:#1a0a0a;border:1px solid #5a1a1a;color:#C94040;font-size:10px;padding:4px 10px;border-radius:3px;margin:4px 12px 0;',
+  };
+  el.style.cssText = styles[type] || '';
+  el.textContent = msg;
+}
+
+function showCurveError() {
+  const chartWrap = document.querySelector('.chart-wrap');
+  if (chartWrap) {
+    chartWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--midscale);font-size:12px;">Live data unavailable — refresh to retry</div>';
+  }
+}
+
 async function loadCurve() {
   Dash.time.start('energy:loadCurve');
   await window._loadChartJS();
   if (!window.Chart) return;
   document.getElementById('curve-update').textContent = 'Fetching live prices...';
-  // Render immediately with fallback data while live fetch runs
-  oilData = { labels: OIL_FUTURES.map(c=>c.label), data: OIL_FUTURES.map(c=>c.fallback), liveCount: 0 };
-  gasData = { labels: GAS_FUTURES.map(c=>c.label), data: GAS_FUTURES.map(c=>c.fallback), liveCount: 0 };
-  renderCurve();
-  // Now fetch live and update
   const [oil, gas] = await Promise.all([fetchCurve(OIL_FUTURES), fetchCurve(GAS_FUTURES)]);
   oilData = oil;
   gasData = gas;
   const totalLive = oil.liveCount + gas.liveCount;
+  const total     = oil.total + gas.total;
   const t = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-  document.getElementById('curve-update').textContent = totalLive > 0
-    ? `${totalLive}/10 live · ${t} · ~ = static fallback`
-    : `Static fallback · ${t} · Live fetch unavailable`;
-  renderCurve();
+  if (totalLive === 0) {
+    document.getElementById('curve-update').textContent = `Data unavailable · ${t}`;
+    setCurveNotice('error', '✕ Live prices unavailable. Refresh to retry.');
+    showCurveError();
+  } else if (totalLive < total) {
+    document.getElementById('curve-update').textContent = `${totalLive}/${total} live · ${t}`;
+    setCurveNotice('partial', `${total - totalLive} contract(s) returned no price — shown as gaps in curve`);
+    renderCurve();
+  } else {
+    document.getElementById('curve-update').textContent = `${totalLive}/${total} live · ${t}`;
+    setCurveNotice('none', '');
+    renderCurve();
+  }
   Dash.time.end('energy:loadCurve');
 }
 
