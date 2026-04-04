@@ -567,57 +567,72 @@ async function loadCommodities() {
 // FORWARD CURVE
 // =====================
 let curveChart = null;
-let oilData = { labels: [], data: [] };
-let gasData = { labels: [], data: [] };
+let oilData = { points: [], liveCount: 0, total: 0 };
+let gasData = { points: [], liveCount: 0, total: 0 };
 let activeView = 'oil';
 
 // WTI and HH futures — Spot + quarterly strip (Mar/Jun/Sep/Dec) years 1-2, Dec-only years 3-4
+// x = months from today (Apr 2026). Quarterly near-term, annual far-term.
+// Gap between Dec'27→Dec'28 (12mo) is 4× wider than quarterly gaps (3mo) — correct.
 const OIL_FUTURES = [
-  { sym: 'CL=F',      label: 'Spot'    },
-  { sym: 'CLM26.NYM', label: 'Jun\'26' },
-  { sym: 'CLU26.NYM', label: 'Sep\'26' },
-  { sym: 'CLZ26.NYM', label: 'Dec\'26' },
-  { sym: 'CLH27.NYM', label: 'Mar\'27' },
-  { sym: 'CLM27.NYM', label: 'Jun\'27' },
-  { sym: 'CLU27.NYM', label: 'Sep\'27' },
-  { sym: 'CLZ27.NYM', label: 'Dec\'27' },
-  { sym: 'CLZ28.NYM', label: 'Dec\'28' },
-  { sym: 'CLZ29.NYM', label: 'Dec\'29' },
+  { sym: 'CL=F',      label: 'Spot',    x: 0  },
+  { sym: 'CLM26.NYM', label: 'Jun\'26', x: 2  },
+  { sym: 'CLU26.NYM', label: 'Sep\'26', x: 5  },
+  { sym: 'CLZ26.NYM', label: 'Dec\'26', x: 8  },
+  { sym: 'CLH27.NYM', label: 'Mar\'27', x: 11 },
+  { sym: 'CLM27.NYM', label: 'Jun\'27', x: 14 },
+  { sym: 'CLU27.NYM', label: 'Sep\'27', x: 17 },
+  { sym: 'CLZ27.NYM', label: 'Dec\'27', x: 20 },
+  { sym: 'CLZ28.NYM', label: 'Dec\'28', x: 32 },
+  { sym: 'CLZ29.NYM', label: 'Dec\'29', x: 44 },
 ];
 const GAS_FUTURES = [
-  { sym: 'NG=F',      label: 'Spot'    },
-  { sym: 'NGM26.NYM', label: 'Jun\'26' },
-  { sym: 'NGU26.NYM', label: 'Sep\'26' },
-  { sym: 'NGZ26.NYM', label: 'Dec\'26' },
-  { sym: 'NGH27.NYM', label: 'Mar\'27' },
-  { sym: 'NGM27.NYM', label: 'Jun\'27' },
-  { sym: 'NGU27.NYM', label: 'Sep\'27' },
-  { sym: 'NGZ27.NYM', label: 'Dec\'27' },
-  { sym: 'NGZ28.NYM', label: 'Dec\'28' },
-  { sym: 'NGZ29.NYM', label: 'Dec\'29' },
+  { sym: 'NG=F',      label: 'Spot',    x: 0  },
+  { sym: 'NGM26.NYM', label: 'Jun\'26', x: 2  },
+  { sym: 'NGU26.NYM', label: 'Sep\'26', x: 5  },
+  { sym: 'NGZ26.NYM', label: 'Dec\'26', x: 8  },
+  { sym: 'NGH27.NYM', label: 'Mar\'27', x: 11 },
+  { sym: 'NGM27.NYM', label: 'Jun\'27', x: 14 },
+  { sym: 'NGU27.NYM', label: 'Sep\'27', x: 17 },
+  { sym: 'NGZ27.NYM', label: 'Dec\'27', x: 20 },
+  { sym: 'NGZ28.NYM', label: 'Dec\'28', x: 32 },
+  { sym: 'NGZ29.NYM', label: 'Dec\'29', x: 44 },
 ];
+// Shared label map: monthOffset → label string (used by x-axis tick callback)
+const CURVE_LABEL_MAP = Object.fromEntries(OIL_FUTURES.map(c => [c.x, c.label]));
 
 async function fetchCurve(contracts) {
   const results = await Dash.yfBatch(contracts.map(c => c.sym));
   const merged = contracts.map((c, i) => ({
-    label:    c.label,
-    price:    results[i]?.price ? +results[i].price.toFixed(2) : null,
-    live:     !!results[i]?.price,
+    x:     c.x,
+    label: c.label,
+    price: results[i]?.price ? +results[i].price.toFixed(2) : null,
+    live:  !!results[i]?.price,
   }));
   return {
-    labels:    merged.map(m => m.label),
-    data:      merged.map(m => m.price),   // null = no data, Chart.js skips the point
+    // {x, y} format for linear scale — null prices are omitted (gaps in curve)
+    points:    merged.filter(m => m.price !== null).map(m => ({ x: m.x, y: m.price })),
     liveCount: merged.filter(m => m.live).length,
     total:     merged.length,
   };
 }
 
-function buildChart(labels, datasets) {
+function fmtPrice(v, decimals) {
+  return '$' + (+v).toFixed(decimals);
+}
+
+function buildChart(datasets, yTitle, y2Title) {
   const ctx = document.getElementById('curveChart').getContext('2d');
   if (curveChart) curveChart.destroy();
+
+  // Tick positions = union of all x values across datasets
+  const xVals = [...new Set(datasets.flatMap(d => (d.data || []).map(p => p.x)))].sort((a,b)=>a-b);
+  const decimalsY  = yTitle  === '$/MMBtu' ? 3 : 2;
+  const decimalsY2 = y2Title === '$/MMBtu' ? 3 : 2;
+
   curveChart = new Chart(ctx, {
     type: 'line',
-    data: { labels, datasets },
+    data: { datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -630,16 +645,40 @@ function buildChart(labels, datasets) {
           borderWidth: 1,
           titleColor: '#DCB96E',
           bodyColor: '#D2DCE6',
+          callbacks: {
+            title: items => CURVE_LABEL_MAP[items[0]?.parsed?.x] || '',
+            label: item => {
+              const dec = item.datasetIndex === 0 ? decimalsY : decimalsY2;
+              return ` ${item.dataset.label}: ${fmtPrice(item.parsed.y, dec)}`;
+            }
+          }
         }
       },
       scales: {
-        x: { ticks: { color: '#737887', font: { size: 10 } }, grid: { color: '#1a2040' } },
-        y: {
-          ticks: { color: '#737887', font: { size: 10 }, callback: v => '$' + v },
-          grid: { color: '#1a2040' },
-          title: { display: true, text: '$/bbl', color: '#737887', font: { size: 10 } }
+        x: {
+          type: 'linear',
+          min: 0,
+          max: 44,
+          afterBuildTicks: axis => { axis.ticks = xVals.map(v => ({ value: v })); },
+          ticks: {
+            color: '#737887',
+            font: { size: 10 },
+            maxRotation: 0,
+            callback: v => CURVE_LABEL_MAP[v] || '',
+          },
+          grid: { color: '#1a2040' }
         },
-        y2: { display: false }
+        y: {
+          ticks: { color: '#737887', font: { size: 10 }, callback: v => fmtPrice(v, decimalsY) },
+          grid: { color: '#1a2040' },
+          title: { display: true, text: yTitle || '$/bbl', color: '#737887', font: { size: 10 } }
+        },
+        y2: y2Title ? {
+          display: true, position: 'right',
+          ticks: { color: '#50AF8C', font: { size: 10 }, callback: v => fmtPrice(v, decimalsY2) },
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: y2Title, color: '#50AF8C', font: { size: 10 } }
+        } : { display: false }
       }
     }
   });
@@ -654,9 +693,9 @@ function showCurve(view, btn) {
 
 function renderCurve() {
   if (activeView === 'oil') {
-    buildChart(oilData.labels, [{
+    buildChart([{
       label: 'WTI Crude ($/bbl)',
-      data: oilData.data,
+      data: oilData.points,
       borderColor: '#DCB96E',
       backgroundColor: 'rgba(220,185,110,0.08)',
       borderWidth: 2,
@@ -665,11 +704,11 @@ function renderCurve() {
       tension: 0.3,
       spanGaps: false,
       fill: true,
-    }]);
+    }], '$/bbl');
   } else if (activeView === 'gas') {
-    buildChart(gasData.labels, [{
+    buildChart([{
       label: 'Henry Hub ($/MMBtu)',
-      data: gasData.data,
+      data: gasData.points,
       borderColor: '#50AF8C',
       backgroundColor: 'rgba(80,175,140,0.08)',
       borderWidth: 2,
@@ -678,42 +717,32 @@ function renderCurve() {
       tension: 0.3,
       spanGaps: false,
       fill: true,
-    }]);
+    }], '$/MMBtu');
   } else {
-    // Both — need merged labels
-    const allLabels = [...new Set([...oilData.labels, ...gasData.labels])];
-    buildChart(allLabels, [
+    buildChart([
       {
         label: 'WTI Crude ($/bbl)',
-        data: oilData.data,
+        data: oilData.points,
         borderColor: '#DCB96E',
         backgroundColor: 'rgba(220,185,110,0.0)',
         borderWidth: 2,
         pointRadius: 3,
         tension: 0.3,
+        spanGaps: false,
         yAxisID: 'y',
       },
       {
         label: 'Henry Hub ($/MMBtu)',
-        data: gasData.data,
+        data: gasData.points,
         borderColor: '#50AF8C',
         backgroundColor: 'rgba(80,175,140,0.0)',
         borderWidth: 2,
         pointRadius: 3,
         tension: 0.3,
+        spanGaps: false,
         yAxisID: 'y2',
       }
-    ]);
-    // Show dual axes for both
-    if (curveChart) {
-      curveChart.options.scales.y2 = {
-        display: true, position: 'right',
-        ticks: { color: '#50AF8C', font: { size: 10 }, callback: v => '$' + v },
-        grid: { drawOnChartArea: false },
-        title: { display: true, text: '$/MMBtu', color: '#50AF8C', font: { size: 10 } }
-      };
-      curveChart.update();
-    }
+    ], '$/bbl', '$/MMBtu');
   }
 }
 
