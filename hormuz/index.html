@@ -41,19 +41,33 @@
   .breaking-text a { color: var(--white); text-decoration: none; }
   .breaking-text a:hover { text-decoration: underline; }
 
-  /* TICKER */
-  .ticker-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 6px 0; overflow: hidden; }
-  .ticker-wrap { display: flex; animation: ticker-scroll 60s linear infinite; width: max-content; }
-  .ticker-wrap:hover { animation-play-state: paused; }
-  @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 18px; white-space: nowrap; border-right: 1px solid #3a4570; }
-  .ticker-item a { color: var(--white); text-decoration: none; font-weight: 600; font-size: 12px; }
-  .tick-label { color: var(--midscale); font-size: 10px; }
-  .tick-price { color: var(--bluegrey); font-size: 12px; }
-  .tick-unit  { color: var(--midscale); font-size: 10px; }
-  .tick-up    { color: var(--turquoise); font-size: 11px; }
-  .tick-down  { color: var(--maroon);    font-size: 11px; }
-  .tick-flat  { color: var(--midscale);  font-size: 11px; }
+  /* VERCEL TOOLBAR SUPPRESSION */
+  vercel-toolbar, #__vercel_toolbar, #vercel-live-feedback, #vercel-speed-insights { display: none !important; }
+
+  /* MARKET INDICATORS BAR */
+  .mkt-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 5px 20px; display: flex; align-items: center; gap: 0; overflow: hidden; }
+  .mkt-bar-label { background: var(--glacier); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 8px; white-space: nowrap; letter-spacing: 1px; margin-right: 16px; flex-shrink: 0; }
+  .mkt-indicators { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden; }
+  .mkt-ind-item { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 18px 0 0; white-space: nowrap; }
+  .mkt-ind-item + .mkt-ind-item { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 18px; }
+  .mkt-ind-name  { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .mkt-ind-price { color: var(--white); font-size: 13px; font-weight: 700; }
+  .mkt-ind-chg   { font-size: 10px; font-weight: 600; }
+  .s-up   { color: var(--turquoise); }
+  .s-down { color: var(--maroon); }
+  .s-flat { color: var(--midscale); }
+
+  /* OIL MARKET STRIP */
+  .strip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; padding: 6px 12px 8px; }
+  .strip-card { background: var(--dark-card); border-radius: 3px; padding: 9px 12px; border-left: 3px solid var(--glacier); }
+  .strip-card.brent  { border-left-color: var(--sandstone); }
+  .strip-card.wti    { border-left-color: #DCB96E; }
+  .strip-card.spread { border-left-color: var(--midscale); }
+  .strip-card.gold   { border-left-color: var(--turquoise); }
+  .strip-label { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .strip-value { font-size: 18px; font-weight: 700; color: var(--white); }
+  .strip-unit  { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .strip-chg   { font-size: 11px; margin-top: 3px; font-weight: 600; }
 
   /* GRIDS */
   .row-map-tv { display: grid; grid-template-columns: 2fr 1fr; gap: 2px; padding: 2px; height: 500px; }
@@ -236,11 +250,45 @@
   <div class="breaking-text" id="breaking-text">Loading conflict headlines...</div>
 </div>
 
-<!-- TICKER -->
-<div class="ticker-bar">
-  <div class="ticker-wrap" id="ticker-wrap">
-    <div class="ticker-item" style="color:var(--midscale)">Loading market data...</div>
+<!-- MARKET INDICATORS -->
+<div class="mkt-bar">
+  <div class="mkt-bar-label">MARKETS</div>
+  <div class="mkt-indicators" id="mkt-indicators">Loading...</div>
+</div>
+
+<!-- OIL MARKET CONTEXT STRIP -->
+<div class="panel" style="margin:2px 2px 0;border-radius:0;padding-bottom:2px;">
+  <div class="panel-header" style="padding-bottom:4px;">
+    <div class="panel-title">Oil Market <span id="strip-badge" style="font-size:9px;font-weight:400;color:var(--midscale);margin-left:6px;">Live Prices</span></div>
+    <div class="panel-sub" style="gap:10px;">
+      <span style="font-size:9px;color:var(--midscale);">Yahoo Finance · 60s refresh</span>
+      <span id="strip-update">Loading...</span>
+      <button class="refresh-btn" onclick="loadCommodities()" title="Refresh">↻</button>
+    </div>
   </div>
+  <div class="strip-grid">
+    <div class="strip-card brent">
+      <div class="strip-label">Brent Crude</div>
+      <div><span class="strip-value" id="strip-brent">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-brent-chg">-- d/d</div>
+    </div>
+    <div class="strip-card wti">
+      <div class="strip-label">WTI Crude</div>
+      <div><span class="strip-value" id="strip-wti">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-wti-chg">-- d/d</div>
+    </div>
+    <div class="strip-card spread">
+      <div class="strip-label">Brent–WTI Spread</div>
+      <div><span class="strip-value" id="strip-spread">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-spread-sub">premium</div>
+    </div>
+    <div class="strip-card gold">
+      <div class="strip-label">Gold (Risk-Off)</div>
+      <div><span class="strip-value" id="strip-gold">--</span><span class="strip-unit">$/oz</span></div>
+      <div class="strip-chg s-flat" id="strip-gold-chg">-- d/d</div>
+    </div>
+  </div>
+  <div class="source-note" style="padding:0 12px 6px;margin-top:2px;border-top:none;">Source: Yahoo Finance (BZ=F · CL=F · GC=F) · Spread computed live</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════
@@ -437,38 +485,66 @@ async function loadCommodities() {
     document.getElementById('spread-sub').className = 'flat';
   }
   document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  // Update oil market context strip
+  if (brent.price != null) {
+    document.getElementById('strip-brent').textContent = fmt(brent.price, 2);
+    const sc = document.getElementById('strip-brent-chg');
+    sc.textContent = fmtChg(brent.chg, 2) + ' d/d';
+    sc.className = `strip-chg ${cls(brent.chg)}`;
+  }
+  if (wti.price != null) {
+    document.getElementById('strip-wti').textContent = fmt(wti.price, 2);
+    const wc = document.getElementById('strip-wti-chg');
+    wc.textContent = fmtChg(wti.chg, 2) + ' d/d';
+    wc.className = `strip-chg ${cls(wti.chg)}`;
+  }
+  if (brent.price && wti.price) {
+    const sp = brent.price - wti.price;
+    document.getElementById('strip-spread').textContent = fmt(Math.abs(sp), 2);
+    const ss = document.getElementById('strip-spread-sub');
+    ss.textContent = sp >= 0 ? 'Brent premium to WTI' : 'WTI premium to Brent';
+    ss.className = 'strip-chg s-flat';
+  }
+  if (gold.price != null) {
+    document.getElementById('strip-gold').textContent = fmt(gold.price, 0);
+    const gc = document.getElementById('strip-gold-chg');
+    gc.textContent = fmtChg(gold.chg, 0) + ' d/d';
+    gc.className = `strip-chg ${cls(gold.chg)}`;
+  }
+  document.getElementById('strip-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   Dash.time.end('hormuz:loadCommodities');
 }
 
 // =====================
-// TICKER
+// MARKET INDICATORS
 // =====================
-const TICKER_ITEMS = [
-  { sym: 'BZ=F',  label: 'Brent',    unit: '$/bbl' },
-  { sym: 'CL=F',  label: 'WTI',      unit: '$/bbl' },
-  { sym: 'TTF=F', label: 'TTF Gas',  unit: '€/MWh' },
-  { sym: 'RB=F',  label: 'RBOB',     unit: '$/gal' },
-  { sym: 'GC=F',  label: 'Gold',     unit: '$/oz'  },
-  { sym: 'HG=F',  label: 'Copper',   unit: '$/lb'  },
+const MKT_INDS = [
+  { sym: '^GSPC', label: 'S&P 500', fmt: 'idx' },
+  { sym: '^DJI',  label: 'Dow',     fmt: 'idx' },
+  { sym: '^IXIC', label: 'Nasdaq',  fmt: 'idx' },
+  { sym: '^TNX',  label: '10Y UST', fmt: 'yld' },
 ];
-async function loadTicker() {
-  Dash.time.start('hormuz:loadTicker');
-  const results = await yfBatch(TICKER_ITEMS.map(c => c.sym));
-  const items = results.map((r, i) => {
-    const c = TICKER_ITEMS[i];
-    const p = r.price ? fmt(r.price, i === 3 ? 3 : i === 4 ? 0 : 2) : '—';
-    const pct = fmtPct(r.pct);
-    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
-    return `<div class="ticker-item">
-      <span class="tick-label">${c.label}</span>
-      <span class="tick-price">${p}</span>
-      <span class="tick-unit">${c.unit}</span>
-      <span class="${tcls}">${pct}</span>
-    </div>`;
-  });
-  const all = items.filter(Boolean);
-  document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(all.join('') + all.join(''));
-  Dash.time.end('hormuz:loadTicker');
+async function loadMarketIndicators() {
+  const results = await yfBatch(MKT_INDS.map(m => m.sym));
+  const html = MKT_INDS.map((m, i) => {
+    const r = results[i] || {};
+    const isYld = m.fmt === 'yld';
+    const p = r.price != null
+      ? (isYld ? r.price.toFixed(2) + '%' : r.price.toLocaleString('en-US', { maximumFractionDigits: 0 }))
+      : '—';
+    const pct = r.pct != null ? fmtPct(r.pct) : '';
+    const bps = isYld && r.pct != null ? (r.pct > 0 ? '+' : '') + Math.round(r.pct * 10) + 'bp' : '';
+    const chgLabel = isYld ? bps : pct;
+    const c = r.pct > 0 ? 's-up' : r.pct < 0 ? 's-down' : 's-flat';
+    return `<span class="mkt-ind-item">` +
+      `<span class="mkt-ind-name">${m.label}</span>` +
+      `<span class="mkt-ind-price">${p}</span>` +
+      (chgLabel ? `<span class="mkt-ind-chg ${c}">${chgLabel}</span>` : '') +
+      `</span>`;
+  }).join('');
+  const el = document.getElementById('mkt-indicators');
+  if (el) el.innerHTML = DOMPurify.sanitize(html);
 }
 
 // =====================
@@ -577,7 +653,13 @@ const layers = {};
 let loadFIRMS, loadACLED;
 
 function initMap() {
-  map = L.map('map', { center: [26.5, 54.5], zoom: 5, zoomControl: true, attributionControl: true });
+  const REGION_BOUNDS = L.latLngBounds([[19, 44], [33, 68]]);
+  map = L.map('map', {
+    center: [26.5, 54.5], zoom: 6,
+    minZoom: 5, maxZoom: 12,
+    maxBounds: REGION_BOUNDS, maxBoundsViscosity: 0.9,
+    zoomControl: true, attributionControl: true
+  });
 
   // ESRI World Street Map — always English labels regardless of region (Arabic/Farsi suppressed)
   // Dark filter applied via CSS to .leaflet-tile-pane only
@@ -1003,8 +1085,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function refreshAll() {
   const btn = document.querySelector('.refresh-all-btn');
   if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
+  loadMarketIndicators();
   await loadCommodities(); await sleep(200);
-  loadWarNews(); loadShippingNews(); loadTicker();
+  loadWarNews(); loadShippingNews();
   if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
 }
 
@@ -1013,18 +1096,18 @@ async function refreshAll() {
 // =====================
 function init() {
   initTV();
-  // Above-the-fold first: price strip + map shell
+  // Above-the-fold first: market bar + price strip + map shell
+  loadMarketIndicators();
   loadCommodities();
   initMap();
   // Defer below-the-fold content
-  setTimeout(loadTicker, 200);
   setTimeout(loadFIRMS, 400);
   setTimeout(loadACLED, 600);
   setTimeout(loadWarNews, 800);
   setTimeout(loadShippingNews, 1000);
 
   // Staggered refresh intervals via Dash.stagger
-  Dash.stagger([loadCommodities, loadTicker], 60000, 5000);
+  Dash.stagger([loadMarketIndicators, loadCommodities], 60000, 5000);
   Dash.stagger([loadFIRMS], 1800000, 0);
   Dash.stagger([loadACLED], 3600000, 0);
   Dash.stagger([loadWarNews, loadShippingNews], 600000, 5000);
