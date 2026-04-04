@@ -326,9 +326,7 @@
       <div class="map-divider"></div>
       <label class="map-toggle"><input type="checkbox" id="tog-cities" checked onchange="toggleLayer('cities',this.checked)"> ● Cities</label>
       <div class="map-divider"></div>
-      <label class="map-toggle"><input type="checkbox" id="tog-firms" checked onchange="toggleFIRMS(this.checked)"> <span style="color:#FF6600">🔥</span> GDACS Fires</label>
-      <div class="map-divider"></div>
-      <label class="map-toggle"><input type="checkbox" id="tog-acled" checked onchange="toggleACLED(this.checked)"> <span style="color:#E040FB">⚔</span> Conflict Events</label>
+      <label class="map-toggle"><input type="checkbox" id="tog-firms" checked onchange="toggleFIRMS(this.checked)"> <span style="color:#FF6600">🔥</span> Thermal Hotspots</label>
     </div>
   </div>
 
@@ -650,7 +648,7 @@ function switchTV(btn, idx) {
 // =====================
 let map;
 const layers = {};
-let loadFIRMS, loadACLED;
+let loadFIRMS;
 
 function initMap() {
   const REGION_BOUNDS = L.latLngBounds([[19, 44], [33, 68]]);
@@ -947,119 +945,54 @@ function initMap() {
   layers.term = termGroup;
   termGroup.addTo(map);
 
-  // ── GDACS Wildfire/Disaster Hotspots — no API key required ──
-  // Source: UN OCHA Global Disaster Alert and Coordination System
+  // ── NASA FIRMS Thermal Hotspots (VIIRS/SNPP) ──
+  // Source: NASA Fire Information for Resource Management System
+  // Detects oil fires, facility strikes, industrial thermal anomalies — Gulf region
   const firmsGroup = L.layerGroup();
   layers.firms = firmsGroup;
 
-  function _renderGDACS(events) {
+  function _renderFIRMS(hotspots) {
     firmsGroup.clearLayers();
-    events.forEach(e => {
-      const alert = (e.alert || '').toLowerCase();
-      const color = alert === 'red' ? '#FF2200' : alert === 'orange' ? '#FF6600' : '#FF9900';
-      const r = alert === 'red' ? 8 : alert === 'orange' ? 6 : 4;
-      const sev = e.severity ? `${Math.round(e.severity).toLocaleString()} ${e.severityUnit}` : 'n/a';
-      L.circleMarker([e.lat, e.lon], {
+    hotspots.forEach(h => {
+      const conf = (h.confidence || '').toLowerCase();
+      // High confidence = bright red; nominal = orange; low = yellow
+      const color = conf === 'high' ? '#FF2200' : conf === 'nominal' ? '#FF6600' : '#FF9900';
+      const r     = conf === 'high' ? 7 : conf === 'nominal' ? 5 : 3;
+      const frp   = h.frp != null ? `${h.frp} MW` : 'n/a';
+      const bright= h.brightness != null ? `${Math.round(h.brightness)} K` : 'n/a';
+      const dt    = h.datetime ? h.datetime.slice(0, 16).replace('T', ' ') + ' UTC' : '';
+      L.circleMarker([h.lat, h.lon], {
         radius: r, color, fillColor: color, fillOpacity: 0.88, weight: 0.5
       })
       .bindTooltip(
-        `<div class="map-tip-title">🔥 ${e.name || 'Wildfire'}</div>` +
-        `<div class="map-tip-body">GDACS · ${e.country || ''}<br>` +
-        `Alert: <b style="color:${color}">${e.alert || 'Green'}</b> · Area: ${sev}<br>` +
-        `Since: ${(e.fromDate || '').slice(0,10)}</div>`,
+        `<div class="map-tip-title">🔥 Thermal Hotspot</div>` +
+        `<div class="map-tip-body">NASA FIRMS · VIIRS/SNPP<br>` +
+        `Confidence: <b style="color:${color}">${h.confidence || '?'}</b><br>` +
+        `Brightness: ${bright} · FRP: ${frp}<br>` +
+        `${dt}</div>`,
         {sticky: true, maxWidth: 240}
       )
       .addTo(firmsGroup);
     });
-    const n = events.length;
+    const n = hotspots.length;
     document.getElementById('map-status').textContent =
-      `GDACS · ${n} fire event${n !== 1 ? 's' : ''} · Gulf & Middle East`;
+      `NASA FIRMS · ${n} thermal hotspot${n !== 1 ? 's' : ''} · 48h · Gulf region`;
   }
 
   loadFIRMS = async function() {
     Dash.time.start('hormuz:loadFIRMS');
     try {
-      const cKey = 'gdacs_gulf';
-      try {
-        const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
-        if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 30 * 60000) {
-          _renderGDACS(cached.data); Dash.time.end('hormuz:loadFIRMS'); return;
-        }
-      } catch {}
-      const r = await cachedFetch('/api/gdacs', 1800000);
-      if (!r.ok) { Dash.time.end('hormuz:loadFIRMS'); return; }
+      const r = await cachedFetch('/api/fires', 900000); // 15-min cache
+      if (!r.ok) { console.warn('FIRMS: HTTP', r.status); Dash.time.end('hormuz:loadFIRMS'); return; }
       const payload = await r.json();
-      if (!Array.isArray(payload)) { console.warn('GDACS:', payload.error || payload); Dash.time.end('hormuz:loadFIRMS'); return; }
-      try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
-      _renderGDACS(payload);
-    } catch (e) { console.warn('GDACS fires:', e.message); }
+      if (!Array.isArray(payload)) { console.warn('FIRMS:', payload.error || payload); Dash.time.end('hormuz:loadFIRMS'); return; }
+      _renderFIRMS(payload);
+    } catch (e) { console.warn('FIRMS:', e.message); }
     Dash.time.end('hormuz:loadFIRMS');
   };
 
   firmsGroup.addTo(map);
 
-  // ── ACLED Armed Conflict Events ──
-  // Source: Armed Conflict Location & Event Data (acleddata.com) — free API key required
-  // Set ACLED_KEY and ACLED_EMAIL in Vercel env vars to activate
-  const acledGroup = L.layerGroup();
-  layers.acled = acledGroup;
-
-  const ACLED_COLOR = {
-    'Battles':                       '#FF4444',
-    'Explosions/Remote violence':    '#FF6600',
-    'Violence against civilians':    '#A855F7',
-    'Protests':                      '#F59E0B',
-    'Riots':                         '#F59E0B',
-    'Strategic developments':        '#38BDF8',
-  };
-
-  function _renderACLED(events) {
-    acledGroup.clearLayers();
-    events.forEach(e => {
-      const color = ACLED_COLOR[e.type] || '#737887';
-      const r = e.fatalities > 50 ? 10 : e.fatalities > 10 ? 7 : e.fatalities > 0 ? 5 : 3;
-      L.circleMarker([e.lat, e.lon], {
-        radius: r, color, fillColor: color, fillOpacity: 0.75, weight: 1
-      })
-      .bindTooltip(
-        `<div class="map-tip-title">⚔ ${e.type}</div>` +
-        `<div class="map-tip-body"><b>${e.subtype}</b><br>` +
-        `${e.location}, ${e.country} · ${e.date}<br>` +
-        `${e.actor1}${e.actor2 ? ' vs ' + e.actor2 : ''}<br>` +
-        `Fatalities: <b style="color:${e.fatalities > 0 ? '#FF4444' : '#aaa'}">${e.fatalities}</b><br>` +
-        `<span style="font-size:10px;color:#aaa">${(e.notes || '').slice(0, 120)}${e.notes && e.notes.length > 120 ? '…' : ''}</span></div>`,
-        {sticky: true, maxWidth: 260}
-      )
-      .addTo(acledGroup);
-    });
-    console.log(`ACLED: ${events.length} conflict events loaded`);
-  }
-
-  loadACLED = async function() {
-    Dash.time.start('hormuz:loadACLED');
-    try {
-      const cKey = 'acled_gulf';
-      try {
-        const cached = JSON.parse(localStorage.getItem(cKey) || 'null');
-        if (cached && Array.isArray(cached.data) && Date.now() - cached.ts < 60 * 60000) {
-          _renderACLED(cached.data); Dash.time.end('hormuz:loadACLED'); return;
-        }
-      } catch {}
-      const r = await cachedFetch('/api/acled', 3600000);
-      if (!r.ok) { Dash.time.end('hormuz:loadACLED'); return; }
-      const payload = await r.json();
-      if (!Array.isArray(payload)) {
-        // NO_ACLED_CREDS is expected until key is set — silent fail
-        if (payload.error !== 'NO_ACLED_CREDS') console.warn('ACLED:', payload.error || payload);
-        Dash.time.end('hormuz:loadACLED'); return;
-      }
-      try { localStorage.setItem(cKey, JSON.stringify({ ts: Date.now(), data: payload })); } catch {}
-      _renderACLED(payload);
-    } catch (e) { console.warn('ACLED:', e.message); }
-    Dash.time.end('hormuz:loadACLED');
-  };
-
-  acledGroup.addTo(map);
 
   // Resize fix
   setTimeout(() => map.invalidateSize(), 300);
@@ -1073,9 +1006,6 @@ function toggleLayer(name, show) {
 }
 function toggleFIRMS(show) {
   toggleLayer('firms', show);
-}
-function toggleACLED(show) {
-  toggleLayer('acled', show);
 }
 
 // =====================
@@ -1102,14 +1032,12 @@ function init() {
   initMap();
   // Defer below-the-fold content
   setTimeout(loadFIRMS, 400);
-  setTimeout(loadACLED, 600);
-  setTimeout(loadWarNews, 800);
-  setTimeout(loadShippingNews, 1000);
+  setTimeout(loadWarNews, 600);
+  setTimeout(loadShippingNews, 800);
 
   // Staggered refresh intervals via Dash.stagger
   Dash.stagger([loadMarketIndicators, loadCommodities], 60000, 5000);
-  Dash.stagger([loadFIRMS], 1800000, 0);
-  Dash.stagger([loadACLED], 3600000, 0);
+  Dash.stagger([loadFIRMS], 900000, 0);          // 15-min — matches /api/fires cache
   Dash.stagger([loadWarNews, loadShippingNews], 600000, 5000);
 }
 init();
