@@ -133,6 +133,17 @@ window._loadChartJS = function() {
   .flat { color: var(--midscale); }
   .source-note { font-size: 9px; color: var(--midscale); margin-top: 10px; border-top: 1px solid #2a3560; padding-top: 6px; }
 
+  /* EIA ELECTRIC POWER STRIP */
+  .eia-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .eia-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid #3a7a3a; }
+  .eia-card.solar  { border-left-color: var(--sandstone); }
+  .eia-card.wind   { border-left-color: var(--glacier); }
+  .eia-card.renew  { border-left-color: var(--turquoise); }
+  .eia-label { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .eia-value { font-size: 18px; font-weight: 700; color: var(--white); }
+  .eia-unit  { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .eia-chg   { font-size: 11px; margin-top: 3px; font-weight: 600; }
+
   /* NEWS */
   .news-list { list-style: none; }
   .news-item { padding: 7px 0; border-bottom: 1px solid #1a2040; display: flex; flex-direction: column; gap: 3px; }
@@ -270,6 +281,36 @@ window._loadChartJS = function() {
   <div class="ticker-wrap" id="ticker-wrap">
     <div class="ticker-item" style="color:var(--midscale)">Loading market data...</div>
   </div>
+</div>
+
+<!-- EIA ELECTRIC POWER BAND -->
+<div class="panel" style="margin:2px 2px 0;border-radius:0;padding-bottom:6px;">
+  <div class="panel-header" style="padding-bottom:4px;">
+    <div class="panel-title">EIA Electric Power <span id="eia-power-badge" style="font-size:9px;font-weight:400;color:var(--midscale);margin-left:6px;">EIA EPM · Loading...</span></div>
+    <div class="panel-sub" style="gap:10px;">
+      <span style="font-size:9px;color:var(--midscale);">Released monthly · ~2mo lag · Cached 24h</span>
+      <span id="eia-power-update">Loading...</span>
+      <button class="refresh-btn" onclick="loadPowerEIA()" title="Refresh">↻</button>
+    </div>
+  </div>
+  <div class="eia-grid" style="margin-top:4px;">
+    <div class="eia-card solar">
+      <div class="eia-label">US Solar Generation</div>
+      <div><span class="eia-value" id="eia-solar">--</span><span class="eia-unit">TWh</span></div>
+      <div class="eia-chg flat" id="eia-solar-chg">-- MoM</div>
+    </div>
+    <div class="eia-card wind">
+      <div class="eia-label">US Wind Generation</div>
+      <div><span class="eia-value" id="eia-wind">--</span><span class="eia-unit">TWh</span></div>
+      <div class="eia-chg flat" id="eia-wind-chg">-- MoM</div>
+    </div>
+    <div class="eia-card renew">
+      <div class="eia-label">Renewables Share of Grid</div>
+      <div><span class="eia-value" id="eia-renew">--</span><span class="eia-unit">%</span></div>
+      <div class="eia-chg flat" id="eia-renew-chg">-- vs prior mo</div>
+    </div>
+  </div>
+  <div class="source-note" style="padding:0 12px 4px;margin-top:6px;border-top:none;">Source: EIA Electric Power Monthly · Solar + Wind + Hydro / Total US Generation · All Sectors</div>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -806,10 +847,56 @@ function switchTV(btn, idx) {
 // REFRESH ALL
 // =====================
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// =====================
+// EIA ELECTRIC POWER
+// =====================
+async function loadPowerEIA() {
+  try {
+    const r = await fetch('/api/eia-power');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    if (d.solar?.value != null) {
+      document.getElementById('eia-solar').textContent = d.solar.value;
+      const sc = document.getElementById('eia-solar-chg');
+      if (d.solar.mom != null) {
+        const m = +d.solar.mom;
+        sc.textContent = `${m > 0 ? '+' : ''}${m}% MoM`;
+        sc.className   = `eia-chg ${m > 0 ? 'up' : m < 0 ? 'down' : 'flat'}`;
+      }
+    }
+    if (d.wind?.value != null) {
+      document.getElementById('eia-wind').textContent = d.wind.value;
+      const wc = document.getElementById('eia-wind-chg');
+      if (d.wind.mom != null) {
+        const m = +d.wind.mom;
+        wc.textContent = `${m > 0 ? '+' : ''}${m}% MoM`;
+        wc.className   = `eia-chg ${m > 0 ? 'up' : m < 0 ? 'down' : 'flat'}`;
+      }
+    }
+    if (d.renewShare != null) {
+      document.getElementById('eia-renew').textContent = d.renewShare;
+      const rc = document.getElementById('eia-renew-chg');
+      if (d.renewSharePrev != null) {
+        const delta = (+d.renewShare - +d.renewSharePrev).toFixed(1);
+        rc.textContent = `${+delta > 0 ? '+' : ''}${delta}pp vs prior mo`;
+        rc.className   = `eia-chg ${+delta > 0 ? 'up' : +delta < 0 ? 'down' : 'flat'}`;
+      }
+    }
+    document.getElementById('eia-power-badge').textContent  = d.period ? `EIA EPM · ${d.period}` : 'EIA EPM';
+    document.getElementById('eia-power-update').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    document.getElementById('eia-power-update').textContent = 'EIA data unavailable';
+    console.warn('loadPowerEIA:', e);
+  }
+}
+
 async function refreshAll() {
   const btn = document.querySelector('.refresh-all-btn');
   if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
   loadMarketIndicators();
+  loadPowerEIA();
   await sleep(200);
   await loadStocks();
   await sleep(300);
@@ -825,6 +912,7 @@ async function refreshAll() {
 // =====================
 initTV();
 loadMarketIndicators();
+setTimeout(loadPowerEIA, 300);
 setTimeout(loadTicker, 200);
 setTimeout(loadStocks, 400);
 setTimeout(loadDataCenterNews, 600);
@@ -834,6 +922,7 @@ setTimeout(loadNuclearNews, 1000);
 // Stagger refresh intervals
 Dash.stagger([loadMarketIndicators, loadTicker, loadStocks], 60000, 5000);
 Dash.stagger([loadDataCenterNews, loadCleantechNews, loadNuclearNews], 600000, 5000);
+Dash.stagger([loadPowerEIA], 86400000, 0); // refresh once per day (24h cache)
 </script>
 </body>
 </html>
