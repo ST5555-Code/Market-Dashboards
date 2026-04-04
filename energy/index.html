@@ -395,28 +395,52 @@ window._loadChartJS = function() {
 
 </div>
 
-<!-- ROW 2: Forward Curve (full width) -->
-<div class="row-full">
+<!-- ROW 2: Forward Curves — WTI (left) | Henry Hub (right) -->
+<div class="row-2col">
+
+  <!-- WTI Crude -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title">Forward Price Curve</div>
-      <div class="panel-sub"><span id="curve-update">Loading 5-year strip...</span><button class="refresh-btn" onclick="loadCurve()" title="Refresh">↻</button></div>
-    </div>
-    <div class="chart-tabs">
-      <button class="chart-tab active" onclick="showCurve('oil', this)">WTI Crude</button>
-      <button class="chart-tab" onclick="showCurve('gas', this)">Henry Hub</button>
-      <button class="chart-tab" onclick="showCurve('both', this)">Both</button>
+      <div class="panel-title">WTI Crude Forward Curve</div>
+      <div class="panel-sub"><span id="curve-update-oil">Loading strip...</span><button class="refresh-btn" onclick="loadCurve()" title="Refresh">↻</button></div>
     </div>
     <div class="chart-wrap">
-      <div class="chart-container">
-        <canvas id="curveChart"></canvas>
-      </div>
+      <div class="chart-container"><canvas id="curveChartOil"></canvas></div>
     </div>
-    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX December futures · Spot + Dec '26/'27/'28/'29 · Exchange-traded forward prices · Refresh for latest</div>
+    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX · Spot + Quarterly '26-'27 + Dec '28/'29</div>
   </div>
+
+  <!-- Henry Hub -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Henry Hub Forward Curve</div>
+      <div class="panel-sub"><span id="curve-update-gas">Loading strip...</span></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-container"><canvas id="curveChartGas"></canvas></div>
+    </div>
+    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX · Spot + Quarterly '26-'27 + Dec '28/'29</div>
+  </div>
+
 </div>
 
-<!-- ROW 3: Earnings | M&A | Financing -->
+<!-- ROW 3: E&P Stocks (moved up) -->
+<div class="row-full">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">E&amp;P &amp; Energy Stocks — Live</div>
+      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
+    </div>
+    <div id="stocks-grid" class="stocks-grid">
+      <div class="stocks-col" style="text-align:center;padding:20px;color:var(--midscale);grid-column:1/-1;">Loading stock data...</div>
+    </div>
+    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance Direct · Refreshes every 60s · ~ = approx</div>
+  </div>
+
+</div>
+
+<!-- ROW 4: Earnings | M&A | Financing -->
 <div class="row-3col">
 
   <!-- EARNINGS CALENDAR -->
@@ -487,22 +511,6 @@ window._loadChartJS = function() {
       </ul>
       <div class="source-note">Source: Moelis Upstream Weekly, Mar 20 2026 · Bloomberg · S&P Capital IQ</div>
     </div>
-  </div>
-
-</div>
-
-<!-- ROW 4: E&P Stocks -->
-<div class="row-full">
-
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">E&P &amp; Energy Stocks — Live</div>
-      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
-    </div>
-    <div id="stocks-grid" class="stocks-grid">
-      <div class="stocks-col" style="text-align:center;padding:20px;color:var(--midscale);grid-column:1/-1;">Loading stock data...</div>
-    </div>
-    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance Direct · Refreshes every 60s · ~ = approx</div>
   </div>
 
 </div>
@@ -582,7 +590,8 @@ async function loadCommodities() {
 // =====================
 // FORWARD CURVE
 // =====================
-let curveChart = null;
+let curveChartOil = null;
+let curveChartGas = null;
 let oilData = { points: [], liveCount: 0, total: 0 };
 
 // Inline Chart.js plugin — draws price labels above each data point
@@ -610,7 +619,6 @@ const priceLabelsPlugin = {
   }
 };
 let gasData = { points: [], liveCount: 0, total: 0 };
-let activeView = 'oil';
 
 // WTI and HH futures — Spot + quarterly strip (Mar/Jun/Sep/Dec) years 1-2, Dec-only years 3-4
 // x = months from today (Apr 2026). Quarterly near-term, annual far-term.
@@ -662,16 +670,18 @@ function fmtPrice(v, decimals) {
   return '$' + (+v).toFixed(decimals);
 }
 
-function buildChart(datasets, yTitle, y2Title) {
-  const ctx = document.getElementById('curveChart').getContext('2d');
-  if (curveChart) curveChart.destroy();
+function buildChart(canvasId, datasets, yTitle, y2Title) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
 
   // Tick positions = union of all x values across datasets
   const xVals = [...new Set(datasets.flatMap(d => (d.data || []).map(p => p.x)))].sort((a,b)=>a-b);
   const decimalsY  = yTitle  === '$/MMBtu' ? 3 : 2;
   const decimalsY2 = y2Title === '$/MMBtu' ? 3 : 2;
 
-  curveChart = new Chart(ctx, {
+  return new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { datasets },
     plugins: [priceLabelsPlugin],
@@ -727,115 +737,62 @@ function buildChart(datasets, yTitle, y2Title) {
   });
 }
 
-function showCurve(view, btn) {
-  activeView = view;
-  document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderCurve();
-}
-
 function renderCurve() {
-  if (activeView === 'oil') {
-    buildChart([{
-      label: 'WTI Crude ($/bbl)',
-      data: oilData.points,
-      borderColor: '#DCB96E',
-      backgroundColor: 'rgba(220,185,110,0.08)',
-      borderWidth: 2,
-      pointRadius: 4,
-      pointBackgroundColor: '#DCB96E',
-      tension: 0.3,
-      spanGaps: false,
-      fill: true,
-    }], '$/bbl');
-  } else if (activeView === 'gas') {
-    buildChart([{
-      label: 'Henry Hub ($/MMBtu)',
-      data: gasData.points,
-      borderColor: '#50AF8C',
-      backgroundColor: 'rgba(80,175,140,0.08)',
-      borderWidth: 2,
-      pointRadius: 4,
-      pointBackgroundColor: '#50AF8C',
-      tension: 0.3,
-      spanGaps: false,
-      fill: true,
-    }], '$/MMBtu');
-  } else {
-    buildChart([
-      {
-        label: 'WTI Crude ($/bbl)',
-        data: oilData.points,
-        borderColor: '#DCB96E',
-        backgroundColor: 'rgba(220,185,110,0.0)',
-        borderWidth: 2,
-        pointRadius: 3,
-        tension: 0.3,
-        spanGaps: false,
-        yAxisID: 'y',
-      },
-      {
-        label: 'Henry Hub ($/MMBtu)',
-        data: gasData.points,
-        borderColor: '#50AF8C',
-        backgroundColor: 'rgba(80,175,140,0.0)',
-        borderWidth: 2,
-        pointRadius: 3,
-        tension: 0.3,
-        spanGaps: false,
-        yAxisID: 'y2',
-      }
-    ], '$/bbl', '$/MMBtu');
-  }
-}
-
-function setCurveNotice(type, msg) {
-  // type: 'none' | 'partial' | 'error'
-  let el = document.getElementById('curve-notice');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'curve-notice';
-    const chartWrap = document.querySelector('.chart-wrap');
-    if (chartWrap) chartWrap.parentNode.insertBefore(el, chartWrap);
-  }
-  const styles = {
-    none:    '',
-    partial: 'background:#1a2a1a;border:1px solid #2a5a2a;color:#50AF8C;font-size:10px;padding:4px 10px;border-radius:3px;margin:4px 12px 0;',
-    error:   'background:#1a0a0a;border:1px solid #5a1a1a;color:#C94040;font-size:10px;padding:4px 10px;border-radius:3px;margin:4px 12px 0;',
-  };
-  el.style.cssText = styles[type] || '';
-  el.textContent = msg;
+  curveChartOil = buildChart('curveChartOil', [{
+    label: 'WTI Crude ($/bbl)',
+    data: oilData.points,
+    borderColor: '#DCB96E',
+    backgroundColor: 'rgba(220,185,110,0.08)',
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#DCB96E',
+    tension: 0.3,
+    spanGaps: false,
+    fill: true,
+  }], '$/bbl');
+  curveChartGas = buildChart('curveChartGas', [{
+    label: 'Henry Hub ($/MMBtu)',
+    data: gasData.points,
+    borderColor: '#50AF8C',
+    backgroundColor: 'rgba(80,175,140,0.08)',
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#50AF8C',
+    tension: 0.3,
+    spanGaps: false,
+    fill: true,
+  }], '$/MMBtu');
 }
 
 function showCurveError() {
-  const chartWrap = document.querySelector('.chart-wrap');
-  if (chartWrap) {
-    chartWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--midscale);font-size:12px;">Live data unavailable — refresh to retry</div>';
-  }
+  const errMsg = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--midscale);font-size:12px;">Live data unavailable — refresh to retry</div>';
+  ['curveChartOil','curveChartGas'].forEach(id => {
+    const wrap = document.getElementById(id)?.closest('.chart-wrap');
+    if (wrap) wrap.innerHTML = errMsg;
+  });
 }
 
 async function loadCurve() {
   Dash.time.start('energy:loadCurve');
   await window._loadChartJS();
   if (!window.Chart) return;
-  document.getElementById('curve-update').textContent = 'Fetching live prices...';
+  document.getElementById('curve-update-oil').textContent = 'Fetching...';
+  document.getElementById('curve-update-gas').textContent = 'Fetching...';
   const [oil, gas] = await Promise.all([fetchCurve(OIL_FUTURES), fetchCurve(GAS_FUTURES)]);
   oilData = oil;
   gasData = gas;
-  const totalLive = oil.liveCount + gas.liveCount;
-  const total     = oil.total + gas.total;
   const t = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
-  if (totalLive === 0) {
-    document.getElementById('curve-update').textContent = `Data unavailable · ${t}`;
-    setCurveNotice('error', '✕ Live prices unavailable. Refresh to retry.');
+  const oilStatus = oil.liveCount === 0 ? `Unavailable · ${t}` :
+    oil.liveCount < oil.total ? `${oil.liveCount}/${oil.total} live · ${t}` :
+    `${oil.liveCount}/${oil.total} live · ${t}`;
+  const gasStatus = gas.liveCount === 0 ? `Unavailable · ${t}` :
+    gas.liveCount < gas.total ? `${gas.liveCount}/${gas.total} live · ${t}` :
+    `${gas.liveCount}/${gas.total} live · ${t}`;
+  document.getElementById('curve-update-oil').textContent = oilStatus;
+  document.getElementById('curve-update-gas').textContent = gasStatus;
+  if (oil.liveCount === 0 && gas.liveCount === 0) {
     showCurveError();
-  } else if (totalLive < total) {
-    document.getElementById('curve-update').textContent = `${totalLive}/${total} live · ${t}`;
-    setCurveNotice('partial', `${total - totalLive} contract(s) returned no price — shown as gaps in curve`);
-    renderCurve();
   } else {
-    document.getElementById('curve-update').textContent = `${totalLive}/${total} live · ${t}`;
-    setCurveNotice('none', '');
     renderCurve();
   }
   Dash.time.end('energy:loadCurve');
