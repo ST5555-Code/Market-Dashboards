@@ -262,6 +262,33 @@ window._loadChartJS = function() {
   </div>
 </div>
 
+<!-- EIA WEEKLY FUNDAMENTALS BAND -->
+<div class="panel" style="margin:2px 2px 0;border-radius:0;">
+  <div class="panel-header">
+    <div class="panel-title">EIA Weekly Fundamentals</div>
+    <div class="panel-sub"><span id="eia-update">Loading...</span><button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button></div>
+  </div>
+  <span class="eia-badge" id="eia-report-badge">EIA WPSR · Loading...</span>
+  <div class="eia-grid">
+    <div class="eia-card stocks">
+      <div class="eia-label">US Crude Stocks (ex-SPR)</div>
+      <div><span class="eia-value" id="eia-stocks">--</span><span class="eia-unit">MMBbl</span></div>
+      <div class="eia-chg flat" id="eia-stocks-chg">-- w/w</div>
+    </div>
+    <div class="eia-card prod">
+      <div class="eia-label">US Crude Production</div>
+      <div><span class="eia-value" id="eia-prod">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-prod-sub">Weekly estimate</div>
+    </div>
+    <div class="eia-card refine">
+      <div class="eia-label">Refinery Crude Inputs</div>
+      <div><span class="eia-value" id="eia-refine">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-refine-sub">Net weekly inputs</div>
+    </div>
+  </div>
+  <div class="source-note" style="margin-top:8px;">Source: EIA Weekly Petroleum Status Report (WPSR) · Released every Wednesday ~10:30am ET · Cached 6h</div>
+</div>
+
 <!-- ROW 1: Commodity Prices | Energy Business News | TV -->
 <div class="row-3col">
 
@@ -371,33 +398,6 @@ window._loadChartJS = function() {
     </div>
     <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX December futures · Spot + Dec '26/'27/'28/'29 · Exchange-traded forward prices · Refresh for latest</div>
   </div>
-</div>
-
-<!-- EIA WEEKLY FUNDAMENTALS -->
-<div class="panel" style="margin:0 0 10px 0;">
-  <div class="panel-header">
-    <div class="panel-title">EIA Weekly Fundamentals</div>
-    <div class="panel-sub"><span id="eia-update">Loading...</span><button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button></div>
-  </div>
-  <span class="eia-badge" id="eia-report-badge">EIA WPSR · Loading...</span>
-  <div class="eia-grid">
-    <div class="eia-card stocks">
-      <div class="eia-label">US Crude Stocks (ex-SPR)</div>
-      <div><span class="eia-value" id="eia-stocks">--</span><span class="eia-unit">MMBbl</span></div>
-      <div class="eia-chg flat" id="eia-stocks-chg">-- w/w</div>
-    </div>
-    <div class="eia-card prod">
-      <div class="eia-label">US Crude Production</div>
-      <div><span class="eia-value" id="eia-prod">--</span><span class="eia-unit">MBbl/d</span></div>
-      <div class="eia-chg flat" id="eia-prod-sub">Weekly estimate</div>
-    </div>
-    <div class="eia-card refine">
-      <div class="eia-label">Refinery Crude Inputs</div>
-      <div><span class="eia-value" id="eia-refine">--</span><span class="eia-unit">MBbl/d</span></div>
-      <div class="eia-chg flat" id="eia-refine-sub">Net weekly inputs</div>
-    </div>
-  </div>
-  <div class="source-note" style="margin-top:8px;">Source: EIA Weekly Petroleum Status Report (WPSR) · Released every Wednesday ~10:30am ET · Cached 6h</div>
 </div>
 
 <!-- ROW 3: Earnings | M&A | Financing -->
@@ -568,6 +568,31 @@ async function loadCommodities() {
 // =====================
 let curveChart = null;
 let oilData = { points: [], liveCount: 0, total: 0 };
+
+// Inline Chart.js plugin — draws price labels above each data point
+const priceLabelsPlugin = {
+  id: 'priceLabels',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((dataset, dsIdx) => {
+      const meta = chart.getDatasetMeta(dsIdx);
+      const isMmBtu = dataset.label && dataset.label.includes('MMBtu');
+      const dec = isMmBtu ? 3 : 2;
+      meta.data.forEach((element, idx) => {
+        const pt = dataset.data[idx];
+        if (!pt || pt.y == null) return;
+        const lbl = '$' + (+pt.y).toFixed(dec);
+        ctx.save();
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillStyle = dataset.borderColor || '#DCB96E';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(lbl, element.x, element.y - 8);
+        ctx.restore();
+      });
+    });
+  }
+};
 let gasData = { points: [], liveCount: 0, total: 0 };
 let activeView = 'oil';
 
@@ -633,7 +658,9 @@ function buildChart(datasets, yTitle, y2Title) {
   curveChart = new Chart(ctx, {
     type: 'line',
     data: { datasets },
+    plugins: [priceLabelsPlugin],
     options: {
+      parsing: false,
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
