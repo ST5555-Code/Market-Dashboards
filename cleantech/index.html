@@ -45,12 +45,18 @@ window._loadChartJS = function() {
   .header-meta { font-size: 11px; color: var(--midscale); text-align: right; }
   #clock { color: var(--sandstone); font-weight: 600; }
 
-  /* BREAKING BAR */
-  .breaking-bar { background: #1a3a28; padding: 6px 20px; display: flex; align-items: center; gap: 12px; overflow: hidden; border-bottom: 1px solid #2a5a3a; }
-  .breaking-label { background: var(--sandstone); color: #0F1525; font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; }
-  .breaking-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .breaking-text a { color: var(--white); text-decoration: none; }
-  .breaking-text a:hover { text-decoration: underline; }
+  /* VERCEL TOOLBAR — hide */
+  vercel-toolbar, #__vercel_toolbar, #vercel-live-feedback, #vercel-speed-insights { display: none !important; }
+
+  /* BREAKING BAR — MARKET INDICATORS */
+  .breaking-bar { background: #1a3a28; padding: 6px 20px; display: flex; align-items: center; gap: 16px; overflow: hidden; border-bottom: 1px solid #2a5a3a; }
+  .breaking-label { background: var(--sandstone); color: #0F1525; font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; flex-shrink: 0; }
+  .mkt-indicators { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden; }
+  .mkt-ind-item { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 18px 0 0; white-space: nowrap; }
+  .mkt-ind-item + .mkt-ind-item { border-left: 1px solid rgba(255,255,255,0.25); padding-left: 18px; }
+  .mkt-ind-name  { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .mkt-ind-price { color: var(--white); font-size: 13px; font-weight: 700; }
+  .mkt-ind-chg   { font-size: 10px; font-weight: 600; }
 
   /* TICKER */
   .ticker-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 6px 0; overflow: hidden; }
@@ -146,29 +152,38 @@ window._loadChartJS = function() {
   .tag-carbon  { background: #1a3a28; color: var(--sandstone); }
   .news-loading { color: var(--midscale); font-size: 12px; padding: 20px 0; text-align: center; }
 
-  /* STOCKS TABLE */
-  .stocks-table { width: 100%; border-collapse: collapse; }
-  .stocks-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 8px; text-align: right; border-bottom: 1px solid #2a3560; white-space: nowrap; }
-  .stocks-table th:first-child, .stocks-table th:nth-child(2) { text-align: left; }
-  .stocks-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; text-align: right; white-space: nowrap; }
-  .stocks-table td:first-child, .stocks-table td:nth-child(2) { text-align: left; }
-  .stocks-table tr:last-child td { border-bottom: none; }
-  .stocks-table tr:hover { background: #1a2040; }
-  .s-ticker { font-weight: 700; color: var(--glacier); }
-  .s-name   { color: var(--midscale); font-size: 10px; }
-  .s-price  { color: var(--white); font-weight: 600; }
-  .s-up     { color: var(--turquoise); }
-  .s-down   { color: var(--maroon); }
-  .s-flat   { color: var(--midscale); }
-  .s-sector { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; }
-  .sec-solar   { background: #2a2010; color: var(--sandstone); }
-  .sec-wind    { background: #1a2d3d; color: var(--glacier); }
-  .sec-nuclear { background: #1a1a3d; color: #9a85d0; }
-  .sec-storage { background: #1a3028; color: var(--turquoise); }
-  .sec-h2      { background: #25203a; color: #b085d0; }
-  .sec-power   { background: #2a2a10; color: #d0c085; }
-  .sec-mineral { background: #3a1a1a; color: #d08585; }
-  .sec-etf     { background: #2a2a2a; color: var(--midscale); }
+  /* STOCKS — THREE-COLUMN LAYOUT */
+  .stocks-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 1px; padding: 0 0 8px; background: #1a2040; }
+  @media (max-width: 900px) { .stocks-grid { grid-template-columns: 1fr; } }
+  .stocks-col { background: var(--bg); padding: 0 14px; }
+  .stocks-col table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .stocks-col col.c-ticker { width: 14%; }
+  .stocks-col col.c-name   { width: 38%; }
+  .stocks-col col.c-price  { width: 14%; }
+  .stocks-col col.c-pct    { width: 14%; }
+  .stocks-col col.c-range  { width: 20%; }
+  .tbl-header td { padding: 6px 0 4px; font-size: 8px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #2a3560; }
+  .tbl-header td.r { text-align: right; }
+  /* Sector group dividers */
+  .sector-divider td { padding: 7px 0 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #2a3560; }
+  .sector-divider.sec-etf     td { color: var(--midscale); }
+  .sector-divider.sec-power   td { color: #d0c085; }
+  .sector-divider.sec-solar   td { color: var(--sandstone); }
+  .sector-divider.sec-wind    td { color: var(--glacier); }
+  .sector-divider.sec-nuclear td { color: #9a85d0; }
+  .sector-divider.sec-h2      td { color: #b085d0; }
+  .sector-divider.sec-mineral td { color: #d08585; }
+  /* Data rows */
+  .stock-row td { padding: 3px 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid #131929; }
+  .stock-row:last-child td, .stock-row:hover td { background: #1a2040; border-bottom-color: #1a2040; }
+  .stock-row .sr-ticker { font-weight: 700; }
+  .stock-row .sr-name   { color: var(--midscale); font-size: 10px; padding-left: 4px; }
+  .stock-row .sr-price  { color: var(--white); font-weight: 600; text-align: right; }
+  .stock-row .sr-pct    { text-align: right; font-size: 10px; }
+  .stock-row .sr-range  { text-align: right; font-size: 9px; color: var(--midscale); }
+  .s-up   { color: var(--turquoise); }
+  .s-down { color: var(--maroon); }
+  .s-flat { color: var(--midscale); }
 
   /* DEAL TABLE */
   .deal-table { width: 100%; border-collapse: collapse; }
@@ -244,10 +259,10 @@ window._loadChartJS = function() {
   </div>
 </div>
 
-<!-- BREAKING BAR -->
+<!-- BREAKING BAR — MARKET INDICATORS -->
 <div class="breaking-bar">
-  <div class="breaking-label">LATEST</div>
-  <div class="breaking-text" id="breaking-text">Loading cleantech headlines...</div>
+  <div class="breaking-label">MARKETS</div>
+  <div class="mkt-indicators" id="mkt-indicators">Loading...</div>
 </div>
 
 <!-- TICKER -->
@@ -262,14 +277,14 @@ window._loadChartJS = function() {
 ═══════════════════════════════════════════ -->
 <div class="row-3col">
 
-  <!-- TOP NEWS -->
+  <!-- DATA CENTER NEWS -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title">Top News</div>
-      <div class="panel-sub"><span id="top-update">Loading...</span><button class="refresh-btn" onclick="loadTopNews()" title="Refresh">↻</button></div>
+      <div class="panel-title">Data Center &amp; AI Infrastructure</div>
+      <div class="panel-sub"><span id="dc-update">Loading...</span><button class="refresh-btn" onclick="loadDataCenterNews()" title="Refresh">↻</button></div>
     </div>
     <div class="panel-body-scroll">
-      <ul class="news-list" id="top-list"><li class="news-loading">Fetching headlines...</li></ul>
+      <ul class="news-list" id="dc-list"><li class="news-loading">Fetching headlines...</li></ul>
     </div>
   </div>
 
@@ -306,15 +321,15 @@ window._loadChartJS = function() {
 </div><!-- /row 1 -->
 
 <!-- ═══════════════════════════════════════════
-     ROW 2: Carbon & Credits | Battery & Critical Minerals
+     ROW 2: Carbon & Credit Markets (full width)
 ═══════════════════════════════════════════ -->
-<div class="row-comm-curve">
+<div class="row-full">
 
   <!-- CARBON & CREDIT MARKETS -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title">Carbon &amp; Credit Markets</div>
-      <div class="panel-sub">As of Mar 22, 2026 · CARB · EPA · ICE</div>
+      <div class="panel-sub"><span style="font-size:9px;color:var(--midscale);">CARB · EPA · ICE · ~ = weekly manual</span><button class="refresh-btn" title="Static data — update manually">↻</button></div>
     </div>
     <div class="panel-body">
       <div class="carbon-section-hdr">Compliance Carbon</div>
@@ -368,87 +383,30 @@ window._loadChartJS = function() {
           <div class="carbon-meta"><span class="carbon-src"><a href="https://www.cblmarkets.com/" target="_blank">CBL ↗</a></span></div>
         </div>
       </div>
-      <div class="source-note">~ = weekly manual update · Live = CARB weekly xlsx · Static: EPA EMTS, ICE, RGGI</div>
-    </div>
-  </div>
-
-  <!-- BATTERY & CRITICAL MINERALS -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Battery &amp; Critical Minerals</div>
-      <div class="panel-sub"><span id="metals-update">Loading...</span><button class="refresh-btn" onclick="loadMetals()" title="Refresh">↻</button></div>
-    </div>
-    <div class="panel-body">
-      <div style="font-size:9px;color:var(--midscale);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Live Futures (Yahoo Finance)</div>
-      <div class="comm-grid">
-        <div class="comm-card metal-live" id="card-copper">
-          <div class="comm-name">Copper</div>
-          <div><span class="comm-price" id="m-hgf">—</span><span class="comm-unit">$/lb</span></div>
-          <div class="comm-change"><span id="m-hgf-chg" class="flat">—</span><span id="m-hgf-pct" class="flat">—</span></div>
-          <div class="comm-sub">COMEX HG=F</div>
-        </div>
-        <div class="comm-card metal-live" id="card-nickel">
-          <div class="comm-name">Nickel</div>
-          <div><span class="comm-price" id="m-nif">—</span><span class="comm-unit">$/MT</span></div>
-          <div class="comm-change"><span id="m-nif-chg" class="flat">—</span><span id="m-nif-pct" class="flat">—</span></div>
-          <div class="comm-sub">LME NI=F</div>
-        </div>
-        <div class="comm-card metal-live" id="card-aluminum">
-          <div class="comm-name">Aluminum</div>
-          <div><span class="comm-price" id="m-alif">—</span><span class="comm-unit">$/MT</span></div>
-          <div class="comm-change"><span id="m-alif-chg" class="flat">—</span><span id="m-alif-pct" class="flat">—</span></div>
-          <div class="comm-sub">LME ALI=F</div>
-        </div>
-        <div class="comm-card metal-proxy" id="card-alb">
-          <div class="comm-name">Lithium <span style="font-size:9px;opacity:.6">(ALB proxy)</span></div>
-          <div><span class="comm-price" id="m-alb">—</span><span class="comm-unit">$</span></div>
-          <div class="comm-change"><span id="m-alb-chg" class="flat">—</span><span id="m-alb-pct" class="flat">—</span></div>
-          <div class="comm-sub">Albemarle Corp</div>
-        </div>
-        <div class="comm-card metal-proxy" id="card-mp">
-          <div class="comm-name">Rare Earth <span style="font-size:9px;opacity:.6">(MP proxy)</span></div>
-          <div><span class="comm-price" id="m-mp">—</span><span class="comm-unit">$</span></div>
-          <div class="comm-change"><span id="m-mp-chg" class="flat">—</span><span id="m-mp-pct" class="flat">—</span></div>
-          <div class="comm-sub">MP Materials</div>
-        </div>
-        <div class="comm-card metal-proxy">
-          <div class="comm-name">Uranium <span style="font-size:9px;opacity:.6">(CCJ proxy)</span></div>
-          <div><span class="comm-price" id="m-ccj">—</span><span class="comm-unit">$</span></div>
-          <div class="comm-change"><span id="m-ccj-chg" class="flat">—</span><span id="m-ccj-pct" class="flat">—</span></div>
-          <div class="comm-sub">Cameco Corp</div>
-        </div>
-      </div>
-      <div style="font-size:9px;color:var(--midscale);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Static Spot (LME / Fastmarkets ~)</div>
-      <div class="comm-grid">
-        <div class="comm-card metal-static">
-          <div class="comm-name">Lithium Carbonate</div>
-          <div><span class="comm-price">$9.80</span><span class="comm-unit">$/kg</span></div>
-          <div class="comm-change"><span class="flat">Spot · LME ~</span></div>
-        </div>
-        <div class="comm-card metal-static">
-          <div class="comm-name">Cobalt</div>
-          <div><span class="comm-price">$13.90</span><span class="comm-unit">$/lb</span></div>
-          <div class="comm-change"><span class="flat">LME Cash ~</span></div>
-        </div>
-        <div class="comm-card metal-static">
-          <div class="comm-name">Polysilicon</div>
-          <div><span class="comm-price">$5.60</span><span class="comm-unit">$/kg</span></div>
-          <div class="comm-change"><span class="flat">China spot ~</span></div>
-        </div>
-        <div class="comm-card metal-static">
-          <div class="comm-name">Uranium Oxide</div>
-          <div><span class="comm-price">$68.50</span><span class="comm-unit">$/lb U₃O₈</span></div>
-          <div class="comm-change"><span class="flat">UxC spot ~</span></div>
-        </div>
-      </div>
-      <div class="source-note">Live: Yahoo Finance (HG=F, NI=F, ALI=F, ALB, MP, CCJ) · Static: LME, Fastmarkets, UxC · ~ = approx</div>
+      <div class="source-note">~ = weekly manual update · CARB weekly xlsx · EPA EMTS · ICE · RGGI</div>
     </div>
   </div>
 
 </div><!-- /row 2 -->
 
 <!-- ═══════════════════════════════════════════
-     ROW 3: M&A | Nuclear | Green Finance
+     ROW 3: Clean Energy & Transition Stocks
+═══════════════════════════════════════════ -->
+<div class="row-full">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Clean Energy &amp; Transition Equities — Live</div>
+      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
+    </div>
+    <div id="stocks-grid" class="stocks-grid">
+      <div class="stocks-col" style="text-align:center;padding:20px;color:var(--midscale);grid-column:1/-1;">Loading stock data...</div>
+    </div>
+    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance · Refreshes every 60s · ~ = approx</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ROW 4: M&A | Nuclear | Green Finance
 ═══════════════════════════════════════════ -->
 <div class="row-3col">
 
@@ -513,36 +471,10 @@ window._loadChartJS = function() {
 
 </div><!-- /row 3 -->
 
-<!-- ═══════════════════════════════════════════
-     ROW 4: Clean Energy Stocks
-═══════════════════════════════════════════ -->
-<div class="row-full">
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Clean Energy &amp; Transition Equities — Live</div>
-      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="stocks-table">
-        <thead>
-          <tr>
-            <th>Ticker</th><th>Company</th><th>Sector</th>
-            <th>Price</th><th>Chg</th><th>% Chg</th><th>52W Hi</th><th>52W Lo</th>
-          </tr>
-        </thead>
-        <tbody id="stocks-body">
-          <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--midscale)">Loading stock data...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance · Refreshes every 60s · ~ = approx</div>
-  </div>
-</div>
-
 <!-- FOOTER -->
 <div class="footer">
-  <div>Live: Yahoo Finance · Carbon Brief · CleanTechnica · World Nuclear News · Reuters · rss2json</div>
-  <div>Static: CARB LCFS Mar 22 2026 · EPA EMTS · LME · UxC · ~ = estimated</div>
+  <div>Live: Yahoo Finance · Datacenter Dynamics · The Register · CleanTechnica · World Nuclear News · rss2json</div>
+  <div>Static: CARB LCFS Mar 22 2026 · EPA EMTS · ICE · RGGI · ~ = estimated</div>
 </div>
 
 <script>
@@ -573,131 +505,145 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // =====================
-// BATTERY METALS
+// MARKET INDICATORS
 // =====================
-const METALS = [
-  { sym: 'HG=F',  elP: 'm-hgf',  elC: 'm-hgf-chg',  elPct: 'm-hgf-pct',  dec: 3 },
-  { sym: 'NI=F',  elP: 'm-nif',  elC: 'm-nif-chg',  elPct: 'm-nif-pct',  dec: 0 },
-  { sym: 'ALI=F', elP: 'm-alif', elC: 'm-alif-chg', elPct: 'm-alif-pct', dec: 0 },
-  { sym: 'ALB',   elP: 'm-alb',  elC: 'm-alb-chg',  elPct: 'm-alb-pct',  dec: 2 },
-  { sym: 'MP',    elP: 'm-mp',   elC: 'm-mp-chg',   elPct: 'm-mp-pct',   dec: 2 },
-  { sym: 'CCJ',   elP: 'm-ccj',  elC: 'm-ccj-chg',  elPct: 'm-ccj-pct',  dec: 2 },
+const MKT_INDS = [
+  { sym: '^GSPC', label: 'S&P 500',  fmt: 'idx' },
+  { sym: '^DJI',  label: 'Dow',      fmt: 'idx' },
+  { sym: '^IXIC', label: 'Nasdaq',   fmt: 'idx' },
+  { sym: '^TNX',  label: '10Y UST',  fmt: 'yld' },
 ];
-async function loadMetals() {
-  Dash.time.start('cleantech:loadMetals');
-  const results = await Dash.yfBatch(METALS.map(m => m.sym));
-  results.forEach((r, i) => {
-    if (!r.ok) return;
-    const m = METALS[i];
-    document.getElementById(m.elP).textContent   = fmt(r.price, m.dec);
-    const ec = document.getElementById(m.elC);
-    const ep = document.getElementById(m.elPct);
-    ec.textContent = fmtChg(r.chg, m.dec); ec.className = cls(r.chg);
-    ep.textContent = fmtPct(r.pct);        ep.className = cls(r.pct);
-  });
-  document.getElementById('metals-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  Dash.time.end('cleantech:loadMetals');
+async function loadMarketIndicators() {
+  const results = await Dash.yfBatch(MKT_INDS.map(m => m.sym));
+  const html = MKT_INDS.map((m, i) => {
+    const r = results[i] || {};
+    const isYld = m.fmt === 'yld';
+    const p = r.price != null
+      ? (isYld ? r.price.toFixed(2) + '%' : r.price.toLocaleString('en-US', { maximumFractionDigits: 0 }))
+      : '—';
+    const pct = r.pct != null ? fmtPct(r.pct) : '';
+    const bps = isYld && r.pct != null ? (r.pct > 0 ? '+' : '') + Math.round(r.pct * 10) + 'bp' : '';
+    const chgLabel = isYld ? bps : pct;
+    const c = r.pct > 0 ? 's-up' : r.pct < 0 ? 's-down' : 's-flat';
+    return `<span class="mkt-ind-item">` +
+      `<span class="mkt-ind-name">${m.label}</span>` +
+      `<span class="mkt-ind-price">${p}</span>` +
+      (chgLabel ? `<span class="mkt-ind-chg ${c}">${chgLabel}</span>` : '') +
+      `</span>`;
+  }).join('');
+  const el = document.getElementById('mkt-indicators');
+  if (el) el.innerHTML = DOMPurify.sanitize(html);
 }
 
 // =====================
-// CLEAN ENERGY STOCKS
+// CLEAN ENERGY STOCKS — 3-COL GRID
 // =====================
 const STOCKS = [
-  { sym: 'ICLN', name: 'iShares Clean Energy ETF',  sector: 'etf'     },
-  { sym: 'QCLN', name: 'First Trust Clean Energy',   sector: 'etf'     },
-  { sym: 'NEE',  name: 'NextEra Energy',             sector: 'power'   },
-  { sym: 'CEG',  name: 'Constellation Energy',       sector: 'nuclear' },
-  { sym: 'VST',  name: 'Vistra Energy',              sector: 'nuclear' },
-  { sym: 'AES',  name: 'AES Corporation',            sector: 'power'   },
-  { sym: 'FSLR', name: 'First Solar',                sector: 'solar'   },
-  { sym: 'ENPH', name: 'Enphase Energy',             sector: 'solar'   },
-  { sym: 'BEP',  name: 'Brookfield Renewable',       sector: 'wind'    },
-  { sym: 'CWEN', name: 'Clearway Energy',            sector: 'wind'    },
-  { sym: 'NNE',  name: 'Nano Nuclear Energy',        sector: 'nuclear' },
-  { sym: 'SMR',  name: 'NuScale Power',              sector: 'nuclear' },
-  { sym: 'OKLO', name: 'Oklo',                       sector: 'nuclear' },
-  { sym: 'BE',   name: 'Bloom Energy',               sector: 'h2'      },
-  { sym: 'PLUG', name: 'Plug Power',                 sector: 'h2'      },
-  { sym: 'ALB',  name: 'Albemarle (Lithium)',        sector: 'mineral' },
-  { sym: 'MP',   name: 'MP Materials (Rare Earth)',  sector: 'mineral' },
-  { sym: 'CCJ',  name: 'Cameco (Uranium)',           sector: 'nuclear' },
+  { sym: 'ICLN', name: 'iShares Clean Energy ETF', sector: 'etf'     },
+  { sym: 'QCLN', name: 'First Trust Clean Energy',  sector: 'etf'     },
+  { sym: 'NEE',  name: 'NextEra Energy',            sector: 'power'   },
+  { sym: 'AES',  name: 'AES Corporation',           sector: 'power'   },
+  { sym: 'FSLR', name: 'First Solar',               sector: 'solar'   },
+  { sym: 'ENPH', name: 'Enphase Energy',            sector: 'solar'   },
+  { sym: 'ARRY', name: 'Array Technologies',        sector: 'solar'   },
+  { sym: 'BEP',  name: 'Brookfield Renewable',      sector: 'wind'    },
+  { sym: 'CWEN', name: 'Clearway Energy',           sector: 'wind'    },
+  { sym: 'BEPC', name: 'Brookfield RE Corp',        sector: 'wind'    },
+  { sym: 'CEG',  name: 'Constellation Energy',      sector: 'nuclear' },
+  { sym: 'VST',  name: 'Vistra Energy',             sector: 'nuclear' },
+  { sym: 'CCJ',  name: 'Cameco',                    sector: 'nuclear' },
+  { sym: 'NNE',  name: 'Nano Nuclear Energy',       sector: 'nuclear' },
+  { sym: 'SMR',  name: 'NuScale Power',             sector: 'nuclear' },
+  { sym: 'OKLO', name: 'Oklo',                      sector: 'nuclear' },
+  { sym: 'BE',   name: 'Bloom Energy',              sector: 'h2'      },
+  { sym: 'PLUG', name: 'Plug Power',                sector: 'h2'      },
+  { sym: 'ALB',  name: 'Albemarle',                 sector: 'mineral' },
+  { sym: 'MP',   name: 'MP Materials',              sector: 'mineral' },
 ];
-const SECTOR_LABELS = {
-  solar:   ['sec-solar',   'Solar'],
-  wind:    ['sec-wind',    'Wind'],
-  nuclear: ['sec-nuclear', 'Nuclear'],
-  storage: ['sec-storage', 'Storage'],
-  h2:      ['sec-h2',      'H2/Fuel Cell'],
-  power:   ['sec-power',   'Power'],
-  mineral: ['sec-mineral', 'Minerals'],
-  etf:     ['sec-etf',     'ETF'],
+const CT_LEFT_SECTORS   = ['etf', 'power'];
+const CT_MIDDLE_SECTORS = ['solar', 'wind'];
+const CT_RIGHT_SECTORS  = ['nuclear', 'h2', 'mineral'];
+const SECTOR_META = {
+  etf:     { cls: 'sec-etf',     label: 'ETFs' },
+  power:   { cls: 'sec-power',   label: 'Power / Utilities' },
+  solar:   { cls: 'sec-solar',   label: 'Solar' },
+  wind:    { cls: 'sec-wind',    label: 'Wind' },
+  nuclear: { cls: 'sec-nuclear', label: 'Nuclear' },
+  h2:      { cls: 'sec-h2',      label: 'Hydrogen / Fuel Cell' },
+  mineral: { cls: 'sec-mineral', label: 'Critical Minerals' },
 };
+
+function buildColHTML(sectors, stocks, resultMap) {
+  let html = `<table>
+    <colgroup>
+      <col class="c-ticker"><col class="c-name"><col class="c-price"><col class="c-pct"><col class="c-range">
+    </colgroup>
+    <tr class="tbl-header">
+      <td>Ticker</td><td></td>
+      <td class="r">Price</td>
+      <td class="r">Day %</td>
+      <td class="r">52W H/L</td>
+    </tr>`;
+  sectors.forEach(sec => {
+    const m = SECTOR_META[sec];
+    const items = stocks.filter(s => s.sector === sec);
+    if (!items.length) return;
+    html += `<tr class="sector-divider ${m.cls}"><td colspan="5">${m.label}</td></tr>`;
+    items.forEach(s => {
+      const r = resultMap[s.sym] || {};
+      const p  = r.price  ? '$' + fmt(r.price)     : '—';
+      const pct = fmtPct(r.pct);
+      const hi = r.high52 ? '$' + fmt(r.high52, 0) : '—';
+      const lo = r.low52  ? '$' + fmt(r.low52,  0) : '—';
+      html += `<tr class="stock-row">
+        <td class="sr-ticker"><a href="https://finance.yahoo.com/quote/${s.sym}" target="_blank" style="color:var(--glacier);text-decoration:none;">${s.sym}</a></td>
+        <td class="sr-name">${s.name}</td>
+        <td class="sr-price">${p}</td>
+        <td class="sr-pct ${sCls(r.pct)}">${pct}</td>
+        <td class="sr-range">${hi}&#8202;/&#8202;${lo}</td>
+      </tr>`;
+    });
+  });
+  html += '</table>';
+  return html;
+}
+
 async function loadStocks() {
   Dash.time.start('cleantech:loadStocks');
   const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
-  const tbody = document.getElementById('stocks-body');
-  tbody.innerHTML = '';
-  results.forEach((r, i) => {
-    const s = STOCKS[i];
-    const [secCls, secLabel] = SECTOR_LABELS[s.sector] || ['sec-etf','—'];
-    const tr = document.createElement('tr');
-    tr.innerHTML = DOMPurify.sanitize(`
-      <td><span class="s-ticker">${s.sym}</span></td>
-      <td><span class="s-name">${s.name}</span></td>
-      <td><span class="s-sector ${secCls}">${secLabel}</span></td>
-      <td class="s-price">${r.price ? '$'+fmt(r.price) : '—'}</td>
-      <td class="${sCls(r.chg)}">${fmtChg(r.chg)}</td>
-      <td class="${sCls(r.pct)}">${fmtPct(r.pct)}</td>
-      <td class="s-flat">${r.high52 ? '$'+fmt(r.high52) : '—'}</td>
-      <td class="s-flat">${r.low52  ? '$'+fmt(r.low52)  : '—'}</td>`);
-    tbody.appendChild(tr);
-  });
-  document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const resultMap = {};
+  results.forEach((r, i) => { resultMap[STOCKS[i].sym] = r; });
+  const grid = document.getElementById('stocks-grid');
+  grid.innerHTML = DOMPurify.sanitize(
+    '<div class="stocks-col">' + buildColHTML(CT_LEFT_SECTORS,   STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(CT_MIDDLE_SECTORS, STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(CT_RIGHT_SECTORS,  STOCKS, resultMap) + '</div>',
+    { ADD_ATTR: ['target'] }
+  );
+  document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
   Dash.time.end('cleantech:loadStocks');
 }
 
 // =====================
-// TICKER
+// TICKER — stocks only
 // =====================
-const TICKER_METALS = [
-  { sym: 'HG=F',  label: 'Copper',   unit: '$/lb' },
-  { sym: 'NI=F',  label: 'Nickel',   unit: '$/MT' },
-  { sym: 'ALI=F', label: 'Aluminum', unit: '$/MT' },
-];
-const TICKER_STOCKS = ['ICLN','NEE','CEG','VST','FSLR','ENPH','BEP','NNE','SMR','OKLO','BE','ALB','CCJ'];
+const TICKER_STOCKS = ['ICLN','QCLN','NEE','AES','CEG','VST','FSLR','ENPH','ARRY','BEP','CWEN','NNE','SMR','OKLO','CCJ','BE','PLUG','ALB','MP'];
 
 async function loadTicker() {
   Dash.time.start('cleantech:loadTicker');
-  const metalResults = await Dash.yfBatch(TICKER_METALS.map(c => c.sym));
-  const stockResults = await Promise.all(TICKER_STOCKS.map(s => yf(s)));
-
-  const metalItems = metalResults.map((r, i) => {
-    const c = TICKER_METALS[i];
-    const p = r.price ? fmt(r.price, 2) : '—';
-    const pct = fmtPct(r.pct);
-    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
-    return `<div class="ticker-item">
-      <span class="tick-label">${c.label}</span>
-      <span class="tick-price">$${p}</span>
-      <span class="tick-unit">${c.unit}</span>
-      <span class="${tcls}">${pct}</span>
-    </div>`;
-  });
-
-  const stockItems = stockResults.map((r, i) => {
+  const results = await Dash.yfBatch(TICKER_STOCKS);
+  const items = results.map((r, i) => {
     const sym = TICKER_STOCKS[i];
-    const p = r.price ? '$'+fmt(r.price) : '—';
-    const pct = fmtPct(r.pct);
-    const tcls = r.pct > 0 ? 'tick-up' : r.pct < 0 ? 'tick-down' : 'tick-flat';
+    const p = r?.price ? '$' + fmt(r.price) : '—';
+    const pct = fmtPct(r?.pct);
+    const tcls = r?.pct > 0 ? 'tick-up' : r?.pct < 0 ? 'tick-down' : 'tick-flat';
     return `<div class="ticker-item">
       <a href="https://finance.yahoo.com/quote/${sym}" target="_blank">${sym}</a>
       <span class="tick-price">${p}</span>
       <span class="${tcls}">${pct}</span>
     </div>`;
   });
-
-  const all = [...metalItems, ...stockItems];
-  document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(all.join('') + all.join(''), { ADD_ATTR: ['target'] });
+  document.getElementById('ticker-wrap').innerHTML = DOMPurify.sanitize(items.join('') + items.join(''), { ADD_ATTR: ['target'] });
   Dash.time.end('cleantech:loadTicker');
 }
 
@@ -720,6 +666,13 @@ const NUC_FEEDS = [
   { url: 'https://www.world-nuclear-news.org/rss',       name: 'World Nuclear News' },
   { url: 'https://www.powermag.com/nuclear/feed/',       name: 'Power Magazine' },
 ];
+const DC_FEEDS = [
+  { url: 'https://www.datacenterdynamics.com/en/rss/',  name: 'DC Dynamics' },
+  { url: 'https://www.theregister.com/data_centre/feed/', name: 'The Register' },
+  { url: 'https://news.google.com/rss/search?q=data+center+AI+hyperscaler+GPU+colocation+power&hl=en&gl=US&ceid=US:en', name: 'Google News' },
+];
+const DC_KW = ['data center','datacenter','data centre','hyperscaler','colocation','GPU','Nvidia','AI infrastructure','Microsoft Azure','Amazon AWS','Google Cloud','Meta AI','Apple AI','server','semiconductor','chip','compute','MSFT','AMZN','GOOGL','AAPL','power demand','megawatt','cooling','liquid cooling','HVAC','rack density','edge computing','cloud','inference','training cluster','network capacity'];
+const isDC = t => DC_KW.some(k => t.toLowerCase().includes(k.toLowerCase()));
 
 const CT_KW  = ['solar','wind','renewable','battery','storage','hydrogen','carbon','climate','clean energy','electric vehicle','EV','lithium','nuclear','offshore wind','IRA','energy transition','net zero','emissions','cleantech','biofuel','LCFS','RIN','CCS','CCUS','geothermal','fuel cell','green bond','decarboni','photovoltaic','turbine','microgrid','electrif'];
 const MA_KW  = ['acqui','merger','buyout','deal','stake','divestiture','divest','bid','offer','purchase','consolidat','takeover','transaction'];
@@ -802,6 +755,17 @@ async function loadNuclearNews() {
   Dash.time.end('cleantech:loadNuclearNews');
 }
 
+async function loadDataCenterNews() {
+  Dash.time.start('cleantech:loadDataCenterNews');
+  const results = await Promise.all(DC_FEEDS.map(fetchFeed));
+  const all = [].concat(...results);
+  renderNews(all, 'dc-list', 'dc-update', isDC, getCTTag, 14);
+  Dash.time.end('cleantech:loadDataCenterNews');
+}
+
+// Also replace the old loadTopNews reference (now unused)
+function loadTopNews() { loadDataCenterNews(); }
+
 // =====================
 // TV
 // =====================
@@ -832,12 +796,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function refreshAll() {
   const btn = document.querySelector('.refresh-all-btn');
   if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
-  await loadMetals();
-  await sleep(300);
+  loadMarketIndicators();
+  await sleep(200);
   await loadStocks();
   await sleep(300);
   loadCleantechNews();
-  loadTopNews();
+  loadDataCenterNews();
   loadNuclearNews();
   loadTicker();
   if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
@@ -847,16 +811,16 @@ async function refreshAll() {
 // INIT — above-the-fold first
 // =====================
 initTV();
-loadMetals(); // above the fold
+loadMarketIndicators();
 setTimeout(loadTicker, 200);
 setTimeout(loadStocks, 400);
-setTimeout(loadTopNews, 600);
+setTimeout(loadDataCenterNews, 600);
 setTimeout(loadCleantechNews, 800);
 setTimeout(loadNuclearNews, 1000);
 
 // Stagger refresh intervals
-Dash.stagger([loadMetals, loadTicker, loadStocks], 60000, 5000);
-Dash.stagger([loadTopNews, loadCleantechNews, loadNuclearNews], 600000, 5000);
+Dash.stagger([loadMarketIndicators, loadTicker, loadStocks], 60000, 5000);
+Dash.stagger([loadDataCenterNews, loadCleantechNews, loadNuclearNews], 600000, 5000);
 </script>
 </body>
 </html>
