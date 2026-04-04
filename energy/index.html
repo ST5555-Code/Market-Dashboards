@@ -46,10 +46,15 @@ window._loadChartJS = function() {
   .header-meta { font-size: 11px; color: var(--midscale); text-align: right; }
   #clock { color: var(--sandstone); font-weight: 600; }
 
-  /* BREAKING BAR */
-  .breaking-bar { background: var(--maroon); padding: 6px 20px; display: flex; align-items: center; gap: 12px; overflow: hidden; }
-  .breaking-label { background: var(--white); color: var(--maroon); font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; }
-  .breaking-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* BREAKING BAR — MARKET INDICATORS */
+  .breaking-bar { background: var(--maroon); padding: 6px 20px; display: flex; align-items: center; gap: 16px; overflow: hidden; }
+  .breaking-label { background: var(--white); color: var(--maroon); font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; flex-shrink: 0; }
+  .mkt-indicators { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden; }
+  .mkt-ind-item { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 18px 0 0; white-space: nowrap; }
+  .mkt-ind-item + .mkt-ind-item { border-left: 1px solid rgba(255,255,255,0.25); padding-left: 18px; }
+  .mkt-ind-name { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .mkt-ind-price { color: var(--white); font-size: 13px; font-weight: 700; }
+  .mkt-ind-chg { font-size: 10px; font-weight: 600; }
   .breaking-text a { color: var(--white); text-decoration: none; }
   .breaking-text a:hover { text-decoration: underline; }
 
@@ -169,24 +174,35 @@ window._loadChartJS = function() {
   .chart-tab.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
   .chart-status { font-size: 10px; color: var(--midscale); padding: 4px 12px 0; }
 
-  /* STOCKS — TWO-COLUMN LAYOUT */
-  .stocks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; padding: 0 12px 8px; }
+  /* STOCKS — THREE-COLUMN LAYOUT */
+  .stocks-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 1px; padding: 0 0 8px; background: #1a2040; }
   @media (max-width: 900px) { .stocks-grid { grid-template-columns: 1fr; } }
-  .stocks-col table { width: 100%; border-collapse: collapse; }
-  .sector-divider td { padding: 6px 0 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #2a3560; }
-  .sector-divider.sec-major td { color: var(--glacier); border-color: #1a2d3d; }
-  .sector-divider.sec-oil td   { color: var(--sandstone); border-color: #2a2010; }
-  .sector-divider.sec-gas td   { color: var(--turquoise); border-color: #1a3028; }
-  .sector-divider.sec-ofs td   { color: #9a85d0; border-color: #25203a; }
-  .sector-divider.sec-etf td   { color: var(--midscale); border-color: #2a2a2a; }
-  .stock-row td { padding: 3px 0; font-size: 11px; white-space: nowrap; }
-  .stock-row:hover td { background: #1a2040; }
-  .stock-row .sr-ticker { font-weight: 700; color: var(--glacier); width: 48px; }
-  .stock-row .sr-name   { color: var(--midscale); font-size: 10px; }
+  .stocks-col { background: var(--bg); padding: 0 14px; }
+  .stocks-col table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  /* Column widths — fixed so all three tables align identically */
+  .stocks-col col.c-ticker { width: 14%; }
+  .stocks-col col.c-name   { width: 38%; }
+  .stocks-col col.c-price  { width: 14%; }
+  .stocks-col col.c-pct    { width: 14%; }
+  .stocks-col col.c-range  { width: 20%; }
+  /* Single column header row */
+  .tbl-header td { padding: 6px 0 4px; font-size: 8px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #2a3560; white-space: nowrap; }
+  .tbl-header td.r { text-align: right; }
+  /* Sector group dividers */
+  .sector-divider td { padding: 7px 0 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #2a3560; }
+  .sector-divider.sec-major td { color: var(--glacier); }
+  .sector-divider.sec-oil td   { color: var(--sandstone); }
+  .sector-divider.sec-gas td   { color: var(--turquoise); }
+  .sector-divider.sec-ofs td   { color: #9a85d0; }
+  .sector-divider.sec-etf td   { color: var(--midscale); }
+  /* Data rows */
+  .stock-row td { padding: 3px 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid #131929; }
+  .stock-row:last-child td, .stock-row:hover td { background: #1a2040; border-bottom-color: #1a2040; }
+  .stock-row .sr-ticker { font-weight: 700; color: var(--glacier); }
+  .stock-row .sr-name   { color: var(--midscale); font-size: 10px; padding-left: 4px; }
   .stock-row .sr-price  { color: var(--white); font-weight: 600; text-align: right; }
-  .stock-row .sr-pct    { text-align: right; width: 60px; font-weight: 600; }
-  .stock-row .sr-range  { text-align: right; color: var(--midscale); font-size: 10px; width: 52px; }
-  .stock-row .sr-mcap   { text-align: right; color: var(--midscale); font-size: 10px; width: 56px; }
+  .stock-row .sr-pct    { text-align: right; font-weight: 600; padding-right: 2px; }
+  .stock-row .sr-range  { text-align: right; color: var(--midscale); font-size: 10px; }
   .s-up { color: var(--turquoise); }
   .s-down { color: var(--maroon); }
   .s-flat { color: var(--midscale); }
@@ -249,10 +265,10 @@ window._loadChartJS = function() {
   </div>
 </div>
 
-<!-- BREAKING BAR -->
+<!-- BREAKING BAR — MARKET INDICATORS -->
 <div class="breaking-bar">
-  <div class="breaking-label">LATEST</div>
-  <div class="breaking-text" id="breaking-text">Loading energy headlines...</div>
+  <div class="breaking-label">MARKETS</div>
+  <div class="mkt-indicators" id="mkt-indicators">Loading...</div>
 </div>
 
 <!-- TICKER -->
@@ -851,9 +867,10 @@ const STOCKS = [
   { sym: 'XOP',  name: 'SPDR Oil & Gas E&P',  sector: 'etf'   },
 ];
 
-// Column layout: left = majors + oil, right = gas + ofs + etf
-const LEFT_SECTORS  = ['major','oil'];
-const RIGHT_SECTORS = ['gas','ofs','etf'];
+// Column layout: 3 cols — majors | oil | gas+ofs+etf
+const LEFT_SECTORS   = ['major'];
+const MIDDLE_SECTORS = ['oil'];
+const RIGHT_SECTORS  = ['gas','ofs','etf'];
 const SECTOR_META = {
   major: { cls: 'sec-major', label: 'Majors' },
   oil:   { cls: 'sec-oil',   label: 'Oil E&P' },
@@ -871,32 +888,33 @@ function fmtMcap(v) {
 }
 
 function buildColHTML(sectors, stocks, resultMap) {
-  let html = '<table>';
+  let html = `<table>
+    <colgroup>
+      <col class="c-ticker"><col class="c-name"><col class="c-price"><col class="c-pct"><col class="c-range">
+    </colgroup>
+    <tr class="tbl-header">
+      <td>Ticker</td><td></td>
+      <td class="r">Price</td>
+      <td class="r">Day %</td>
+      <td class="r">52W H/L</td>
+    </tr>`;
   sectors.forEach(sec => {
     const m = SECTOR_META[sec];
     const items = stocks.filter(s => s.sector === sec);
     if (!items.length) return;
-    html += `<tr class="sector-divider ${m.cls}"><td colspan="6">${m.label}</td></tr>`;
-    html += `<tr style="font-size:8px;color:var(--midscale);text-transform:uppercase;letter-spacing:1px;">
-      <td style="padding:2px 0;">Ticker</td><td></td>
-      <td style="text-align:right;padding:2px 4px;">Price</td>
-      <td style="text-align:right;padding:2px 4px;">Day %</td>
-      <td style="text-align:right;padding:2px 4px;">52W H/L</td>
-      <td style="text-align:right;padding:2px 4px;">Mkt Cap</td></tr>`;
+    html += `<tr class="sector-divider ${m.cls}"><td colspan="5">${m.label}</td></tr>`;
     items.forEach(s => {
       const r = resultMap[s.sym] || {};
-      const p = r.price ? '$'+fmt(r.price) : '—';
+      const p  = r.price  ? '$' + fmt(r.price)      : '—';
       const pct = fmtPct(r.pct);
-      const hi = r.high52 ? '$'+fmt(r.high52,0) : '—';
-      const lo = r.low52  ? '$'+fmt(r.low52,0)  : '—';
-      const mc = fmtMcap(r.mktCap);
+      const hi = r.high52 ? '$' + fmt(r.high52, 0)  : '—';
+      const lo = r.low52  ? '$' + fmt(r.low52,  0)  : '—';
       html += `<tr class="stock-row">
         <td class="sr-ticker"><a href="https://finance.yahoo.com/quote/${s.sym}" target="_blank" style="color:var(--glacier);text-decoration:none;">${s.sym}</a></td>
         <td class="sr-name">${s.name}</td>
         <td class="sr-price">${p}</td>
         <td class="sr-pct ${sCls(r.pct)}">${pct}</td>
-        <td class="sr-range">${hi} / ${lo}</td>
-        <td class="sr-mcap">${mc}</td>
+        <td class="sr-range">${hi}&#8202;/&#8202;${lo}</td>
       </tr>`;
     });
   });
@@ -912,8 +930,9 @@ async function loadStocks() {
 
   const grid = document.getElementById('stocks-grid');
   grid.innerHTML = DOMPurify.sanitize(
-    '<div class="stocks-col">' + buildColHTML(LEFT_SECTORS, STOCKS, resultMap) + '</div>' +
-    '<div class="stocks-col">' + buildColHTML(RIGHT_SECTORS, STOCKS, resultMap) + '</div>',
+    '<div class="stocks-col">' + buildColHTML(LEFT_SECTORS,   STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(MIDDLE_SECTORS, STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(RIGHT_SECTORS,  STOCKS, resultMap) + '</div>',
     { ADD_ATTR: ['target'] }
   );
 
@@ -925,6 +944,40 @@ async function loadStocks() {
 // =====================
 // TICKER
 // =====================
+// =====================
+// MARKET INDICATORS (breaking bar)
+// =====================
+const MKT_INDS = [
+  { sym: '^GSPC', label: 'S&P 500',  fmt: 'idx' },
+  { sym: '^DJI',  label: 'Dow',      fmt: 'idx' },
+  { sym: '^IXIC', label: 'Nasdaq',   fmt: 'idx' },
+  { sym: '^TNX',  label: '10Y UST',  fmt: 'yld' },
+];
+
+async function loadMarketIndicators() {
+  const results = await Dash.yfBatch(MKT_INDS.map(m => m.sym));
+  const html = MKT_INDS.map((m, i) => {
+    const r = results[i] || {};
+    const isYld = m.fmt === 'yld';
+    const p = r.price != null
+      ? (isYld ? r.price.toFixed(2) + '%' : r.price.toLocaleString('en-US', { maximumFractionDigits: 0 }))
+      : '—';
+    const pct = r.pct != null ? fmtPct(r.pct) : '';
+    const bps = isYld && r.pct != null
+      ? (r.pct > 0 ? '+' : '') + Math.round(r.pct * 10) + 'bp'
+      : '';
+    const chgLabel = isYld ? bps : pct;
+    const cls = r.pct > 0 ? 's-up' : r.pct < 0 ? 's-down' : 's-flat';
+    return `<span class="mkt-ind-item">` +
+      `<span class="mkt-ind-name">${m.label}</span>` +
+      `<span class="mkt-ind-price">${p}</span>` +
+      (chgLabel ? `<span class="mkt-ind-chg ${cls}">${chgLabel}</span>` : '') +
+      `</span>`;
+  }).join('');
+  const el = document.getElementById('mkt-indicators');
+  if (el) el.innerHTML = DOMPurify.sanitize(html);
+}
+
 const TICKER_COMMS = [
   { sym: 'CL=F', label: 'WTI', unit: '$/bbl' },
   { sym: 'BZ=F', label: 'Brent', unit: '$/bbl' },
@@ -1046,12 +1099,7 @@ async function loadAllNews() {
   renderNews(all, 'ma-list',       'ma-update',       isMA,     10);
   renderNews(all, 'fin-list',      null,              isFin,    8);
 
-  // Breaking bar
-  const topBiz = all.filter(i => isEnergy(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
-  if (topBiz.length) {
-    document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(topBiz.slice(0,3)
-      .map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '));
-  }
+  // Breaking bar removed — replaced with market indicators
   Dash.time.end('energy:loadAllNews');
 }
 
@@ -1202,6 +1250,7 @@ initTV();
 loadEarnings();
 // Above the fold — start immediately, don't block
 loadCommodities();
+loadMarketIndicators();
 // Secondary panels — slight delay
 setTimeout(loadTicker, 200);
 setTimeout(loadStocks, 400);
@@ -1210,7 +1259,7 @@ setTimeout(loadAllNews, 600);
 setTimeout(loadCurve, 800);
 setTimeout(loadEIA, 1200);  // EIA data — cached 6h, no need to rush
 // Stagger refresh intervals
-Dash.stagger([loadCommodities, loadTicker, loadStocks], 60000, 5000);
+Dash.stagger([loadCommodities, loadMarketIndicators, loadTicker, loadStocks], 60000, 5000);
 Dash.stagger([loadAllNews], 600000, 5000);
 // Keep loadCurve on its own long interval
 setTimeout(() => setInterval(loadCurve, 3600000), 15000);
