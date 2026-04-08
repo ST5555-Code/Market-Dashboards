@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         landing: resolve(__dirname, 'index.html'),
         ma: resolve(__dirname, 'ma/index.html'),
+        energy: resolve(__dirname, 'energy/index.html'),
       },
     },
   },

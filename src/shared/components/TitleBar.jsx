@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 
-const portals = [
-  { label: 'Energy', href: 'https://media-dashboards.vercel.app/energy/' },
-  { label: 'Cleantech', href: 'https://media-dashboards.vercel.app/cleantech/' },
-  { label: 'Media', href: 'https://media-dashboards.vercel.app/media/' },
-  { label: 'Hormuz', href: 'https://media-dashboards.vercel.app/hormuz/' },
+const DEFAULT_PORTALS = [
+  { label: 'Energy', href: '/energy/' },
+  { label: 'Cleantech', href: '/cleantech/' },
+  { label: 'Media', href: '/media/' },
+  { label: 'Hormuz', href: '/hormuz/' },
+  { label: 'M&A', href: '/ma/' },
 ];
 
 function Clock() {
@@ -29,8 +30,9 @@ function Clock() {
   return <span className="text-gold font-semibold text-sm">{time}</span>;
 }
 
-export default function TitleBar({ onRefresh }) {
+export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelligence Monitor', portals }) {
   const [loading, setLoading] = useState(false);
+  const navLinks = portals || DEFAULT_PORTALS;
 
   async function handleRefresh() {
     if (loading) return;
@@ -42,24 +44,21 @@ export default function TitleBar({ onRefresh }) {
   return (
     <div className="bg-navy border-b-[3px] border-gold px-5 py-2 flex items-center justify-between gap-4">
       <div className="text-[16px] font-bold tracking-[2px] text-white uppercase flex-shrink-0">
-        M&A <span className="text-gold">Intelligence</span> Monitor
+        {title} <span className="text-gold">{subtitle}</span>
       </div>
 
-      {/* Portal links — center */}
       {/* Portal links */}
       <div className="hidden md:flex items-center gap-1.5 text-[10px] flex-shrink-0">
         <a
-          href="https://media-dashboards.vercel.app/"
+          href="/"
           className="text-gold border border-gold/40 px-2 py-0.5 rounded-sm hover:bg-gold hover:text-navy transition-all whitespace-nowrap font-semibold"
         >
           Home
         </a>
-        {portals.map((p) => (
+        {navLinks.map((p) => (
           <a
             key={p.label}
             href={p.href}
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-txt-secondary border border-gold/20 px-2 py-0.5 rounded-sm hover:text-gold hover:border-gold/40 transition-all whitespace-nowrap"
           >
             {p.label}

@@ -57,7 +57,19 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-navy text-txt-primary font-sans">
-        <StickyHeader quotes={quotes} loading={quotesLoading} onRefresh={handleRefreshAll} />
+        <StickyHeader
+          quotes={quotes}
+          loading={quotesLoading}
+          onRefresh={handleRefreshAll}
+          dashboardTitle="M&A"
+          dashboardSubtitle="Intelligence Monitor"
+          portals={[
+            { label: 'Energy', href: '/energy/' },
+            { label: 'Cleantech', href: '/cleantech/' },
+            { label: 'Media', href: '/media/' },
+            { label: 'Hormuz', href: '/hormuz/' },
+          ]}
+        />
         <TopRow fredData={fredData} fredLoading={fredLoading} fredLastUpdated={fredLastUpdated} refreshFRED={refreshFRED} />
         <MainGrid
           quotes={quotes}

@@ -18,12 +18,16 @@ function colorClass(v) {
   return v > 0 ? 'text-pos' : 'text-neg';
 }
 
-export default function TickerTape() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+// If tickerSymbols are provided, use quotes from parent (watchlist mode)
+// Otherwise, fetch trending stocks (M&A mode)
+export default function TickerTape({ quotes, tickerSymbols }) {
+  const [trendingItems, setTrendingItems] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(!tickerSymbols);
   const mountedRef = useRef(true);
 
+  // Trending mode (no tickerSymbols provided)
   useEffect(() => {
+    if (tickerSymbols) return;
     mountedRef.current = true;
 
     async function fetchTrending() {
@@ -32,40 +36,44 @@ export default function TickerTape() {
         if (!res.ok) return;
         const data = await res.json();
         if (!mountedRef.current) return;
-
         const tickers = (data.symbols || []).map(sym => {
           const q = data.quotes?.[sym];
           return q ? { sym, name: q.name, price: q.price, changePct: q.changePct } : null;
         }).filter(Boolean);
-
-        setItems(tickers);
-      } catch {
-        // silent
-      } finally {
-        if (mountedRef.current) setLoading(false);
+        setTrendingItems(tickers);
+      } catch { /* silent */ } finally {
+        if (mountedRef.current) setTrendingLoading(false);
       }
     }
 
     fetchTrending();
     const id = setInterval(fetchTrending, 60000);
-    return () => {
-      mountedRef.current = false;
-      clearInterval(id);
-    };
-  }, []);
+    return () => { mountedRef.current = false; clearInterval(id); };
+  }, [tickerSymbols]);
+
+  // Build items list
+  let items, label, isLoading;
+  if (tickerSymbols) {
+    label = 'STOCKS';
+    isLoading = !quotes || Object.keys(quotes).length === 0;
+    items = tickerSymbols.map(sym => {
+      const q = quotes?.[sym];
+      return q ? { sym, name: q.name || sym, price: q.price, changePct: q.changePct } : { sym, name: sym };
+    });
+  } else {
+    label = 'ACTIVE';
+    isLoading = trendingLoading;
+    items = trendingItems;
+  }
 
   return (
     <div className="bg-navy-panel border-b border-gold/30 flex items-center">
-      {/* Fixed label */}
       <div className="bg-gold text-navy text-[10px] font-bold py-2 tracking-wider flex-shrink-0 z-10 w-[70px] text-center">
-        ACTIVE
+        {label}
       </div>
-      {/* Scrolling tape */}
       <div className="flex-1 overflow-hidden py-1.5">
-        {loading && items.length === 0 ? (
-          <div className="text-txt-secondary text-[12px] px-5">Loading trending stocks...</div>
-        ) : items.length === 0 ? (
-          <div className="text-txt-secondary text-[12px] px-5">No trending data</div>
+        {isLoading && items.length === 0 ? (
+          <div className="text-txt-secondary text-[12px] px-5">Loading...</div>
         ) : (
           <Marquee speed={40} pauseOnHover gradient={false}>
             {items.map((item) => (
@@ -74,9 +82,17 @@ export default function TickerTape() {
                 className="inline-flex items-center gap-1.5 px-4 border-r border-[#3a4570] text-[12px]"
               >
                 <span className="text-white font-semibold">{item.sym}</span>
-                <span className="text-white/40 text-[10px] max-w-[100px] truncate">{item.name}</span>
-                <span className="text-white">{fmt(item.price)}</span>
-                <span className={colorClass(item.changePct)}>{fmtChg(item.changePct)}</span>
+                {item.name && item.name !== item.sym && (
+                  <span className="text-white/40 text-[10px] max-w-[100px] truncate">{item.name}</span>
+                )}
+                {item.price ? (
+                  <>
+                    <span className="text-white">{fmt(item.price)}</span>
+                    <span className={colorClass(item.changePct)}>{fmtChg(item.changePct)}</span>
+                  </>
+                ) : (
+                  <span className="text-white/40">--</span>
+                )}
               </div>
             ))}
           </Marquee>

@@ -36,7 +36,8 @@ function colorClass(v) {
   return v > 0 ? 'text-pos' : 'text-neg';
 }
 
-export default function MarketsBar({ quotes, loading }) {
+export default function MarketsBar({ quotes, loading, symbols }) {
+  const items = symbols || MARKET_ITEMS;
   const hasData = !loading || Object.keys(quotes).length > 0;
 
   return (
@@ -51,7 +52,7 @@ export default function MarketsBar({ quotes, loading }) {
           <div className="text-txt-secondary text-[12px] px-5">Loading markets...</div>
         ) : (
           <Marquee speed={25} pauseOnHover gradient={false}>
-            {MARKET_ITEMS.map((item) => {
+            {items.map((item) => {
               const q = quotes[item.sym];
               return (
                 <div
