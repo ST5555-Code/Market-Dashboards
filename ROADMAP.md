@@ -12,7 +12,7 @@ _Accumulate changes here. Build and deploy as a batch._
 
 - [x] Fix nav buttons position — centered absolutely so they do not shift with title length
 - [ ] Cleantech EIA Power box: replace solar hero number with 6-month horizontal bar chart (each bar = 1 month TWh, latest in gold, others muted). Shows seasonal pattern + growth trend. Hero TWh number above. Requires /api/eia-power to return 6 months of history instead of just latest.
-- [ ] **BUG** RSS whitelist missing domains — cleantech, nuclear, energy, media, sports feeds all blocked. Need to add: carbonbrief.org, cleantechnica.com, pv-magazine.com, electrek.co, energymonitor.ai, world-nuclear-news.org, powermag.com, oilprice.com, rigzone.com, variety.com, deadline.com, hollywoodreporter.com, frontofficesports.com, sportico.com, datacenterdynamics.com, theregister.com, aljazeera.com
+- [x] **BUG** RSS whitelist missing domains — fixed, added 17 domains to api/rss.js
 - [ ] Cleantech Carbon Prices box: convert metric rows to individual cards with bg-navy boxes for each (EU ETS, RGGI, VCU, CBL) — same card style as WTI/Brent on energy Oil panel. Each card: label, price large, unit, source small.
 - [ ] Cleantech Fuel Credits box: same card treatment (LCFS, RIN D3, RIN D4, RIN D6) — individual bg-navy cards stacked inside the panel.
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes

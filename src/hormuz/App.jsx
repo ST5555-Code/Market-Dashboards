@@ -63,7 +63,7 @@ function App() {
           quotes={quotes}
           loading={loading}
           onRefresh={refresh}
-          dashboardTitle="Strait of Hormuz"
+          dashboardTitle="Iran War"
           dashboardSubtitle="Geopolitical Monitor"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={TICKER_SYMBOLS}

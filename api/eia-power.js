@@ -35,9 +35,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch all fuel types in parallel — 3 data points each (current + 2 prior months)
+    // Fetch all fuel types in parallel — 6 months for solar chart, 3 for others
     const [sunData, wndData, allData, hycData, nucData] = await Promise.all([
-      fetchGen('SUN', 3),  // Solar
+      fetchGen('SUN', 6),  // Solar — 6 months for bar chart
       fetchGen('WND', 3),  // Wind
       fetchGen('ALL', 3),  // Total
       fetchGen('HYC', 3),  // Conventional hydro
@@ -69,6 +69,10 @@ export default async function handler(req, res) {
         value: solar  != null ? (solar  / 1000).toFixed(1) : null,
         mom:   mom(solar, solarPrev),
         units: 'TWh',
+        history: sunData.map(d => ({
+          period: d.period,
+          value: d.generation != null ? +(+d.generation / 1000).toFixed(1) : null,
+        })).reverse(),
       },
       wind: {
         value: wind   != null ? (wind   / 1000).toFixed(1) : null,
