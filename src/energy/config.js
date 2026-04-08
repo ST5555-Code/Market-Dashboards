@@ -20,9 +20,6 @@ export const STOCKS = [
   { sym: 'SHEL', name: 'Shell PLC', sector: 'Majors' },
   { sym: 'TTE', name: 'TotalEnergies SE', sector: 'Majors' },
   { sym: 'BP', name: 'BP', sector: 'Majors' },
-  // ETFs
-  { sym: 'XLE', name: 'Energy Select SPDR', sector: 'ETFs' },
-  { sym: 'XOP', name: 'SPDR Oil & Gas E&P', sector: 'ETFs' },
   // Large Cap Oil
   { sym: 'COP', name: 'ConocoPhillips', sector: 'Large Cap Oil' },
   { sym: 'EOG', name: 'EOG Resources', sector: 'Large Cap Oil' },
@@ -109,11 +106,12 @@ export const HH_CURVE = [
   { sym: 'NGZ29.NYM', label: "Dec'29", months: 56 },
 ];
 
-// RSS feeds for energy news
+// RSS feeds for energy news (includes M&A coverage)
 export const NEWS_FEEDS = [
   { url: 'https://oilprice.com/rss/main', source: 'OilPrice' },
   { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', source: 'CNBC Energy' },
   { url: 'https://www.rigzone.com/news/rss/rigzone_latest.aspx', source: 'Rigzone' },
+  { url: 'https://news.google.com/rss/search?q=energy+merger+OR+acquisition+OR+divestiture+OR+%22asset+sale%22&hl=en-US&gl=US&ceid=US:en', source: 'Google News' },
 ];
 
 // Portal links (excludes self)

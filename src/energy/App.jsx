@@ -80,16 +80,14 @@ function App() {
             loading={loading}
             lastUpdated={lastUpdated}
             columnLayout={[
-              ['Majors', 'Large Cap Oil', 'ETFs'],
+              ['Majors', 'Large Cap Oil'],
               ['Mid Cap Oil'],
               ['Gas'],
             ]}
           />
 
-          {/* Bottom row: Earnings + TBD */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <EarningsCalendar symbols={earningsSymbols} />
-          </div>
+          {/* Earnings — full width, 3 columns */}
+          <EarningsCalendar symbols={earningsSymbols} columns={3} />
         </div>
       </div>
     </ErrorBoundary>
