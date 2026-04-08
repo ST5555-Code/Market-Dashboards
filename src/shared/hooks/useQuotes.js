@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+const BATCH_SIZE = 18;
+
 function parseYFResponse(sym, raw) {
   try {
     const result = raw?.chart?.result?.[0];
@@ -31,17 +33,36 @@ export default function useQuotes(symbols, intervalMs = 60000) {
 
   const fetchQuotes = useCallback(async () => {
     try {
-      const res = await fetch(`/api/quotes?syms=${symbolsKey}`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const allSyms = symbolsKey.split(',');
+
+      // Split into batches of BATCH_SIZE
+      const batches = [];
+      for (let i = 0; i < allSyms.length; i += BATCH_SIZE) {
+        batches.push(allSyms.slice(i, i + BATCH_SIZE));
+      }
+
+      const results = await Promise.all(
+        batches.map(async (batch) => {
+          const res = await fetch(`/api/quotes?syms=${batch.join(',')}`);
+          if (!res.ok) return {};
+          return res.json();
+        })
+      );
+
       if (!mountedRef.current) return;
 
-      const parsed = {};
-      for (const sym of symbolsKey.split(',')) {
-        const q = parseYFResponse(sym, data[sym]);
-        if (q) parsed[sym] = q;
+      // Merge all batch results
+      const merged = {};
+      for (const data of results) {
+        for (const sym of allSyms) {
+          if (data[sym]) {
+            const q = parseYFResponse(sym, data[sym]);
+            if (q) merged[sym] = q;
+          }
+        }
       }
-      setQuotes(parsed);
+
+      setQuotes(merged);
       setLastUpdated(new Date());
     } catch {
       // silent fail — keep stale data
