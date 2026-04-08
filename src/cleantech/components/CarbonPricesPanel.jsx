@@ -4,22 +4,21 @@ import { CARBON_PRICES } from '../config';
 export default function CarbonPricesPanel() {
   return (
     <PanelCard title="Carbon Prices" compact>
-      <div className="flex flex-col gap-2">
-        {CARBON_PRICES.map((m) => (
-          <div key={m.label} className="bg-navy rounded-lg p-2.5">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[9px] text-txt-secondary">{m.label}</span>
-              <span className={`text-[7px] font-bold px-1 py-0.5 rounded ${
-                m.tag === 'LIVE' ? 'bg-pos/15 text-pos' : 'bg-gold/15 text-gold'
-              }`}>{m.tag}</span>
-            </div>
-            <div className="text-[16px] font-bold text-txt-primary tabular-nums leading-tight">
-              {m.price} <span className="text-[9px] text-txt-secondary font-normal">{m.unit}</span>
-            </div>
-            <div className="text-[7px] text-txt-secondary">{m.source}</div>
+      {CARBON_PRICES.map((m) => (
+        <div key={m.label} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+          <div>
+            <span className="text-[10px] text-txt-secondary">{m.label}</span>
+            <span className={`text-[7px] font-bold ml-1 px-1 py-0.5 rounded ${
+              m.tag === 'LIVE' ? 'bg-pos/15 text-pos' : 'bg-gold/15 text-gold'
+            }`}>{m.tag}</span>
           </div>
-        ))}
-      </div>
+          <div className="text-right">
+            <span className="text-[13px] font-bold text-txt-primary tabular-nums">{m.price}</span>
+            <span className="text-[8px] text-txt-secondary ml-1">{m.unit}</span>
+          </div>
+        </div>
+      ))}
+      <div className="text-[7px] text-txt-secondary text-center mt-1">~ = weekly manual</div>
     </PanelCard>
   );
 }

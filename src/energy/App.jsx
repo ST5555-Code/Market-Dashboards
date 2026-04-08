@@ -55,7 +55,6 @@ function App() {
           dashboardSubtitle="Intelligence Monitor"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={tickerSymbols}
-          portals={PORTALS}
         />
 
         <div className="p-4 flex flex-col gap-4">

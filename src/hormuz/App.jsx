@@ -67,7 +67,6 @@ function App() {
           dashboardSubtitle="Geopolitical Monitor"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={TICKER_SYMBOLS}
-          portals={PORTALS}
         />
 
         <div className="p-4 flex flex-col gap-4">

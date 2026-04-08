@@ -63,11 +63,6 @@ function App() {
           onRefresh={handleRefreshAll}
           dashboardTitle="M&A"
           dashboardSubtitle="Intelligence Monitor"
-          portals={[
-            { label: 'Energy', href: '/energy/' },
-            { label: 'Cleantech', href: '/cleantech/' },
-            { label: 'Media', href: '/media/' },
-          ]}
         />
         <TopRow fredData={fredData} fredLoading={fredLoading} fredLastUpdated={fredLastUpdated} refreshFRED={refreshFRED} />
         <MainGrid

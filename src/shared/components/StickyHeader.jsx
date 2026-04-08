@@ -4,7 +4,7 @@ import TickerTape from '@shared/components/TickerTape';
 
 export default function StickyHeader({
   quotes, loading, onRefresh,
-  dashboardTitle, dashboardSubtitle, marketSymbols, tickerSymbols, portals,
+  dashboardTitle, dashboardSubtitle, marketSymbols, tickerSymbols,
 }) {
   return (
     <header className="sticky top-0 z-[1000]">
@@ -12,7 +12,6 @@ export default function StickyHeader({
         onRefresh={onRefresh}
         title={dashboardTitle}
         subtitle={dashboardSubtitle}
-        portals={portals}
       />
       <MarketsBar quotes={quotes} loading={loading} symbols={marketSymbols} />
       <TickerTape quotes={quotes} tickerSymbols={tickerSymbols} />

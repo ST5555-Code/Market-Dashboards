@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 
-const DEFAULT_PORTALS = [
+const NAV_ITEMS = [
+  { label: 'Home', href: '/' },
   { label: 'M&A', href: '/ma/' },
-  { label: 'Energy', href: '/energy/' },
+  { label: 'Upstream', href: '/energy/' },
   { label: 'Cleantech', href: '/cleantech/' },
   { label: 'Media', href: '/media/' },
+  { label: 'Iran War', href: '/hormuz/' },
 ];
 
 function Clock() {
@@ -29,9 +31,15 @@ function Clock() {
   return <span className="text-gold font-semibold text-sm">{time}</span>;
 }
 
-export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelligence Monitor', portals }) {
+function isActive(href) {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  if (href === '/') return path === '/' || path === '';
+  return path.startsWith(href);
+}
+
+export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelligence Monitor' }) {
   const [loading, setLoading] = useState(false);
-  const navLinks = portals || DEFAULT_PORTALS;
 
   async function handleRefresh() {
     if (loading) return;
@@ -46,23 +54,24 @@ export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelli
         {title} <span className="text-gold">{subtitle}</span>
       </div>
 
-      {/* Portal links */}
-      <div className="hidden md:flex items-center gap-1.5 text-[10px] flex-shrink-0">
-        <a
-          href="/"
-          className="text-gold border border-gold/40 px-2 py-0.5 rounded-sm hover:bg-gold hover:text-navy transition-all whitespace-nowrap font-semibold"
-        >
-          Home
-        </a>
-        {navLinks.map((p) => (
-          <a
-            key={p.label}
-            href={p.href}
-            className="text-txt-secondary border border-gold/20 px-2 py-0.5 rounded-sm hover:text-gold hover:border-gold/40 transition-all whitespace-nowrap"
-          >
-            {p.label}
-          </a>
-        ))}
+      {/* Nav — same across all dashboards, active one filled */}
+      <div className="hidden md:flex items-center gap-1 text-[10px] flex-shrink-0">
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <a
+              key={item.label}
+              href={item.href}
+              className={`px-2 py-0.5 rounded-sm border transition-all whitespace-nowrap ${
+                active
+                  ? 'bg-gold text-navy border-gold font-bold'
+                  : 'text-txt-secondary border-gold/20 hover:text-gold hover:border-gold/40'
+              }`}
+            >
+              {item.label}
+            </a>
+          );
+        })}
       </div>
 
       {/* Clock + Refresh */}

@@ -6,24 +6,6 @@ function fmt(v) {
   return v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
-function MetricCard({ label, value, unit, change, changeUnit }) {
-  const chgColor = change == null ? '' : change >= 0 ? 'text-pos' : 'text-neg';
-  return (
-    <div className="bg-navy rounded-lg p-2.5">
-      <div className="text-[9px] text-txt-secondary mb-0.5">{label}</div>
-      <div className="text-[18px] font-bold text-txt-primary tabular-nums leading-tight">
-        {value != null ? fmt(value) : '--'}
-        <span className="text-[10px] text-txt-secondary font-normal ml-1">{unit}</span>
-      </div>
-      {change != null && (
-        <div className={`text-[10px] font-semibold tabular-nums ${chgColor}`}>
-          {change >= 0 ? '+' : ''}{fmt(change)}{changeUnit}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function EIAPowerCompact() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,19 +32,47 @@ export default function EIAPowerCompact() {
     return () => { mountedRef.current = false; clearInterval(id); };
   }, [fetchData]);
 
+  const solarMoM = data?.solar?.mom;
+  const windMoM = data?.wind?.mom;
+
   return (
     <PanelCard title="EIA Power" loading={loading} lastUpdated={lastUpdated} onRefresh={fetchData} compact>
-      <MetricCard label="US Solar" value={data?.solar?.value} unit="TWh" change={data?.solar?.mom} changeUnit="% MoM" />
-      <div className="mt-2">
-        <MetricCard label="US Wind" value={data?.wind?.value} unit="TWh" change={data?.wind?.mom} changeUnit="% MoM" />
+      {/* Solar — hero number */}
+      <div className="bg-navy rounded-lg p-2.5">
+        <div className="text-[9px] text-txt-secondary">US Solar Generation</div>
+        <div className="text-[22px] font-bold text-txt-primary tabular-nums leading-tight">
+          {data?.solar ? fmt(data.solar.value) : '--'}
+          <span className="text-[10px] text-txt-secondary font-normal ml-1">TWh</span>
+        </div>
+        {solarMoM != null && (
+          <div className={`text-[10px] font-semibold tabular-nums ${solarMoM >= 0 ? 'text-pos' : 'text-neg'}`}>
+            {solarMoM >= 0 ? '+' : ''}{fmt(solarMoM)}% MoM
+          </div>
+        )}
       </div>
-      <div className="mt-2">
-        <MetricCard
-          label="Renewables Share"
-          value={data?.renewShare}
-          unit="%"
-        />
+
+      {/* Wind + Renewables Share — compact cards */}
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className="bg-navy rounded-lg p-2">
+          <div className="text-[8px] text-txt-secondary">Wind</div>
+          <div className="text-[14px] font-bold text-txt-primary tabular-nums leading-tight">
+            {data?.wind ? fmt(data.wind.value) : '--'} <span className="text-[9px] text-txt-secondary font-normal">TWh</span>
+          </div>
+          {windMoM != null && (
+            <div className={`text-[9px] tabular-nums ${windMoM >= 0 ? 'text-pos' : 'text-neg'}`}>
+              {windMoM >= 0 ? '+' : ''}{fmt(windMoM)}%
+            </div>
+          )}
+        </div>
+        <div className="bg-navy rounded-lg p-2">
+          <div className="text-[8px] text-txt-secondary">Renewables</div>
+          <div className="text-[14px] font-bold text-txt-primary tabular-nums leading-tight">
+            {data?.renewShare != null ? fmt(data.renewShare) : '--'}<span className="text-[9px] text-txt-secondary font-normal">%</span>
+          </div>
+          <div className="text-[8px] text-txt-secondary">grid share</div>
+        </div>
       </div>
+
       {data?.period && (
         <div className="text-[7px] text-txt-secondary text-center mt-1.5">EIA EPM · {data.period}</div>
       )}
