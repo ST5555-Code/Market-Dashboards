@@ -19,7 +19,7 @@ export const MARKET_SYMBOLS = [
 // Ticker tape stocks
 export const TICKER_SYMBOLS = [
   'XOM', 'CVX', 'COP', 'EOG', 'DVN', 'OXY', 'APA', 'MRO', 'FANG',
-  'EQT', 'AR', 'RRC', 'SWN', 'SLB', 'HAL', 'BKR', 'XLE', 'XOP',
+  'EQT', 'AR', 'RRC', 'SWN', 'SLB', 'HAL', 'BKR', 'NOV', 'XLE', 'XOP', 'OIH',
 ];
 
 // All symbols needed (union of markets + ticker + commodities + curves)
@@ -32,7 +32,7 @@ export const ALL_SYMBOLS = [
   'XLE', 'XOP',
   // Ticker stocks
   'XOM', 'CVX', 'COP', 'EOG', 'DVN', 'OXY', 'APA', 'MRO', 'FANG',
-  'EQT', 'AR', 'CTRA', 'RRC', 'SWN', 'SLB', 'HAL', 'BKR', 'HES', 'PR',
+  'EQT', 'AR', 'CTRA', 'RRC', 'SWN', 'SLB', 'HAL', 'BKR', 'NOV', 'HES', 'PR', 'OIH',
 ];
 
 // E&P stocks by sector
@@ -56,8 +56,10 @@ export const STOCKS = [
   { sym: 'SLB', name: 'SLB', sector: 'Oilfield Services' },
   { sym: 'HAL', name: 'Halliburton', sector: 'Oilfield Services' },
   { sym: 'BKR', name: 'Baker Hughes', sector: 'Oilfield Services' },
+  { sym: 'NOV', name: 'NOV Inc', sector: 'Oilfield Services' },
   { sym: 'XLE', name: 'Energy Select SPDR', sector: 'ETFs' },
   { sym: 'XOP', name: 'SPDR Oil & Gas E&P', sector: 'ETFs' },
+  { sym: 'OIH', name: 'VanEck Oil Services', sector: 'ETFs' },
 ];
 
 // Earnings symbols to track
