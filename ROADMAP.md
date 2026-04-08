@@ -6,6 +6,21 @@
 
 ---
 
+## Next Deploy Queue
+
+_Accumulate changes here. Build and deploy as a batch._
+
+- [x] Fix nav buttons position — centered absolutely so they do not shift with title length
+- [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
+- [ ] Hormuz: rename title to "Iran War" to match nav button
+- [ ] Landing page: update card descriptions to match current dashboard content
+- [ ] Remove vanilla dashboards from public/ (energy, cleantech, media, hormuz — all React now)
+- [ ] Remove unused PORTALS exports from all config.js files (no longer used)
+- [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
+- [ ] Mobile QA pass across all dashboards
+
+---
+
 ## Completed
 
 ### Phase 1 — Monorepo Scaffold

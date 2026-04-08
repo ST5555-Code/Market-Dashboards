@@ -49,13 +49,13 @@ export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelli
   }
 
   return (
-    <div className="bg-navy border-b-[3px] border-gold px-5 py-2 flex items-center justify-between gap-4">
+    <div className="bg-navy border-b-[3px] border-gold px-5 py-2 flex items-center justify-between gap-4 relative">
       <div className="text-[16px] font-bold tracking-[2px] text-white uppercase flex-shrink-0">
         {title} <span className="text-gold">{subtitle}</span>
       </div>
 
-      {/* Nav — same across all dashboards, active one filled */}
-      <div className="hidden md:flex items-center gap-1 text-[10px] flex-shrink-0">
+      {/* Nav — centered absolutely so position is fixed regardless of title length */}
+      <div className="hidden md:flex items-center gap-1 text-[10px] absolute left-1/2 -translate-x-1/2">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           return (
