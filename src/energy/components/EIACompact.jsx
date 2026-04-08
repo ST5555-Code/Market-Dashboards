@@ -16,7 +16,7 @@ function StocksBar({ value, label, height = 'h-2', showLabels = false }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`flex-1 ${height} bg-navy rounded-full overflow-hidden`}>
+      <div className={`flex-1 ${height} bg-white/10 rounded-full overflow-hidden`}>
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
       </div>
       {label && <span className="text-[7px] text-txt-secondary w-[16px] text-right flex-shrink-0">{label}</span>}
