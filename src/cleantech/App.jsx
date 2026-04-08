@@ -6,8 +6,9 @@ import useQuotes from '@shared/hooks/useQuotes';
 import useSymbols from '@shared/hooks/useSymbols';
 import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
-import CarbonMarketsPanel from './components/CarbonMarketsPanel';
-import EIAPowerPanel from './components/EIAPowerPanel';
+import EIAPowerCompact from './components/EIAPowerCompact';
+import CarbonPricesPanel from './components/CarbonPricesPanel';
+import FuelCreditsPanel from './components/FuelCreditsPanel';
 import {
   STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS,
   PORTALS, CT_FEEDS, NUCLEAR_FEEDS, DC_FEEDS,
@@ -55,27 +56,26 @@ function App() {
         />
 
         <div className="p-4 flex flex-col gap-4">
-          {/* EIA Power */}
-          <EIAPowerPanel />
-
-          {/* Row 1: DC News + CT News + TV */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-            <NewsFeedPanel title="Data Center & AI" feeds={DC_FEEDS} keywords={DC_KEYWORDS} />
-            <NewsFeedPanel title="Cleantech & Transition" feeds={CT_FEEDS} keywords={CT_KEYWORDS} />
+          {/* Top row: 4 boxes — EIA Power | Carbon Prices | Fuel Credits | TV */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <EIAPowerCompact />
+            <CarbonPricesPanel />
+            <FuelCreditsPanel />
             <LiveTVPanel />
           </div>
 
-          {/* Carbon Markets */}
-          <CarbonMarketsPanel />
+          {/* Row 2: News feeds */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <NewsFeedPanel title="Data Center & AI" feeds={DC_FEEDS} keywords={DC_KEYWORDS} />
+            <NewsFeedPanel title="Cleantech & Transition" feeds={CT_FEEDS} keywords={CT_KEYWORDS} />
+            <NewsFeedPanel title="Nuclear" feeds={[...NUCLEAR_FEEDS, ...CT_FEEDS]} keywords={NUCLEAR_KEYWORDS} />
+          </div>
 
           {/* Stock Table */}
           <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
 
-          {/* Row: Nuclear + Earnings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NewsFeedPanel title="Nuclear" feeds={[...NUCLEAR_FEEDS, ...CT_FEEDS]} keywords={NUCLEAR_KEYWORDS} />
-            <EarningsCalendar symbols={earningsSymbols} />
-          </div>
+          {/* Earnings — full width, 3 columns */}
+          <EarningsCalendar symbols={earningsSymbols} columns={3} />
         </div>
       </div>
     </ErrorBoundary>

@@ -61,15 +61,19 @@ export const DC_FEEDS = [
   { url: 'https://news.google.com/rss/search?q=data+center+AI+hyperscaler+power+demand&hl=en&gl=US&ceid=US:en', source: 'Google News' },
 ];
 
-export const CARBON_MARKETS = [
+// Split into two panels for top row
+export const CARBON_PRICES = [
   { label: 'EU ETS (EUA)', price: '65.20', unit: '€/tCO₂', source: 'ICE Front Month', tag: '~' },
-  { label: 'CA LCFS Credit', price: '66.41', unit: '$/MT', source: 'CARB Weekly', tag: 'LIVE' },
   { label: 'RGGI Allowance', price: '15.48', unit: '$/short ton', source: 'RGGI', tag: '~' },
+  { label: 'Gold Standard VCU', price: '6.50', unit: '$/tCO₂', source: 'GS Foundation', tag: '~' },
+  { label: 'CBL Nature VCM', price: '4.10', unit: '$/tCO₂', source: 'CBL Markets', tag: '~' },
+];
+
+export const FUEL_CREDITS = [
+  { label: 'CA LCFS Credit', price: '66.41', unit: '$/MT', source: 'CARB Weekly', tag: 'LIVE' },
   { label: 'RIN D3 Cellulosic', price: '3.22', unit: '$/RIN', source: 'EPA EMTS', tag: '~' },
   { label: 'RIN D4 Bio-Diesel', price: '1.68', unit: '$/RIN', source: 'EPA EMTS', tag: '~' },
   { label: 'RIN D6 Ethanol', price: '0.89', unit: '$/RIN', source: 'EPA EMTS', tag: '~' },
-  { label: 'Gold Standard VCU', price: '6.50', unit: '$/tCO₂', source: 'GS Foundation', tag: '~' },
-  { label: 'CBL Nature VCM', price: '4.10', unit: '$/tCO₂', source: 'CBL Markets', tag: '~' },
 ];
 
 export const PORTALS = [
