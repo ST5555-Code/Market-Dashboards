@@ -66,11 +66,14 @@ function App() {
             <LiveTVPanel />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Row 2: News + Forward Curves */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <EnergyNewsFeed />
             <ForwardCurve title="WTI Crude Forward Curve" contracts={WTI_CURVE} color="#DCB96E" unit="$/bbl" />
             <ForwardCurve title="Henry Hub Forward Curve" contracts={HH_CURVE} color="#4CAF7D" unit="$/MMBtu" />
           </div>
 
+          {/* Stock Table */}
           <StockTable
             stocks={stocks}
             quotes={quotes}
@@ -83,10 +86,8 @@ function App() {
             ]}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <EnergyNewsFeed />
-            <EarningsCalendar symbols={earningsSymbols} />
-          </div>
+          {/* Earnings */}
+          <EarningsCalendar symbols={earningsSymbols} />
         </div>
       </div>
     </ErrorBoundary>

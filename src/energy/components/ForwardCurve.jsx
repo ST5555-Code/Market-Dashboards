@@ -21,17 +21,22 @@ function CurveDot({ cx, cy, payload, color }) {
   return <circle cx={cx} cy={cy} r={r} fill={color} stroke="#141E35" strokeWidth={1.5} />;
 }
 
-// Price labels — spot, quarterly, and annual only
-function CurveLabel({ x, y, value, payload }) {
-  if (value == null) return null;
-  const m = payload?.months;
-  const show = m === 0 || (m <= 21 && m % 3 === 0) || m > 21;
-  if (!show) return null;
-  return (
-    <text x={x} y={y - 10} textAnchor="middle" fill="#FFFFFF" fontSize={8} fontWeight={600}>
-      {value.toFixed(2)}
-    </text>
-  );
+// Label renderer — needs access to chartData via closure
+function makeCurveLabel(chartData) {
+  return function CurveLabel({ x, y, value, index }) {
+    if (value == null || index == null) return null;
+    const point = chartData[index];
+    if (!point) return null;
+    const m = point.months;
+    // Show on: spot (0), quarterly in monthly section (every 3), and annual (>21)
+    const show = m === 0 || (m <= 21 && m % 3 === 0) || m > 21;
+    if (!show) return null;
+    return (
+      <text x={x} y={y - 10} textAnchor="middle" fill="#FFFFFF" fontSize={8} fontWeight={600}>
+        {value.toFixed(2)}
+      </text>
+    );
+  };
 }
 
 export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit = '$/bbl' }) {
@@ -176,7 +181,7 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
                 dot={<CurveDot color={color} />}
                 activeDot={{ r: 5, fill: color, stroke: '#141E35', strokeWidth: 2 }}
               >
-                <LabelList dataKey="price" content={<CurveLabel />} />
+                <LabelList dataKey="price" content={makeCurveLabel(chartData)} />
               </Line>
             </LineChart>
           </ResponsiveContainer>
