@@ -11,6 +11,7 @@ export default defineConfig({
         ma: resolve(__dirname, 'ma/index.html'),
         energy: resolve(__dirname, 'energy/index.html'),
         cleantech: resolve(__dirname, 'cleantech/index.html'),
+        media: resolve(__dirname, 'media/index.html'),
       },
     },
   },
