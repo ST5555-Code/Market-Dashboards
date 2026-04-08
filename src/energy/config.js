@@ -114,9 +114,3 @@ export const NEWS_FEEDS = [
   { url: 'https://news.google.com/rss/search?q=energy+merger+OR+acquisition+OR+divestiture+OR+%22asset+sale%22&hl=en-US&gl=US&ceid=US:en', source: 'Google News' },
 ];
 
-// Portal links (excludes self)
-export const PORTALS = [
-  { label: 'M&A', href: '/ma/' },
-  { label: 'Cleantech', href: '/cleantech/' },
-  { label: 'Media', href: '/media/' },
-];

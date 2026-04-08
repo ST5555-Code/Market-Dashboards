@@ -9,7 +9,7 @@ import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
 import StreamingScoreboard from './components/StreamingScoreboard';
 import SportsRightsPanel from './components/SportsRightsPanel';
-import { STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS, PORTALS, ENTERTAINMENT_FEEDS, SPORTS_FEEDS } from './config';
+import { STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS, ENTERTAINMENT_FEEDS, SPORTS_FEEDS } from './config';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }

@@ -2,9 +2,14 @@ import { useMemo, Component } from 'react';
 import StickyHeader from '@shared/components/StickyHeader';
 import LiveTVPanel from '@shared/components/LiveTVPanel';
 import NewsFeedPanel from '@shared/components/NewsFeedPanel';
+import PanelCard from '@shared/components/PanelCard';
+import MarketsBar from '@shared/components/MarketsBar';
 import useQuotes from '@shared/hooks/useQuotes';
 import HormuzMap from './components/HormuzMap';
-import { ALL_SYMBOLS, MARKET_SYMBOLS, TICKER_SYMBOLS, PORTALS, WAR_FEEDS, SHIPPING_FEEDS, WAR_KEYWORDS, SHIPPING_KEYWORDS } from './config';
+import {
+  ALL_SYMBOLS, MARKET_SYMBOLS, TICKER_SYMBOLS,
+  WAR_FEEDS, SUPPLY_FEEDS, WAR_KEYWORDS, SUPPLY_KEYWORDS,
+} from './config';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -22,70 +27,81 @@ class ErrorBoundary extends Component {
   }
 }
 
-function CommodityStrip({ quotes }) {
-  const items = [
-    { sym: 'BZ=F', label: 'Brent' },
-    { sym: 'CL=F', label: 'WTI' },
-    { sym: 'TTF=F', label: 'TTF Gas' },
-    { sym: 'GC=F', label: 'Gold' },
-  ];
+function fmt(v) {
+  if (v == null) return '--';
+  return v.toFixed(2);
+}
 
+function CommodityBox({ label, sub, quote }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {items.map(item => {
-        const q = quotes[item.sym];
-        return (
-          <div key={item.sym} className="bg-navy-panel rounded-lg border-l-4 border-gold/40 p-3">
-            <div className="text-[10px] text-txt-secondary">{item.label}</div>
-            <div className="text-[18px] font-bold text-txt-primary tabular-nums">
-              {q ? `$${q.price.toFixed(2)}` : '--'}
-            </div>
-            {q?.changePct != null && (
-              <div className={`text-[11px] font-semibold tabular-nums ${q.changePct >= 0 ? 'text-pos' : 'text-neg'}`}>
-                {q.changePct >= 0 ? '+' : ''}{q.changePct.toFixed(2)}%
-              </div>
-            )}
-          </div>
-        );
-      })}
+    <div className="bg-navy rounded-lg p-2">
+      <div className="text-[9px] text-txt-secondary">{label}</div>
+      <div className="text-[18px] font-bold text-txt-primary tabular-nums leading-tight">
+        ${fmt(quote?.price)}
+      </div>
+      {quote?.changePct != null && (
+        <div className={`text-[10px] font-semibold tabular-nums ${quote.changePct >= 0 ? 'text-pos' : 'text-neg'}`}>
+          {quote.changePct >= 0 ? '+' : ''}{quote.changePct.toFixed(2)}%
+        </div>
+      )}
+      <div className="text-[7px] text-txt-secondary mt-0.5">{sub}</div>
     </div>
+  );
+}
+
+function CommoditiesPanel({ quotes, loading, lastUpdated }) {
+  return (
+    <PanelCard title="Commodities" loading={loading} lastUpdated={lastUpdated} compact>
+      <div className="flex flex-col gap-1.5">
+        <CommodityBox label="Brent Crude" sub="ICE $/bbl" quote={quotes['BZ=F']} />
+        <CommodityBox label="WTI Crude" sub="NYMEX $/bbl" quote={quotes['CL=F']} />
+        <CommodityBox label="Gold" sub="COMEX $/oz" quote={quotes['GC=F']} />
+      </div>
+    </PanelCard>
   );
 }
 
 function App() {
   const symbols = useMemo(() => ALL_SYMBOLS, []);
-  const { quotes, loading, refresh } = useQuotes(symbols, 60000);
+  const { quotes, loading, lastUpdated, refresh } = useQuotes(symbols, 60000);
 
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-navy text-txt-primary font-sans">
-        <StickyHeader
-          quotes={quotes}
-          loading={loading}
-          onRefresh={refresh}
-          dashboardTitle="Iran War"
-          dashboardSubtitle="Geopolitical Monitor"
-          marketSymbols={MARKET_SYMBOLS}
-          tickerSymbols={TICKER_SYMBOLS}
-        />
+        {/* Custom header: title + red war headline tape + market data tape */}
+        <header className="sticky top-0 z-[1000]">
+          {/* Title bar — reuses shared TitleBar via StickyHeader internals */}
+          <StickyHeader
+            quotes={quotes}
+            loading={loading}
+            onRefresh={refresh}
+            dashboardTitle="Iran War"
+            dashboardSubtitle="Geopolitical Monitor"
+            marketSymbols={MARKET_SYMBOLS}
+            tickerSymbols={TICKER_SYMBOLS}
+          />
+        </header>
 
         <div className="p-4 flex flex-col gap-4">
-          {/* Commodity prices strip */}
-          <CommodityStrip quotes={quotes} />
-
-          {/* Map + sidebar */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {/* Top row: Map (2x) | Commodities | TV */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div className="xl:col-span-2">
               <HormuzMap />
             </div>
-            <div className="flex flex-col gap-4">
-              <LiveTVPanel />
-              <NewsFeedPanel title="Conflict Intelligence" feeds={WAR_FEEDS} keywords={WAR_KEYWORDS} limit={10} />
-            </div>
+            <CommoditiesPanel quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
+            <LiveTVPanel />
           </div>
 
-          {/* Shipping news */}
-          <NewsFeedPanel title="Shipping & Energy Intelligence" feeds={SHIPPING_FEEDS} keywords={SHIPPING_KEYWORDS} limit={10} />
+          {/* Row 2: Conflict | Supply Chain | Placeholder */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <NewsFeedPanel title="Conflict & Military" feeds={WAR_FEEDS} keywords={WAR_KEYWORDS} limit={12} />
+            <NewsFeedPanel title="Supply Chain & Logistics" feeds={SUPPLY_FEEDS} keywords={SUPPLY_KEYWORDS} limit={12} />
+            <PanelCard title="Analysis" compact>
+              <div className="py-8 text-center">
+                <p className="text-txt-secondary text-[10px]">Coming soon</p>
+              </div>
+            </PanelCard>
+          </div>
         </div>
       </div>
     </ErrorBoundary>

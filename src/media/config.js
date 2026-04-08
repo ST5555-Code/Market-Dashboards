@@ -60,8 +60,3 @@ export const SPORTS_RIGHTS = [
   { league: 'F1', annual: '$750M', expires: '2029', holders: 'ESPN' },
 ];
 
-export const PORTALS = [
-  { label: 'M&A', href: '/ma/' },
-  { label: 'Energy', href: '/energy/' },
-  { label: 'Cleantech', href: '/cleantech/' },
-];

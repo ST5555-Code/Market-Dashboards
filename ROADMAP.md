@@ -11,12 +11,21 @@
 _Accumulate changes here. Build and deploy as a batch._
 
 - [x] Fix nav buttons position — centered absolutely so they do not shift with title length
-- [ ] Cleantech EIA Power box: replace solar hero number with 6-month horizontal bar chart (each bar = 1 month TWh, latest in gold, others muted). Shows seasonal pattern + growth trend. Hero TWh number above. Requires /api/eia-power to return 6 months of history instead of just latest.
+- [x] Cleantech EIA Power box: 6-month solar bar chart + hero number
 - [x] **BUG** RSS whitelist missing domains — fixed, added 17 domains to api/rss.js
-- [ ] Cleantech Carbon Prices box: convert metric rows to individual cards with bg-navy boxes for each (EU ETS, RGGI, VCU, CBL) — same card style as WTI/Brent on energy Oil panel. Each card: label, price large, unit, source small.
-- [ ] Cleantech Fuel Credits box: same card treatment (LCFS, RIN D3, RIN D4, RIN D6) — individual bg-navy cards stacked inside the panel.
+- [x] Cleantech Carbon Prices box: individual bg-navy cards per metric
+- [x] Cleantech Fuel Credits box: individual bg-navy cards per metric
+- [x] Hormuz: renamed title to "Iran War Geopolitical Monitor"
+- [ ] **Iran War dashboard overhaul:**
+  - [ ] TV box same as other dashboards, default to Al Jazeera
+  - [ ] Top ticker tape = red background, scrolling war/Hormuz headlines (RSS)
+  - [ ] Bottom ticker tape = market data (commodities, indices)
+  - [ ] Top row: Map (spans 2 boxes wide) | Commodities (Brent, WTI, TTF, Gold in box 3) | TV (box 4)
+  - [ ] Map fix: restore dark theme colors, add all original layers (oil sites, refineries, terminals, pipelines, military bases, nuclear sites, shipping lanes). Each layer toggleable via clickable legend.
+  - [ ] Map sizing: fill 2-box width appropriately, match top row height
+  - [ ] Row 2 (3-column): Conflict & Military news | Supply Chain & Logistics news | Placeholder (TBD)
+  - [ ] Restore all map attributes from original vanilla dashboard (tooltips, icons, detail popups)
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
-- [ ] Hormuz: rename title to "Iran War" to match nav button
 - [ ] Landing page: update card descriptions to match current dashboard content
 - [ ] Remove vanilla dashboards from public/ (energy, cleantech, media, hormuz — all React now)
 - [ ] Remove unused PORTALS exports from all config.js files (no longer used)

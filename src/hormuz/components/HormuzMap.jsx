@@ -1,30 +1,70 @@
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
+import { useState } from 'react';
+import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import PanelCard from '@shared/components/PanelCard';
-import { OIL_SITES, MILITARY_BASES, MAP_CENTER, MAP_ZOOM } from '../config';
+import {
+  OIL_SITES, REFINERIES, TERMINALS, US_BASES, GCC_BASES, IRAN_BASES,
+  NUCLEAR_SITES, CITIES, INBOUND_LANE, OUTBOUND_LANE, PETROLINE,
+  FUJAIRAH_PIPE, MAP_CENTER, MAP_ZOOM,
+} from '../config';
 
-// Custom marker icons
-function makeIcon(color, size = 10) {
+function makeIcon(emoji, size = 14) {
   return L.divIcon({
     className: '',
-    html: `<div style="width:${size}px;height:${size}px;background:${color};border-radius:50%;border:2px solid #1E2846;box-shadow:0 0 4px ${color}80;"></div>`,
+    html: `<span style="font-size:${size}px">${emoji}</span>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 }
 
-const oilIcon = makeIcon('#DCB96E', 12);
-const militaryIcon = makeIcon('#C94040', 10);
-const chokeIcon = makeIcon('#FF4444', 16);
+const cityIcon = makeIcon('', 8);
+
+const LAYERS = [
+  { key: 'lanes', label: 'Shipping Lanes', color: '#38BDF8', defaultOn: true },
+  { key: 'pipes', label: 'Pipelines', color: '#F59E0B', defaultOn: true },
+  { key: 'oil', label: 'Oil & Gas', color: '#DCB96E', defaultOn: true },
+  { key: 'ref', label: 'Refineries', color: '#A855F7', defaultOn: false },
+  { key: 'term', label: 'Terminals', color: '#3B82F6', defaultOn: false },
+  { key: 'us', label: 'US Bases', color: '#60A5FA', defaultOn: true },
+  { key: 'gcc', label: 'GCC Bases', color: '#4CAF7D', defaultOn: false },
+  { key: 'ir', label: 'Iran Bases', color: '#C94040', defaultOn: true },
+  { key: 'nuc', label: 'Nuclear', color: '#FF6B6B', defaultOn: true },
+  { key: 'cities', label: 'Cities', color: '#A0AEC0', defaultOn: true },
+];
+
+function MarkerLayer({ items, color, size = 6 }) {
+  return items.map((s, i) => (
+    <CircleMarker
+      key={i}
+      center={s.pos}
+      radius={size}
+      pathOptions={{ color, fillColor: color, fillOpacity: 0.7, weight: 1.5 }}
+    >
+      <Tooltip direction="top" offset={[0, -8]}>
+        <div style={{ fontWeight: 600 }}>{s.flag && `${s.flag} `}{s.name}</div>
+        {s.detail && <div style={{ fontSize: 11 }}>{s.detail}</div>}
+        {s.cap && <div style={{ fontSize: 11 }}>Capacity: {s.cap}</div>}
+      </Tooltip>
+    </CircleMarker>
+  ));
+}
 
 export default function HormuzMap() {
+  const [layers, setLayers] = useState(() => {
+    const init = {};
+    LAYERS.forEach(l => init[l.key] = l.defaultOn);
+    return init;
+  });
+
+  const toggle = (key) => setLayers(prev => ({ ...prev, [key]: !prev[key] }));
+
   return (
-    <PanelCard title="Strait of Hormuz — Strategic Map">
-      <div className="rounded overflow-hidden" style={{ height: 500 }}>
+    <PanelCard title="Strategic Map">
+      <div className="rounded overflow-hidden" style={{ height: 340 }}>
         <MapContainer
           center={MAP_CENTER}
           zoom={MAP_ZOOM}
-          minZoom={5}
+          minZoom={4}
           maxZoom={12}
           style={{ height: '100%', width: '100%', background: '#0a1628' }}
           scrollWheelZoom={true}
@@ -35,45 +75,77 @@ export default function HormuzMap() {
             className="map-tiles-dark"
           />
 
-          {/* Oil infrastructure */}
-          {OIL_SITES.map((site, i) => (
-            <Marker
-              key={`oil-${i}`}
-              position={site.pos}
-              icon={site.flag === '!' ? chokeIcon : oilIcon}
-            >
-              <Tooltip direction="top" offset={[0, -8]} className="custom-tooltip">
-                <span className="font-semibold">{site.label}</span>
-                <br />
-                <span className="text-xs">{site.detail}</span>
-              </Tooltip>
-            </Marker>
-          ))}
+          {/* Chokepoint */}
+          <CircleMarker
+            center={[26.57, 56.25]}
+            radius={12}
+            pathOptions={{ color: '#C94040', fillColor: '#C94040', fillOpacity: 0.2, weight: 2 }}
+          >
+            <Tooltip direction="top"><div style={{ fontWeight: 600 }}>Strait of Hormuz</div><div style={{ fontSize: 11 }}>20M b/d at risk · 21 nm wide · ~20% global oil</div></Tooltip>
+          </CircleMarker>
 
-          {/* Military bases */}
-          {MILITARY_BASES.map((base, i) => (
-            <Marker key={`mil-${i}`} position={base.pos} icon={militaryIcon}>
-              <Tooltip direction="top" offset={[0, -8]} className="custom-tooltip">
-                <span className="font-semibold">{base.label}</span>
-                <br />
-                <span className="text-xs">{base.flag} — {base.detail}</span>
-              </Tooltip>
+          {/* Shipping lanes */}
+          {layers.lanes && (
+            <>
+              <Polyline positions={INBOUND_LANE} pathOptions={{ color: '#38BDF8', weight: 2.5, opacity: 0.85 }} />
+              <Polyline positions={OUTBOUND_LANE} pathOptions={{ color: '#38BDF8', weight: 2.5, opacity: 0.85, dashArray: '6,4' }} />
+            </>
+          )}
+
+          {/* Pipelines */}
+          {layers.pipes && (
+            <>
+              <Polyline positions={PETROLINE} pathOptions={{ color: '#F59E0B', weight: 2.5, opacity: 0.9 }}>
+                <Tooltip sticky>Saudi E-W Petroline · 5M b/d · Abqaiq → Yanbu</Tooltip>
+              </Polyline>
+              <Polyline positions={FUJAIRAH_PIPE} pathOptions={{ color: '#F59E0B', weight: 2, opacity: 0.75, dashArray: '5,3' }}>
+                <Tooltip sticky>UAE Fujairah Pipeline · 1.8M b/d · Habshan → Fujairah</Tooltip>
+              </Polyline>
+            </>
+          )}
+
+          {/* Oil & Gas */}
+          {layers.oil && <MarkerLayer items={OIL_SITES} color="#DCB96E" size={7} />}
+
+          {/* Refineries */}
+          {layers.ref && <MarkerLayer items={REFINERIES} color="#A855F7" size={5} />}
+
+          {/* Terminals */}
+          {layers.term && <MarkerLayer items={TERMINALS} color="#3B82F6" size={5} />}
+
+          {/* US Bases */}
+          {layers.us && <MarkerLayer items={US_BASES} color="#60A5FA" size={6} />}
+
+          {/* GCC Bases */}
+          {layers.gcc && <MarkerLayer items={GCC_BASES} color="#4CAF7D" size={5} />}
+
+          {/* Iran Bases */}
+          {layers.ir && <MarkerLayer items={IRAN_BASES} color="#C94040" size={6} />}
+
+          {/* Nuclear */}
+          {layers.nuc && <MarkerLayer items={NUCLEAR_SITES} color="#FF6B6B" size={7} />}
+
+          {/* Cities */}
+          {layers.cities && CITIES.map((c, i) => (
+            <Marker key={i} position={c.pos} icon={cityIcon}>
+              <Tooltip>{c.name}</Tooltip>
             </Marker>
           ))}
         </MapContainer>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-2 text-[9px] text-txt-secondary">
-        <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-gold inline-block" /> Oil Infrastructure
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-neg inline-block" /> Military / Nuclear
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-[#FF4444] inline-block" /> Chokepoint
-        </span>
+      {/* Clickable legend */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+        {LAYERS.map(l => (
+          <button
+            key={l.key}
+            onClick={() => toggle(l.key)}
+            className={`flex items-center gap-1 text-[8px] cursor-pointer transition-opacity ${layers[l.key] ? 'opacity-100' : 'opacity-30'}`}
+          >
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: l.color }} />
+            <span className="text-txt-secondary">{l.label}</span>
+          </button>
+        ))}
       </div>
     </PanelCard>
   );

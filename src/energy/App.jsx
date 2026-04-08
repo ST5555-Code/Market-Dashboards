@@ -10,7 +10,7 @@ import ForwardCurve from './components/ForwardCurve';
 import StockTable from './components/StockTable';
 import EarningsCalendar from './components/EarningsCalendar';
 import EnergyNewsFeed from './components/EnergyNewsFeed';
-import { STOCKS as DEFAULT_STOCKS, WTI_CURVE, HH_CURVE, MARKET_SYMBOLS, PORTALS } from './config';
+import { STOCKS as DEFAULT_STOCKS, WTI_CURVE, HH_CURVE, MARKET_SYMBOLS } from './config';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }

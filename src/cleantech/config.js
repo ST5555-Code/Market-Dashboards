@@ -76,8 +76,3 @@ export const FUEL_CREDITS = [
   { label: 'RIN D6 Ethanol', price: '0.89', unit: '$/RIN', source: 'EPA EMTS', tag: '~' },
 ];
 
-export const PORTALS = [
-  { label: 'M&A', href: '/ma/' },
-  { label: 'Energy', href: '/energy/' },
-  { label: 'Media', href: '/media/' },
-];
