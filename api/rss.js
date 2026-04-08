@@ -14,6 +14,29 @@ const ALLOWED_DOMAINS = [
   'buyoutsinsider.com',
   'feeds.bbci.co.uk',
   'feeds.bbc.com',
+  // Energy
+  'oilprice.com',
+  'rigzone.com',
+  // Cleantech
+  'carbonbrief.org',
+  'cleantechnica.com',
+  'pv-magazine.com',
+  'electrek.co',
+  'energymonitor.ai',
+  // Nuclear
+  'world-nuclear-news.org',
+  'powermag.com',
+  // Data Center
+  'datacenterdynamics.com',
+  'theregister.com',
+  // Media
+  'variety.com',
+  'deadline.com',
+  'hollywoodreporter.com',
+  'frontofficesports.com',
+  'sportico.com',
+  // Hormuz
+  'aljazeera.com',
 ];
 
 function parseRSS(xml) {
