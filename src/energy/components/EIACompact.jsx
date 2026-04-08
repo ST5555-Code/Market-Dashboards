@@ -6,23 +6,23 @@ function fmt(v, dec = 1) {
   return v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
-// Visual bar showing stocks relative to approximate 5-year range
-function StocksBar({ value }) {
+// Gauge bar showing stocks relative to 5-year range
+function StocksBar({ value, label, height = 'h-2', showLabels = false }) {
   if (value == null) return null;
-  const min = 380; // ~5yr low in MMBbl
-  const max = 500; // ~5yr high in MMBbl
+  const min = 380; // ~5yr low MMBbl
+  const max = 500; // ~5yr high MMBbl
   const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
   const color = pct > 60 ? '#C94040' : pct > 40 ? '#DCB96E' : '#4CAF7D';
 
   return (
-    <div className="mt-1.5">
-      <div className="w-full h-2 bg-navy rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+    <div className="flex items-center gap-1.5">
+      <div className={`flex-1 ${height} bg-navy rounded-full overflow-hidden`}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <div className="flex justify-between text-[7px] text-txt-secondary mt-0.5">
-        <span>{min}</span>
-        <span>{max} MMBbl</span>
-      </div>
+      {label && <span className="text-[7px] text-txt-secondary w-[16px] text-right flex-shrink-0">{label}</span>}
+      {showLabels && (
+        <span className="text-[7px] text-txt-secondary w-[28px] text-right flex-shrink-0 tabular-nums">{fmt(value, 0)}</span>
+      )}
     </div>
   );
 }
@@ -79,6 +79,7 @@ export default function EIACompact() {
   const stocks = data?.crudeStocks;
   const stocksMMBbl = stocks ? stocks.value / 1000 : null;
   const stocksChg = stocks?.change ? stocks.change / 1000 : null;
+  const history = stocks?.history || [];
 
   return (
     <PanelCard title="EIA Weekly" loading={loading} lastUpdated={lastUpdated} onRefresh={fetchData} compact>
@@ -90,7 +91,22 @@ export default function EIACompact() {
         changeUnit="w/w"
         invertColor
       >
-        <StocksBar value={stocksMMBbl} />
+        {/* Current week bar */}
+        <div className="mt-2 flex flex-col gap-1">
+          {history.map((h, i) => (
+            <StocksBar
+              key={h.period}
+              value={h.value / 1000}
+              label={i === 0 ? 'now' : `${i}w`}
+              height={i === 0 ? 'h-2.5' : 'h-1.5'}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between text-[7px] text-txt-secondary mt-1">
+          <span>380</span>
+          <span>5yr range MMBbl</span>
+          <span>500</span>
+        </div>
       </MetricCard>
 
       <div className="grid grid-cols-2 gap-2 mt-2">

@@ -45,27 +45,29 @@ export default async function handler(req, res) {
 
   try {
     const [stocks, production, refInputs] = await Promise.all([
-      // US crude oil ending stocks ex-SPR (weekly)
-      eiaFetch('petroleum/stoc/wstk', { product: 'EPC0', duoarea: 'NUS', process: 'SAX' }, 3),
+      // US crude oil ending stocks ex-SPR (weekly) — 5 weeks for trend bars
+      eiaFetch('petroleum/stoc/wstk', { product: 'EPC0', duoarea: 'NUS', process: 'SAX' }, 5),
       // US crude field production (weekly)
       eiaFetch('petroleum/sum/sndw',  { product: 'EPC0', duoarea: 'NUS', process: 'FPF' }, 2),
       // US refinery net crude inputs (weekly)
       eiaFetch('petroleum/pnp/wiup',  { product: 'EPC0', duoarea: 'NUS', process: 'YIY' }, 2),
     ]);
 
-    const s0 = stocks[0], s1 = stocks[1];
-    const stockVal  = s0 ? +s0.value : null;
-    const stockPrev = s1 ? +s1.value : null;
+    const stockHistory = stocks.map(s => ({ period: s.period, value: +s.value }));
+    const s0 = stockHistory[0], s1 = stockHistory[1];
+    const stockVal  = s0 ? s0.value : null;
+    const stockPrev = s1 ? s1.value : null;
     const stockChg  = stockVal != null && stockPrev != null ? stockVal - stockPrev : null;
 
     res.setHeader('Cache-Control', 'public, max-age=21600, s-maxage=21600');
     return res.status(200).json({
-      reportDate:  s0?.period   || null,
+      reportDate:  stocks[0]?.period || null,
       nextReport:  nextWednesday(),
       crudeStocks: {
         value: stockVal,   // MBbl
         prev:  stockPrev,  // MBbl
-        chg:   stockChg,   // MBbl w/w (positive = build, negative = draw)
+        change: stockChg,  // MBbl w/w
+        history: stockHistory.slice(0, 4), // current + 3 prior weeks
         units: 'MBbl',
       },
       crudeProduction: {
