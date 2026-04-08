@@ -58,8 +58,10 @@ function SectorColumn({ sectors, quotes }) {
   );
 }
 
-export default function StockTable({ stocks, quotes, loading, lastUpdated }) {
-  // Group by sector, then distribute into 3 columns
+// columnLayout: optional array of 3 arrays of sector names
+// e.g. [['Majors','Large Cap Oil','ETFs'], ['Mid Cap Oil'], ['Gas']]
+// If not provided, auto-balances by row count
+export default function StockTable({ stocks, quotes, loading, lastUpdated, columnLayout }) {
   const columns = useMemo(() => {
     const sectors = {};
     for (const s of stocks) {
@@ -67,21 +69,25 @@ export default function StockTable({ stocks, quotes, loading, lastUpdated }) {
       sectors[s.sector].push(s);
     }
 
-    const sectorEntries = Object.entries(sectors);
-
-    // Distribute sectors across 3 columns trying to balance row count
-    const cols = [[], [], []];
-    const counts = [0, 0, 0];
-
-    for (const entry of sectorEntries) {
-      // Add to the column with fewest rows
-      const minIdx = counts.indexOf(Math.min(...counts));
-      cols[minIdx].push(entry);
-      counts[minIdx] += entry[1].length + 1; // +1 for sector header
+    if (columnLayout) {
+      return columnLayout.map(colSectors =>
+        colSectors
+          .filter(name => sectors[name])
+          .map(name => [name, sectors[name]])
+      );
     }
 
+    // Auto-balance by row count
+    const sectorEntries = Object.entries(sectors);
+    const cols = [[], [], []];
+    const counts = [0, 0, 0];
+    for (const entry of sectorEntries) {
+      const minIdx = counts.indexOf(Math.min(...counts));
+      cols[minIdx].push(entry);
+      counts[minIdx] += entry[1].length + 1;
+    }
     return cols;
-  }, [stocks]);
+  }, [stocks, columnLayout]);
 
   return (
     <PanelCard title="Equities — Live" loading={loading} lastUpdated={lastUpdated}>

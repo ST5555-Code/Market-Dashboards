@@ -71,7 +71,17 @@ function App() {
             <ForwardCurve title="Henry Hub Forward Curve" contracts={HH_CURVE} color="#4CAF7D" unit="$/MMBtu" />
           </div>
 
-          <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
+          <StockTable
+            stocks={stocks}
+            quotes={quotes}
+            loading={loading}
+            lastUpdated={lastUpdated}
+            columnLayout={[
+              ['Majors', 'Large Cap Oil', 'ETFs'],
+              ['Mid Cap Oil'],
+              ['Gas'],
+            ]}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EnergyNewsFeed />
