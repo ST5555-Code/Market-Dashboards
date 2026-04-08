@@ -21,11 +21,14 @@ function CurveDot({ cx, cy, payload, color }) {
   return <circle cx={cx} cy={cy} r={r} fill={color} stroke="#141E35" strokeWidth={1.5} />;
 }
 
-// Custom label — only show on spot and every 3 months
+// Custom label — show on spot, every 6 months in the monthly section, and annual contracts
 function CurveLabel({ x, y, value, index, payload }) {
   if (value == null) return null;
   const months = payload?.months;
-  if (months !== 0 && months % 3 !== 0) return null;
+  // Show on spot, every 6 months, and annual contracts (months > 20 which are beyond monthly range)
+  const isMonthly = months <= 21;
+  const showLabel = months === 0 || (isMonthly && months % 6 === 0) || !isMonthly;
+  if (!showLabel) return null;
   return (
     <text x={x} y={y - 10} textAnchor="middle" fill="#FFFFFF" fontSize={8} fontWeight={600}>
       {value.toFixed(2)}
@@ -105,13 +108,17 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
     return [Math.floor((min - pad) * 10) / 10, Math.ceil((max + pad) * 10) / 10];
   }, [chartData]);
 
-  // Generate quarter tick values for x-axis
-  const quarterTicks = useMemo(() => {
+  // Generate tick values — quarterly for monthly section, then annual points
+  const axisTicks = useMemo(() => {
     if (!chartData.length) return [];
-    const maxMonth = Math.max(...chartData.map(d => d.months));
     const ticks = [0];
-    for (let m = 3; m <= maxMonth; m += 3) {
+    // Quarterly ticks through the monthly section
+    for (let m = 6; m <= 21; m += 6) {
       ticks.push(m);
+    }
+    // Add any annual contracts (months > 21)
+    for (const d of chartData) {
+      if (d.months > 21) ticks.push(d.months);
     }
     return ticks;
   }, [chartData]);
@@ -147,7 +154,7 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
                 dataKey="months"
                 type="number"
                 domain={[0, 'dataMax']}
-                ticks={quarterTicks}
+                ticks={axisTicks}
                 tick={{ fontSize: 8, fill: '#A0AEC0' }}
                 tickLine={false}
                 axisLine={{ stroke: '#2a3560' }}

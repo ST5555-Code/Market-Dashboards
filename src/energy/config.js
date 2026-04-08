@@ -96,9 +96,18 @@ function buildCurve(prefix, startYear, startMonth, endYear, endMonth) {
   return contracts;
 }
 
-// Monthly contracts: Spot + May'26 through Dec'27
-export const WTI_CURVE = buildCurve('CL', 2026, 4, 2027, 12);
-export const HH_CURVE = buildCurve('NG', 2026, 4, 2027, 12);
+// Monthly contracts: Spot + May'26 through Dec'27, then annual Dec'28 + Dec'29
+// Dec'28 = 44 months out, Dec'29 = 56 months out (time-proportional spacing)
+export const WTI_CURVE = [
+  ...buildCurve('CL', 2026, 4, 2027, 12),
+  { sym: 'CLZ28.NYM', label: "Dec'28", months: 44 },
+  { sym: 'CLZ29.NYM', label: "Dec'29", months: 56 },
+];
+export const HH_CURVE = [
+  ...buildCurve('NG', 2026, 4, 2027, 12),
+  { sym: 'NGZ28.NYM', label: "Dec'28", months: 44 },
+  { sym: 'NGZ29.NYM', label: "Dec'29", months: 56 },
+];
 
 // RSS feeds for energy news
 export const NEWS_FEEDS = [
