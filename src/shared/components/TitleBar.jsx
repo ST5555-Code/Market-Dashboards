@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 
 const DEFAULT_PORTALS = [
+  { label: 'M&A', href: '/ma/' },
   { label: 'Energy', href: '/energy/' },
   { label: 'Cleantech', href: '/cleantech/' },
   { label: 'Media', href: '/media/' },
-  { label: 'Hormuz', href: '/hormuz/' },
-  { label: 'M&A', href: '/ma/' },
 ];
 
 function Clock() {

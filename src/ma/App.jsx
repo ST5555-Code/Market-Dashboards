@@ -67,7 +67,6 @@ function App() {
             { label: 'Energy', href: '/energy/' },
             { label: 'Cleantech', href: '/cleantech/' },
             { label: 'Media', href: '/media/' },
-            { label: 'Hormuz', href: '/hormuz/' },
           ]}
         />
         <TopRow fredData={fredData} fredLoading={fredLoading} fredLastUpdated={fredLastUpdated} refreshFRED={refreshFRED} />

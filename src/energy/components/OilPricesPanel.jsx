@@ -34,21 +34,40 @@ function CommodityBox({ label, sub, quote, onClick }) {
 export default function OilPricesPanel({ quotes, loading, lastUpdated }) {
   const [overlay, setOverlay] = useState(null);
 
+  // 3-2-1 crack spread: (2×RBOB + 1×HO) × 42 / 3 − WTI
+  const wti = quotes['CL=F']?.price;
+  const rbob = quotes['RB=F']?.price;
+  const ho = quotes['HO=F']?.price;
+  const crack = (wti && rbob && ho) ? ((2 * rbob + ho) * 42 / 3) - wti : null;
+
   return (
     <PanelCard title="Oil" loading={loading} lastUpdated={lastUpdated} compact>
       <div className="flex flex-col gap-2">
         <CommodityBox
           label="WTI Crude"
-          sub="NYMEX Front Month"
+          sub="NYMEX $/bbl"
           quote={quotes['CL=F']}
           onClick={() => setOverlay({ symbol: 'CL=F', title: 'WTI Crude (CL=F)' })}
         />
         <CommodityBox
           label="Brent Crude"
-          sub="ICE Front Month"
+          sub="ICE $/bbl"
           quote={quotes['BZ=F']}
           onClick={() => setOverlay({ symbol: 'BZ=F', title: 'Brent Crude (BZ=F)' })}
         />
+
+        {/* Crack spread — computed, not clickable */}
+        {crack != null && (
+          <div className="bg-navy rounded-lg p-2 mt-0.5">
+            <div className="text-[8px] text-txt-secondary">3-2-1 Crack Spread</div>
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-[14px] font-bold tabular-nums ${crack > 20 ? 'text-pos' : crack < 10 ? 'text-neg' : 'text-txt-primary'}`}>
+                ${fmt(crack)}
+              </span>
+              <span className="text-[8px] text-txt-secondary">$/bbl refining margin</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {overlay && (

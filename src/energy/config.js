@@ -61,7 +61,7 @@ export const TICKER_SYMBOLS = STOCKS.map(s => s.sym);
 // All symbols needed for quotes (deduped)
 export const ALL_SYMBOLS = [
   // Commodities
-  'CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F',
+  'CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F', 'HO=F',
   // Market indicators
   '^GSPC', '^DJI', '^TNX', '^VIX',
   // All stocks (deduped automatically by useQuotes batching)
@@ -116,10 +116,9 @@ export const NEWS_FEEDS = [
   { url: 'https://www.rigzone.com/news/rss/rigzone_latest.aspx', source: 'Rigzone' },
 ];
 
-// Portal links
+// Portal links (excludes self)
 export const PORTALS = [
+  { label: 'M&A', href: '/ma/' },
   { label: 'Cleantech', href: '/cleantech/' },
   { label: 'Media', href: '/media/' },
-  { label: 'Hormuz', href: '/hormuz/' },
-  { label: 'M&A', href: '/ma/' },
 ];

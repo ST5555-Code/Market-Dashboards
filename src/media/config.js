@@ -61,8 +61,7 @@ export const SPORTS_RIGHTS = [
 ];
 
 export const PORTALS = [
+  { label: 'M&A', href: '/ma/' },
   { label: 'Energy', href: '/energy/' },
   { label: 'Cleantech', href: '/cleantech/' },
-  { label: 'Hormuz', href: '/hormuz/' },
-  { label: 'M&A', href: '/ma/' },
 ];

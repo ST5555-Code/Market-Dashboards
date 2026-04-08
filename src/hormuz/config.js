@@ -50,8 +50,8 @@ export const MILITARY_BASES = [
 ];
 
 export const PORTALS = [
+  { label: 'M&A', href: '/ma/' },
   { label: 'Energy', href: '/energy/' },
   { label: 'Cleantech', href: '/cleantech/' },
   { label: 'Media', href: '/media/' },
-  { label: 'M&A', href: '/ma/' },
 ];

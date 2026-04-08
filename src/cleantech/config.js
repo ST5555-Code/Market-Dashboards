@@ -73,8 +73,7 @@ export const CARBON_MARKETS = [
 ];
 
 export const PORTALS = [
+  { label: 'M&A', href: '/ma/' },
   { label: 'Energy', href: '/energy/' },
   { label: 'Media', href: '/media/' },
-  { label: 'Hormuz', href: '/hormuz/' },
-  { label: 'M&A', href: '/ma/' },
 ];

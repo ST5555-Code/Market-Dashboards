@@ -86,8 +86,10 @@ function App() {
             ]}
           />
 
-          {/* Earnings */}
-          <EarningsCalendar symbols={earningsSymbols} />
+          {/* Bottom row: Earnings + TBD */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <EarningsCalendar symbols={earningsSymbols} />
+          </div>
         </div>
       </div>
     </ErrorBoundary>
