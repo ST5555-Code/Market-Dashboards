@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
 import PanelCard from '@shared/components/PanelCard';
 
 function CustomTooltip({ active, payload }) {
@@ -175,8 +175,9 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
                 strokeWidth={2}
                 dot={<CurveDot color={color} />}
                 activeDot={{ r: 5, fill: color, stroke: '#141E35', strokeWidth: 2 }}
-                label={<CurveLabel />}
-              />
+              >
+                <LabelList dataKey="price" content={<CurveLabel />} />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         </>
