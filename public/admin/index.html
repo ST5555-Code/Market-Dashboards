@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock List Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --oxford:    #1E2846;
+    --oxford-lt: #263354;
+    --oxford-dk: #141C33;
+    --glacier:   #5A82AF;
+    --glacier-lt:#7AA3CC;
+    --sandstone: #DCB96E;
+    --sand-lt:   #E8CC8E;
+    --muted:     #8A96B0;
+    --border:    rgba(90,130,175,0.25);
+    --green:     #4CAF7D;
+    --red:       #E05252;
+    --text:      #D8DDE8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--oxford-dk);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--oxford);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sandstone); }
+  .topbar-sub   { font-size: 11px; color: var(--muted); margin-left: 12px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 7px 16px; border-radius: 5px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em;
+  }
+  .btn:hover  { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary   { background: var(--glacier); color: #fff; }
+  .btn-sandstone { background: var(--sandstone); color: var(--oxford-dk); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--glacier); color: var(--text); }
+  .btn-sm  { padding: 4px 10px; font-size: 11px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Layout ── */
+  .container { max-width: 1000px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab {
+    padding: 10px 20px; border-radius: 5px 5px 0 0;
+    border: 1px solid transparent; border-bottom: none; cursor: pointer;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); background: transparent; transition: color 0.15s, background 0.15s;
+    position: relative; bottom: -1px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--sandstone); background: var(--oxford); border-color: var(--border); border-bottom-color: var(--oxford); }
+  .tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--oxford-lt); color: var(--glacier); font-size: 10px; margin-left: 6px;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Stock table ── */
+  .stock-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .stock-table th {
+    text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .stock-table td { padding: 9px 12px; border-bottom: 1px solid rgba(90,130,175,0.1); vertical-align: middle; }
+  .stock-table tr:last-child td { border-bottom: none; }
+
+  /* ── Drag and drop ── */
+  .drag-handle {
+    cursor: grab; color: var(--muted); font-size: 14px; padding: 0 4px;
+    user-select: none; opacity: 0.5; transition: opacity 0.15s;
+  }
+  .drag-handle:hover { opacity: 1; color: var(--glacier); }
+  .drag-handle:active { cursor: grabbing; }
+  tr.dragging { opacity: 0.4; }
+  tr.drag-over td { background: rgba(90,130,175,0.15); border-top: 2px solid var(--glacier); }
+  tr.stock-row { transition: background 0.1s; }
+  tr.stock-row:hover td { background: rgba(90,130,175,0.06); }
+
+  /* ── Pills / tags ── */
+  .sym-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    background: var(--oxford); border: 1px solid var(--border); font-weight: 600;
+    font-size: 12px; color: var(--glacier-lt);
+    font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: 0.04em;
+  }
+  .sector-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    background: rgba(220,185,110,0.12); border: 1px solid rgba(220,185,110,0.25);
+    font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sandstone);
+  }
+  .row-num { color: var(--muted); font-size: 11px; width: 32px; }
+  .exch-tag { font-size: 10px; color: var(--muted); }
+
+  /* ── Add form ── */
+  .add-card {
+    background: var(--oxford); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin-top: 8px;
+  }
+  .add-card h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .form-group label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .form-group input, .form-group select {
+    background: var(--oxford-dk); border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+    padding: 8px 12px; outline: none; transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--glacier); }
+  .form-group input::placeholder { color: var(--muted); }
+  .form-group select option { background: var(--oxford-dk); }
+  .sym-input  { width: 110px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+  .name-input { width: 240px; }
+  .sector-select { width: 160px; }
+
+  /* ── Autocomplete dropdown ── */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--oxford-lt); border: 1px solid var(--glacier);
+    border-radius: 6px; z-index: 200; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    min-width: 340px;
+  }
+  .autocomplete-item {
+    padding: 9px 14px; cursor: pointer; display: flex; align-items: center;
+    gap: 10px; transition: background 0.1s;
+  }
+  .autocomplete-item:hover, .autocomplete-item.active { background: rgba(90,130,175,0.2); }
+  .ac-sym {
+    font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700;
+    font-size: 12px; color: var(--glacier-lt); min-width: 64px;
+    letter-spacing: 0.04em;
+  }
+  .ac-name  { flex: 1; font-size: 12px; color: var(--text); }
+  .ac-meta  { font-size: 10px; color: var(--muted); text-align: right; white-space: nowrap; }
+  .ac-loading, .ac-empty {
+    padding: 10px 14px; font-size: 12px; color: var(--muted); text-align: center;
+  }
+
+  /* ── GitHub section ── */
+  .github-section { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 28px; }
+  .github-toggle {
+    display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;
+    color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .github-toggle:hover { color: var(--text); }
+  .github-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+  .github-toggle.open .arrow { transform: rotate(90deg); }
+  .github-body { display: none; margin-top: 16px; }
+  .github-body.open { display: block; }
+  .github-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .github-note { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+  .github-note a { color: var(--glacier); text-decoration: none; }
+  .github-note a:hover { text-decoration: underline; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(8px);
+    transition: opacity 0.25s, transform 0.25s; z-index: 999; pointer-events: none; max-width: 360px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: var(--green); color: #fff; }
+  #toast.error   { background: var(--red); color: #fff; }
+  #toast.info    { background: var(--glacier); color: #fff; }
+
+  /* ── Status ── */
+  .status-bar { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .status-dot.ok      { background: var(--green); }
+  .status-dot.error   { background: var(--red); }
+  .status-dot.loading { background: var(--sandstone); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .empty {
+    padding: 32px; text-align: center; color: var(--muted); font-size: 12px;
+    border: 1px dashed var(--border); border-radius: 6px; margin-bottom: 20px;
+  }
+  .unsaved-banner {
+    background: rgba(220,185,110,0.12); border: 1px solid rgba(220,185,110,0.3);
+    border-radius: 6px; padding: 10px 16px; font-size: 12px; color: var(--sandstone);
+    margin-bottom: 20px; align-items: center; gap: 8px; display: flex;
+  }
+  .unsaved-banner.hidden { display: none !important; }
+  .count-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+
+  /* ── Drag hint ── */
+  .drag-hint { font-size: 10px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+
+  /* ── Inline row edit ── */
+  tr.editing td { background: rgba(90,130,175,0.08) !important; padding: 6px 8px !important; }
+  .edit-input {
+    background: var(--oxford-dk); border: 1px solid var(--glacier); border-radius: 4px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px;
+    padding: 5px 8px; outline: none; width: 100%;
+  }
+  .edit-input.sym  { font-family: 'SF Mono','Fira Code',monospace; width: 80px; }
+  .edit-input.name { width: 200px; }
+  .edit-select {
+    background: var(--oxford-dk); border: 1px solid var(--glacier); border-radius: 4px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px;
+    padding: 5px 8px; outline: none; width: 100%;
+  }
+  .custom-sector-wrap { display: none; margin-top: 4px; }
+  .custom-sector-wrap.visible { display: block; }
+  .btn-edit {
+    background: transparent; border: 1px solid transparent;
+    color: var(--muted); font-size: 11px; font-family: 'Inter', sans-serif;
+    padding: 2px 7px; border-radius: 3px; cursor: pointer;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  tr.stock-row:hover .btn-edit { opacity: 1; }
+  .btn-edit:hover { color: var(--glacier-lt); border-color: var(--glacier); background: rgba(90,130,175,0.1); }
+  .btn-save { color: var(--green) !important; border-color: rgba(76,175,125,0.4) !important; opacity: 1 !important; }
+  .btn-cancel-edit { color: var(--muted) !important; opacity: 1 !important; }
+
+  /* ── Manage sectors ── */
+  .sectors-section { margin-top: 20px; }
+  .sectors-toggle {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 11px; color: var(--muted); user-select: none; letter-spacing: 0.04em;
+  }
+  .sectors-toggle:hover { color: var(--text); }
+  .sectors-toggle .sarrow { transition: transform 0.2s; display: inline-block; }
+  .sectors-toggle.open .sarrow { transform: rotate(90deg); }
+  .sectors-body { display: none; margin-top: 12px; }
+  .sectors-body.open { display: block; }
+  .sector-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .sector-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 4px;
+    background: rgba(220,185,110,0.1); border: 1px solid rgba(220,185,110,0.25);
+    font-size: 11px; color: var(--sandstone); letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .sector-chip.builtin { opacity: 0.6; }
+  .sector-chip-del {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 12px; padding: 0; line-height: 1; font-family: inherit;
+  }
+  .sector-chip-del:hover { color: var(--red); }
+  .add-sector-row { display: flex; gap: 8px; align-items: center; }
+  .sector-key-input { width: 110px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; }
+  .sector-label-input { width: 180px; }
+
+  /* ── Insert-here button ── */
+  .btn-insert {
+    background: transparent; border: 1px solid transparent;
+    color: var(--muted); font-size: 10px; font-family: 'Inter', sans-serif;
+    padding: 2px 7px; border-radius: 3px; cursor: pointer; white-space: nowrap;
+    opacity: 0; transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+    letter-spacing: 0.02em;
+  }
+  tr.stock-row:hover .btn-insert { opacity: 1; }
+  .btn-insert:hover {
+    color: var(--glacier-lt); border-color: var(--glacier);
+    background: rgba(90,130,175,0.1);
+  }
+  tr.insert-target td { background: rgba(90,130,175,0.1) !important; }
+  tr.insert-target .btn-insert {
+    opacity: 1; color: var(--glacier-lt); border-color: var(--glacier);
+    background: rgba(90,130,175,0.15);
+  }
+
+  /* ── Insert-position indicator in add form ── */
+  .insert-indicator {
+    display: none; align-items: center; gap: 8px; margin-bottom: 14px;
+    background: rgba(90,130,175,0.12); border: 1px solid rgba(90,130,175,0.3);
+    border-radius: 5px; padding: 7px 12px; font-size: 12px; color: var(--glacier-lt);
+  }
+  .insert-indicator.visible { display: flex; }
+  .insert-indicator-cancel {
+    margin-left: auto; cursor: pointer; font-size: 11px; color: var(--muted);
+    background: none; border: none; font-family: 'Inter', sans-serif; padding: 0;
+  }
+  .insert-indicator-cancel:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:4px">
+    <span class="topbar-title">Stock List Admin</span>
+    <span class="topbar-sub">intelligence-dashboards</span>
+  </div>
+  <div class="topbar-actions">
+    <div class="status-bar">
+      <div class="status-dot loading" id="statusDot"></div>
+      <span id="statusText">Loading…</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="reloadFromAPI()">↺ Reload</button>
+    <button class="btn btn-sandstone" id="downloadBtn" onclick="downloadJSON()" disabled>⬇ Download JSON</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="unsaved-banner hidden" id="unsavedBanner">
+    ⚠ Unsaved changes — use GitHub Save below, or download JSON and push.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('energy')"        id="tab-energy">Energy <span class="tab-badge" id="badge-energy">0</span></button>
+    <button class="tab"        onclick="switchTab('cleantech')"     id="tab-cleantech">Cleantech <span class="tab-badge" id="badge-cleantech">0</span></button>
+    <button class="tab"        onclick="switchTab('media')"         id="tab-media">Media <span class="tab-badge" id="badge-media">0</span></button>
+    <button class="tab"        onclick="switchTab('privateBanking')" id="tab-privateBanking">Private Banking <span class="tab-badge" id="badge-privateBanking">0</span></button>
+  </div>
+
+  <div id="panel-energy"         class="tab-panel active"></div>
+  <div id="panel-cleantech"      class="tab-panel"></div>
+  <div id="panel-media"          class="tab-panel"></div>
+  <div id="panel-privateBanking" class="tab-panel"></div>
+
+  <div class="github-section">
+    <div class="github-toggle" id="githubToggle" onclick="toggleGitHub()">
+      <span class="arrow">▶</span>
+      GitHub Save — push directly, triggers Vercel deploy
+    </div>
+    <div class="github-body" id="githubBody">
+      <p class="github-note">
+        Provide a GitHub <a href="https://github.com/settings/tokens/new?scopes=repo&description=stock-admin" target="_blank">Personal Access Token</a> with <strong>repo</strong> scope.
+        Stored in browser localStorage only — never sent anywhere except GitHub's API.
+      </p>
+      <div class="github-grid">
+        <div class="form-group">
+          <label>GitHub Token</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" style="font-family:monospace">
+        </div>
+        <div class="form-group">
+          <label>Repo (owner/name)</label>
+          <input type="text" id="ghRepo" placeholder="sergetismen/intelligence-dashboards">
+        </div>
+        <div class="form-group">
+          <label>Branch</label>
+          <input type="text" id="ghBranch" value="main">
+        </div>
+        <div class="form-group">
+          <label>File path in repo</label>
+          <input type="text" id="ghPath" value="config/symbols.json">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" onclick="saveToGitHub()">Push to GitHub → deploy</button>
+        <button class="btn btn-ghost btn-sm" onclick="saveGHSettings()">Save settings</button>
+        <span id="ghStatus" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- DOMPurify -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"
+  integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════
+const DASHBOARDS = ['energy','cleantech','media','privateBanking'];
+
+// Built-in sectors (cannot be deleted)
+const BUILTIN_SECTORS = {
+  energy:        { major:'Major Integrated', oil:'E&P Oil', gas:'E&P Gas', ofs:'Oilfield Services', etf:'ETF' },
+  cleantech:     { etf:'ETF', power:'Power Utilities', solar:'Solar', wind:'Wind', nuclear:'Nuclear', h2:'Hydrogen', mineral:'Critical Minerals' },
+  media:         {},
+  privateBanking:{}
+};
+
+let config   = {};
+let isDirty  = false;
+let insertAt = {};   // insertAt[dash] = index (null = append to end)
+
+// Merged sectors for a dashboard (builtin + custom from config)
+function getSectors(dash) {
+  const custom = (config[dash] && config[dash]._sectors) || {};
+  return Object.assign({}, BUILTIN_SECTORS[dash] || {}, custom);
+}
+function getSectorKeys(dash) { return Object.keys(getSectors(dash)); }
+function getSectorLabel(dash, key) { return getSectors(dash)[key] || key; }
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+async function init() {
+  loadGHSettings();
+  await reloadFromAPI();
+}
+
+async function reloadFromAPI() {
+  setStatus('loading','Loading…');
+  try {
+    const r = await fetch('/api/symbols?_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    config = {};
+    DASHBOARDS.forEach(d => {
+      config[d] = {
+        stocks:   (data[d] && data[d].stocks)   ? JSON.parse(JSON.stringify(data[d].stocks))   : [],
+        _sectors: (data[d] && data[d]._sectors) ? JSON.parse(JSON.stringify(data[d]._sectors)) : {}
+      };
+    });
+    isDirty = false;
+    document.getElementById('unsavedBanner').classList.add('hidden');
+    renderAll();
+    setStatus('ok','Loaded');
+    document.getElementById('downloadBtn').disabled = false;
+  } catch(e) {
+    setStatus('error','Failed: ' + e.message);
+    if (!Object.keys(config).length) { DASHBOARDS.forEach(d => { config[d]={stocks:[]}; }); renderAll(); }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function renderAll() { DASHBOARDS.forEach(d => { insertAt[d] = null; renderPanel(d); }); updateBadges(); }
+
+function renderPanel(dash) {
+  const stocks   = config[dash].stocks;
+  const sectors  = getSectors(dash);
+  const hasSec   = Object.keys(sectors).length > 0;
+  const panel    = document.getElementById('panel-' + dash);
+
+  let html = `<div class="count-label">${stocks.length} stock${stocks.length!==1?'s':''} configured</div>`;
+
+  if (!stocks.length) {
+    html += `<div class="empty">No stocks configured. Add one below.</div>`;
+  } else {
+    html += `<div class="drag-hint">⠿ Drag rows to reorder</div>
+    <table class="stock-table" id="tbl-${dash}">
+      <thead><tr>
+        <th style="width:24px"></th>
+        <th class="row-num">#</th>
+        <th>Ticker</th>
+        <th>Name</th>
+        ${hasSec ? '<th>Sector</th>' : ''}
+        <th style="width:60px;text-align:right">Remove</th>
+      </tr></thead>
+      <tbody id="tbody-${dash}">`;
+
+    stocks.forEach((s, i) => {
+      const secCell = hasSec
+        ? `<td><span class="sector-tag">${DOMPurify.sanitize(getSectorLabel(dash, s.sector)||s.sector||'—')}</span></td>`
+        : '';
+      html += `<tr class="stock-row" draggable="true"
+          data-dash="${dash}" data-idx="${i}"
+          ondragstart="onDragStart(event)"
+          ondragover="onDragOver(event)"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event)"
+          ondragend="onDragEnd(event)">
+        <td><span class="drag-handle" title="Drag to reorder">⠿</span></td>
+        <td class="row-num">${i+1}</td>
+        <td><span class="sym-pill">${DOMPurify.sanitize(s.sym)}</span></td>
+        <td>${DOMPurify.sanitize(s.name)}</td>
+        ${secCell}
+        <td style="text-align:right; white-space:nowrap">
+          <button class="btn-edit" title="Edit this row" onclick="startEdit('${dash}',${i})">✎ edit</button>
+          <button class="btn-insert" title="Insert new stock after this row"
+            onclick="setInsertAt('${dash}',${i+1})">↓ insert here</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:rgba(224,82,82,0.25);margin-left:6px"
+            onclick="removeStock('${dash}',${i})">✕</button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  // Sector dropdown for add form
+  let secField = '';
+  if (hasSec) {
+    const sKeys = getSectorKeys(dash);
+    const opts  = sKeys.map(k=>`<option value="${k}">${DOMPurify.sanitize(getSectorLabel(dash,k))}</option>`).join('');
+    secField = `<div class="form-group">
+      <label>Sector</label>
+      <select class="sector-select" id="sector-${dash}">${opts}</select>
+    </div>`;
+  }
+
+  const insertAtTop = stocks.length > 0
+    ? `<span style="font-size:11px;color:var(--muted);margin-left:4px">or
+        <button style="background:none;border:none;color:var(--glacier);font-size:11px;cursor:pointer;padding:0;font-family:inherit"
+          onclick="setInsertAt('${dash}',0)">insert at top</button></span>` : '';
+
+  html += `
+  <div class="add-card" id="addcard-${dash}">
+    <h3>Add Stock ${insertAtTop}</h3>
+    <div class="insert-indicator" id="ins-ind-${dash}">
+      <span id="ins-ind-text-${dash}"></span>
+      <button class="insert-indicator-cancel" onclick="clearInsertAt('${dash}')">✕ append to bottom instead</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group autocomplete-wrap">
+        <label>Search ticker or company</label>
+        <input class="sym-input" id="sym-${dash}" placeholder="e.g. PXD" autocomplete="off" style="width:200px"
+          oninput="onSearchInput(event,'${dash}')"
+          onkeydown="onSearchKeydown(event,'${dash}')"
+          onfocus="onSearchInput(event,'${dash}')">
+        <div class="autocomplete-list" id="ac-${dash}" style="display:none"></div>
+      </div>
+      <div class="form-group">
+        <label>Company Name</label>
+        <input class="name-input" id="name-${dash}" placeholder="Auto-filled from search" autocomplete="off"
+          onkeydown="if(event.key==='Enter')addStock('${dash}')">
+      </div>
+      ${secField}
+      <button class="btn btn-primary" style="align-self:flex-end" onclick="addStock('${dash}')">+ Add</button>
+    </div>
+  </div>`;
+
+  // Manage sectors section (only for dashboards that use sectors)
+  if (hasSec || dash === 'energy' || dash === 'cleantech') {
+    const builtin   = BUILTIN_SECTORS[dash] || {};
+    const custom    = config[dash]._sectors || {};
+    const allKeys   = Object.keys(getSectors(dash));
+
+    const chips = allKeys.map(k => {
+      const isBuiltin = !!builtin[k];
+      const label = DOMPurify.sanitize(getSectorLabel(dash, k));
+      const delBtn = isBuiltin ? '' :
+        `<button class="sector-chip-del" title="Remove sector" onclick="removeSector('${dash}','${k}')">✕</button>`;
+      return `<span class="sector-chip${isBuiltin?' builtin':''}" title="${isBuiltin?'Built-in (cannot delete)':'Custom'}">${label}${delBtn}</span>`;
+    }).join('');
+
+    html += `
+    <div class="sectors-section">
+      <div class="sectors-toggle" id="sec-toggle-${dash}" onclick="toggleSectors('${dash}')">
+        <span class="sarrow">▶</span> Manage Sectors
+        <span style="font-size:10px;color:var(--muted);margin-left:4px">(${Object.keys(custom).length} custom)</span>
+      </div>
+      <div class="sectors-body" id="sec-body-${dash}">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+          Built-in sectors (grey) cannot be deleted. Custom sectors (gold) can be removed.
+          New sectors appear in the sector dropdown immediately. To assign a new sector to a dashboard column,
+          add it to <code style="color:var(--glacier)">SECTOR_META</code> in the dashboard HTML and push.
+        </div>
+        <div class="sector-chips" id="chips-${dash}">${chips}</div>
+        <div class="add-sector-row">
+          <input class="edit-input sector-key-input" id="sec-key-${dash}" placeholder="key e.g. lng" autocomplete="off"
+            onkeydown="if(event.key==='Enter')addSector('${dash}')">
+          <input class="edit-input sector-label-input" id="sec-label-${dash}" placeholder="label e.g. LNG &amp; Gas Export" autocomplete="off"
+            onkeydown="if(event.key==='Enter')addSector('${dash}')">
+          <button class="btn btn-primary btn-sm" onclick="addSector('${dash}')">+ Add Sector</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  panel.innerHTML = html;
+
+  // Close autocomplete on outside click
+  document.addEventListener('click', function handler(e) {
+    const ac = document.getElementById('ac-' + dash);
+    if (ac && !ac.contains(e.target) && e.target.id !== 'sym-' + dash) {
+      ac.style.display = 'none';
+    }
+  });
+}
+
+function updateBadges() {
+  DASHBOARDS.forEach(d => {
+    const el = document.getElementById('badge-' + d);
+    if (el) el.textContent = config[d]?config[d].stocks.length:0;
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTOCOMPLETE
+// ══════════════════════════════════════════════════════
+let acTimers = {};
+let acResults = {};   // cached per dash
+let acActive  = {};   // active highlighted index
+
+function onSearchInput(e, dash) {
+  const q = e.target.value.trim();
+  const ac = document.getElementById('ac-' + dash);
+  clearTimeout(acTimers[dash]);
+
+  if (!q || q.length < 1) {
+    ac.style.display = 'none';
+    return;
+  }
+
+  ac.style.display = 'block';
+  ac.innerHTML = '<div class="ac-loading">Searching…</div>';
+  acActive[dash] = -1;
+
+  acTimers[dash] = setTimeout(() => fetchSearch(q, dash), 280);
+}
+
+async function fetchSearch(q, dash) {
+  const ac = document.getElementById('ac-' + dash);
+  if (!ac) return;
+  try {
+    const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const results = await r.json();
+    acResults[dash] = results;
+    acActive[dash]  = -1;
+    renderAC(dash);
+  } catch(e) {
+    if (ac) ac.innerHTML = `<div class="ac-empty">Search error — type ticker manually</div>`;
+  }
+}
+
+function renderAC(dash) {
+  const ac = document.getElementById('ac-' + dash);
+  if (!ac) return;
+  const results = acResults[dash] || [];
+  if (!results.length) {
+    ac.innerHTML = '<div class="ac-empty">No results</div>';
+    return;
+  }
+  ac.innerHTML = results.map((r, i) => `
+    <div class="autocomplete-item${acActive[dash]===i?' active':''}"
+      onmousedown="selectAC(event,'${dash}',${i})"
+      onmouseover="acActive['${dash}']=${i};renderAC('${dash}')">
+      <span class="ac-sym">${DOMPurify.sanitize(r.sym)}</span>
+      <span class="ac-name">${DOMPurify.sanitize(r.name)}</span>
+      <span class="ac-meta">${DOMPurify.sanitize(r.exchange)} ${DOMPurify.sanitize(r.type)}</span>
+    </div>`).join('');
+}
+
+function selectAC(e, dash, idx) {
+  e.preventDefault();
+  const r = (acResults[dash] || [])[idx];
+  if (!r) return;
+  const symEl  = document.getElementById('sym-'  + dash);
+  const nameEl = document.getElementById('name-' + dash);
+  symEl.value  = r.sym;
+  nameEl.value = r.name;
+  document.getElementById('ac-' + dash).style.display = 'none';
+  // Focus sector or add button
+  const secEl = document.getElementById('sector-' + dash);
+  if (secEl) secEl.focus(); else document.querySelector(`#panel-${dash} .btn-primary`).focus();
+}
+
+function onSearchKeydown(e, dash) {
+  const ac = document.getElementById('ac-' + dash);
+  if (!ac || ac.style.display === 'none') {
+    if (e.key === 'Enter') addStock(dash);
+    return;
+  }
+  const results = acResults[dash] || [];
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acActive[dash] = Math.min((acActive[dash]||0) + 1, results.length - 1);
+    renderAC(dash);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acActive[dash] = Math.max((acActive[dash]||0) - 1, 0);
+    renderAC(dash);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const idx = acActive[dash];
+    if (idx >= 0 && results[idx]) {
+      selectAC(e, dash, idx);
+    } else {
+      ac.style.display = 'none';
+      addStock(dash);
+    }
+  } else if (e.key === 'Escape') {
+    ac.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  ADD / REMOVE
+// ══════════════════════════════════════════════════════
+function addStock(dash) {
+  const symEl  = document.getElementById('sym-'  + dash);
+  const nameEl = document.getElementById('name-' + dash);
+  const secEl  = document.getElementById('sector-' + dash);
+  const sym    = symEl.value.trim().toUpperCase();
+  const name   = nameEl.value.trim();
+
+  if (!sym)  { toast('Ticker is required','error');  symEl.focus();  return; }
+  if (!name) { toast('Name is required','error');    nameEl.focus(); return; }
+  if (config[dash].stocks.some(s => s.sym === sym)) { toast(sym + ' already exists','error'); return; }
+
+  const entry = { sym, name };
+  if (secEl) entry.sector = secEl.value;
+
+  const at = insertAt[dash];
+  if (at != null) {
+    config[dash].stocks.splice(at, 0, entry);
+    insertAt[dash] = null;
+  } else {
+    config[dash].stocks.push(entry);
+  }
+
+  markDirty();
+  renderPanel(dash);
+  updateBadges();
+  const pos = at != null ? ` at position ${at + 1}` : '';
+  toast(sym + ' added' + pos, 'success');
+  symEl.value = '';
+  nameEl.value = '';
+  symEl.focus();
+}
+
+function setInsertAt(dash, idx) {
+  insertAt[dash] = idx;
+  // Highlight the target row
+  document.querySelectorAll(`#tbody-${dash} tr`).forEach(tr => tr.classList.remove('insert-target'));
+  if (idx > 0) {
+    const rows = document.querySelectorAll(`#tbody-${dash} tr`);
+    if (rows[idx - 1]) rows[idx - 1].classList.add('insert-target');
+  }
+  // Update indicator
+  const ind  = document.getElementById('ins-ind-' + dash);
+  const text = document.getElementById('ins-ind-text-' + dash);
+  if (ind && text) {
+    const stocks = config[dash].stocks;
+    const label  = idx === 0 ? 'at the top (position 1)'
+      : `after ${DOMPurify.sanitize(stocks[idx-1].sym)} (position ${idx + 1})`;
+    text.textContent = '↓ Inserting ' + label;
+    ind.classList.add('visible');
+  }
+  // Scroll add form into view and focus search
+  const card = document.getElementById('addcard-' + dash);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => { const s = document.getElementById('sym-' + dash); if (s) s.focus(); }, 300);
+}
+
+function clearInsertAt(dash) {
+  insertAt[dash] = null;
+  document.querySelectorAll(`#tbody-${dash} tr`).forEach(tr => tr.classList.remove('insert-target'));
+  const ind = document.getElementById('ins-ind-' + dash);
+  if (ind) ind.classList.remove('visible');
+}
+
+// ══════════════════════════════════════════════════════
+//  INLINE ROW EDIT
+// ══════════════════════════════════════════════════════
+function startEdit(dash, idx) {
+  const s      = config[dash].stocks[idx];
+  const hasSec = Object.keys(getSectors(dash)).length > 0;
+  const tr     = document.querySelector(`#tbody-${dash} tr[data-idx="${idx}"]`);
+  if (!tr) return;
+
+  tr.classList.add('editing');
+  tr.draggable = false;
+
+  // Build sector select with custom option
+  let secHtml = '';
+  if (hasSec) {
+    const keys  = getSectorKeys(dash);
+    const opts  = keys.map(k=>`<option value="${k}"${k===s.sector?' selected':''}>${DOMPurify.sanitize(getSectorLabel(dash,k))}</option>`).join('');
+    secHtml = `<td>
+      <select class="edit-select" id="edit-sec-${dash}-${idx}" style="width:140px" onchange="onEditSecChange('${dash}',${idx})">
+        ${opts}
+        <option value="__custom__">＋ custom…</option>
+      </select>
+      <div class="custom-sector-wrap" id="edit-cus-${dash}-${idx}">
+        <input class="edit-input" id="edit-cuskey-${dash}-${idx}" placeholder="key" style="width:80px;margin-top:4px;display:inline-block">
+        <input class="edit-input" id="edit-cuslbl-${dash}-${idx}" placeholder="label" style="width:110px;margin-top:4px;display:inline-block;margin-left:4px">
+      </div>
+    </td>`;
+  }
+
+  tr.innerHTML = `
+    <td><span class="drag-handle" style="opacity:0.2;cursor:default">⠿</span></td>
+    <td class="row-num">${idx+1}</td>
+    <td><input class="edit-input sym" id="edit-sym-${dash}-${idx}" value="${DOMPurify.sanitize(s.sym)}" autocomplete="off"></td>
+    <td><input class="edit-input name" id="edit-name-${dash}-${idx}" value="${DOMPurify.sanitize(s.name)}" autocomplete="off"
+      onkeydown="if(event.key==='Enter')saveEdit('${dash}',${idx});if(event.key==='Escape')cancelEdit('${dash}',${idx})"></td>
+    ${secHtml}
+    <td style="text-align:right;white-space:nowrap">
+      <button class="btn-edit btn-save" onclick="saveEdit('${dash}',${idx})">✓ save</button>
+      <button class="btn-edit btn-cancel-edit" style="margin-left:4px" onclick="cancelEdit('${dash}',${idx})">✕</button>
+    </td>`;
+
+  document.getElementById(`edit-name-${dash}-${idx}`)?.focus();
+}
+
+function onEditSecChange(dash, idx) {
+  const sel = document.getElementById(`edit-sec-${dash}-${idx}`);
+  const cus = document.getElementById(`edit-cus-${dash}-${idx}`);
+  if (sel && cus) cus.classList.toggle('visible', sel.value === '__custom__');
+}
+
+function saveEdit(dash, idx) {
+  const symEl  = document.getElementById(`edit-sym-${dash}-${idx}`);
+  const nameEl = document.getElementById(`edit-name-${dash}-${idx}`);
+  const secEl  = document.getElementById(`edit-sec-${dash}-${idx}`);
+  const cusKey = document.getElementById(`edit-cuskey-${dash}-${idx}`);
+  const cusLbl = document.getElementById(`edit-cuslbl-${dash}-${idx}`);
+
+  const sym  = symEl  ? symEl.value.trim().toUpperCase()  : config[dash].stocks[idx].sym;
+  const name = nameEl ? nameEl.value.trim()               : config[dash].stocks[idx].name;
+  if (!sym)  { toast('Ticker required','error'); return; }
+  if (!name) { toast('Name required','error');   return; }
+
+  // Duplicate check (exclude self)
+  if (config[dash].stocks.some((s,i) => i!==idx && s.sym===sym)) {
+    toast(sym + ' already exists in this list','error'); return;
+  }
+
+  const entry = { sym, name };
+
+  if (secEl) {
+    if (secEl.value === '__custom__') {
+      const ck = (cusKey ? cusKey.value.trim().toLowerCase().replace(/\s+/g,'_') : '');
+      const cl = (cusLbl ? cusLbl.value.trim() : '');
+      if (!ck) { toast('Custom sector key required','error'); return; }
+      // Register the custom sector
+      if (!config[dash]._sectors) config[dash]._sectors = {};
+      config[dash]._sectors[ck] = cl || ck;
+      entry.sector = ck;
+    } else {
+      entry.sector = secEl.value;
+    }
+  }
+
+  config[dash].stocks[idx] = entry;
+  markDirty();
+  renderPanel(dash);
+  updateBadges();
+  toast(sym + ' updated','success');
+}
+
+function cancelEdit(dash, idx) {
+  renderPanel(dash);
+}
+
+// ══════════════════════════════════════════════════════
+//  SECTOR MANAGEMENT
+// ══════════════════════════════════════════════════════
+function toggleSectors(dash) {
+  document.getElementById('sec-toggle-' + dash).classList.toggle('open');
+  document.getElementById('sec-body-'   + dash).classList.toggle('open');
+}
+
+function addSector(dash) {
+  const keyEl = document.getElementById('sec-key-'   + dash);
+  const lblEl = document.getElementById('sec-label-' + dash);
+  const key   = keyEl.value.trim().toLowerCase().replace(/\s+/g,'_');
+  const label = lblEl.value.trim();
+  if (!key)   { toast('Sector key required','error');   keyEl.focus(); return; }
+  if (!label) { toast('Sector label required','error'); lblEl.focus(); return; }
+  if (getSectors(dash)[key]) { toast('Sector "' + key + '" already exists','error'); return; }
+  if (!config[dash]._sectors) config[dash]._sectors = {};
+  config[dash]._sectors[key] = label;
+  markDirty();
+  keyEl.value = '';
+  lblEl.value = '';
+  renderPanel(dash);
+  // Re-open sectors section
+  setTimeout(() => {
+    document.getElementById('sec-toggle-' + dash)?.classList.add('open');
+    document.getElementById('sec-body-'   + dash)?.classList.add('open');
+  }, 10);
+  toast('Sector "' + label + '" added — assign it to stocks via edit','success');
+}
+
+function removeSector(dash, key) {
+  if (BUILTIN_SECTORS[dash] && BUILTIN_SECTORS[dash][key]) { toast('Cannot remove built-in sector','error'); return; }
+  // Warn if in use
+  const inUse = config[dash].stocks.filter(s => s.sector === key).map(s => s.sym);
+  if (inUse.length) {
+    if (!confirm(`Sector is used by: ${inUse.join(', ')}. Remove anyway? Those stocks will have no sector.`)) return;
+    config[dash].stocks.forEach(s => { if (s.sector === key) delete s.sector; });
+  }
+  if (config[dash]._sectors) delete config[dash]._sectors[key];
+  markDirty();
+  renderPanel(dash);
+  setTimeout(() => {
+    document.getElementById('sec-toggle-' + dash)?.classList.add('open');
+    document.getElementById('sec-body-'   + dash)?.classList.add('open');
+  }, 10);
+  toast('Sector removed','info');
+}
+
+function removeStock(dash, idx) {
+  const sym = config[dash].stocks[idx].sym;
+  config[dash].stocks.splice(idx, 1);
+  markDirty();
+  renderPanel(dash);
+  updateBadges();
+  toast(sym + ' removed','info');
+}
+
+function markDirty() {
+  isDirty = true;
+  document.getElementById('unsavedBanner').classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════════════
+//  DRAG AND DROP — reorder rows
+// ══════════════════════════════════════════════════════
+let dragSrc = null; // {dash, idx}
+
+function onDragStart(e) {
+  const tr = e.currentTarget;
+  dragSrc = { dash: tr.dataset.dash, idx: parseInt(tr.dataset.idx) };
+  tr.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', ''); // required for Firefox
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const tr = e.currentTarget;
+  if (dragSrc && tr.dataset.dash === dragSrc.dash) {
+    document.querySelectorAll(`#tbody-${dragSrc.dash} tr`).forEach(r => r.classList.remove('drag-over'));
+    tr.classList.add('drag-over');
+  }
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const tr   = e.currentTarget;
+  const dash = tr.dataset.dash;
+  const to   = parseInt(tr.dataset.idx);
+  if (!dragSrc || dragSrc.dash !== dash || dragSrc.idx === to) return;
+
+  const arr = config[dash].stocks;
+  const [moved] = arr.splice(dragSrc.idx, 1);
+  arr.splice(to, 0, moved);
+  markDirty();
+  renderPanel(dash);
+  updateBadges();
+}
+
+function onDragEnd(e) {
+  const dash = e.currentTarget.dataset.dash;
+  document.querySelectorAll(`#tbody-${dash} tr`).forEach(r => {
+    r.classList.remove('dragging','drag-over');
+  });
+  dragSrc = null;
+}
+
+// ══════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════
+function switchTab(dash) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'   + dash).classList.add('active');
+  document.getElementById('panel-' + dash).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+//  DOWNLOAD
+// ══════════════════════════════════════════════════════
+function buildJSON() {
+  const out = { "_comment": "Edit this file and push to update stock lists across all dashboards." };
+  DASHBOARDS.forEach(d => {
+    out[d] = { stocks: config[d].stocks };
+    if (config[d]._sectors && Object.keys(config[d]._sectors).length) {
+      out[d]._sectors = config[d]._sectors;
+    }
+  });
+  return JSON.stringify(out, null, 2);
+}
+
+function downloadJSON() {
+  const blob = new Blob([buildJSON()], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'symbols.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Downloaded — replace config/symbols.json and push','success');
+}
+
+// ══════════════════════════════════════════════════════
+//  GITHUB SAVE
+// ══════════════════════════════════════════════════════
+function toggleGitHub() {
+  document.getElementById('githubToggle').classList.toggle('open');
+  document.getElementById('githubBody').classList.toggle('open');
+}
+
+function saveGHSettings() {
+  ['ghToken','ghRepo','ghBranch','ghPath'].forEach(id => {
+    const v = document.getElementById(id).value.trim();
+    if (v) localStorage.setItem(id, v);
+  });
+  toast('Settings saved','success');
+}
+
+function loadGHSettings() {
+  ['ghToken','ghRepo','ghBranch','ghPath'].forEach(id => {
+    const v = localStorage.getItem(id);
+    if (v) document.getElementById(id).value = v;
+  });
+}
+
+async function saveToGitHub() {
+  const token  = document.getElementById('ghToken').value.trim();
+  const repo   = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const path   = document.getElementById('ghPath').value.trim()   || 'config/symbols.json';
+  const status = document.getElementById('ghStatus');
+
+  if (!token) { toast('GitHub token required','error'); return; }
+  if (!repo)  { toast('Repo required','error'); return; }
+  saveGHSettings();
+
+  status.textContent = 'Fetching file SHA…';
+  status.style.color = 'var(--sandstone)';
+
+  try {
+    const getRes = await fetch(
+      `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`,
+      { headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' } }
+    );
+    let sha = null;
+    if (getRes.ok) { sha = (await getRes.json()).sha; }
+    else if (getRes.status !== 404) throw new Error('GitHub ' + getRes.status);
+
+    status.textContent = 'Pushing commit…';
+    const json    = buildJSON();
+    const content = btoa(unescape(encodeURIComponent(json)));
+    const now     = new Date().toISOString().slice(0,16).replace('T',' ');
+    const body    = { message: `stock-admin: update symbols.json (${now})`, content, branch };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(
+      `https://api.github.com/repos/${repo}/contents/${path}`,
+      { method:'PUT', headers:{ Authorization:'token '+token, Accept:'application/vnd.github.v3+json','Content-Type':'application/json' }, body:JSON.stringify(body) }
+    );
+    if (!putRes.ok) { const err = await putRes.json(); throw new Error(err.message||'PUT '+putRes.status); }
+
+    isDirty = false;
+    document.getElementById('unsavedBanner').classList.add('hidden');
+    status.textContent = '✓ Pushed — deploying…';
+    status.style.color = 'var(--green)';
+    toast('Committed to GitHub — Vercel deploying in ~30s','success');
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+    toast('GitHub error: ' + e.message,'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function setStatus(state, text) {
+  document.getElementById('statusDot').className  = 'status-dot ' + state;
+  document.getElementById('statusText').textContent = text;
+}
+
+let _toastTimer;
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
+
+if (typeof DOMPurify === 'undefined') {
+  window.DOMPurify = { sanitize: s => String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;') };
+}
+
+init();
+</script>
+</body>
+</html>

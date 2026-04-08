@@ -3,12 +3,13 @@ import StickyHeader from '@shared/components/StickyHeader';
 import LiveTVPanel from '@shared/components/LiveTVPanel';
 import NewsFeedPanel from '@shared/components/NewsFeedPanel';
 import useQuotes from '@shared/hooks/useQuotes';
+import useSymbols from '@shared/hooks/useSymbols';
 import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
 import CarbonMarketsPanel from './components/CarbonMarketsPanel';
 import EIAPowerPanel from './components/EIAPowerPanel';
 import {
-  ALL_SYMBOLS, STOCKS, EARNINGS_SYMBOLS, MARKET_SYMBOLS, TICKER_SYMBOLS,
+  STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS,
   PORTALS, CT_FEEDS, NUCLEAR_FEEDS, DC_FEEDS,
 } from './config';
 
@@ -33,8 +34,11 @@ const NUCLEAR_KEYWORDS = ['nuclear','reactor','SMR','uranium','fission','NRC','W
 const DC_KEYWORDS = ['data center','datacenter','hyperscaler','colocation','GPU','Nvidia','AI infrastructure','Azure','AWS','Google Cloud','server','semiconductor','power demand','megawatt','cooling'];
 
 function App() {
-  const symbols = useMemo(() => ALL_SYMBOLS, []);
-  const { quotes, loading, lastUpdated, refresh } = useQuotes(symbols, 60000);
+  const { stocks } = useSymbols('cleantech', DEFAULT_STOCKS);
+  const allSymbols = useMemo(() => ['^GSPC', '^DJI', '^TNX', '^VIX', ...stocks.map(s => s.sym)], [stocks]);
+  const tickerSymbols = useMemo(() => stocks.map(s => s.sym), [stocks]);
+  const earningsSymbols = useMemo(() => stocks.map(s => s.sym).join(','), [stocks]);
+  const { quotes, loading, lastUpdated, refresh } = useQuotes(allSymbols, 60000);
 
   return (
     <ErrorBoundary>
@@ -46,7 +50,7 @@ function App() {
           dashboardTitle="Cleantech &"
           dashboardSubtitle="Transition Monitor"
           marketSymbols={MARKET_SYMBOLS}
-          tickerSymbols={TICKER_SYMBOLS}
+          tickerSymbols={tickerSymbols}
           portals={PORTALS}
         />
 
@@ -65,12 +69,12 @@ function App() {
           <CarbonMarketsPanel />
 
           {/* Stock Table */}
-          <StockTable stocks={STOCKS} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
+          <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
 
           {/* Row: Nuclear + Earnings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <NewsFeedPanel title="Nuclear" feeds={[...NUCLEAR_FEEDS, ...CT_FEEDS]} keywords={NUCLEAR_KEYWORDS} />
-            <EarningsCalendar symbols={EARNINGS_SYMBOLS} />
+            <EarningsCalendar symbols={earningsSymbols} />
           </div>
         </div>
       </div>

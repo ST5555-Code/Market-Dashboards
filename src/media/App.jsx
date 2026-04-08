@@ -3,11 +3,12 @@ import StickyHeader from '@shared/components/StickyHeader';
 import LiveTVPanel from '@shared/components/LiveTVPanel';
 import NewsFeedPanel from '@shared/components/NewsFeedPanel';
 import useQuotes from '@shared/hooks/useQuotes';
+import useSymbols from '@shared/hooks/useSymbols';
 import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
 import StreamingScoreboard from './components/StreamingScoreboard';
 import SportsRightsPanel from './components/SportsRightsPanel';
-import { ALL_SYMBOLS, STOCKS, EARNINGS_SYMBOLS, MARKET_SYMBOLS, TICKER_SYMBOLS, PORTALS, ENTERTAINMENT_FEEDS, SPORTS_FEEDS } from './config';
+import { STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS, PORTALS, ENTERTAINMENT_FEEDS, SPORTS_FEEDS } from './config';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -29,8 +30,11 @@ const MEDIA_KEYWORDS = ['streaming','netflix','disney','hbo','max','paramount','
 const SPORTS_KEYWORDS = ['broadcast','rights','NFL','NBA','MLB','UEFA','F1','ESPN','Fox Sports','stadium','sports media','streaming rights','live sports'];
 
 function App() {
-  const symbols = useMemo(() => ALL_SYMBOLS, []);
-  const { quotes, loading, lastUpdated, refresh } = useQuotes(symbols, 60000);
+  const { stocks } = useSymbols('media', DEFAULT_STOCKS);
+  const allSymbols = useMemo(() => ['^GSPC', '^VIX', ...stocks.map(s => s.sym)], [stocks]);
+  const tickerSymbols = useMemo(() => stocks.map(s => s.sym), [stocks]);
+  const earningsSymbols = useMemo(() => stocks.map(s => s.sym).join(','), [stocks]);
+  const { quotes, loading, lastUpdated, refresh } = useQuotes(allSymbols, 60000);
 
   return (
     <ErrorBoundary>
@@ -42,28 +46,23 @@ function App() {
           dashboardTitle="Media &"
           dashboardSubtitle="Entertainment Tracker"
           marketSymbols={MARKET_SYMBOLS}
-          tickerSymbols={TICKER_SYMBOLS}
+          tickerSymbols={tickerSymbols}
           portals={PORTALS}
         />
 
         <div className="p-4 flex flex-col gap-4">
-          {/* Row 1: Entertainment News + Sports News + TV */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
             <NewsFeedPanel title="Entertainment News" feeds={ENTERTAINMENT_FEEDS} keywords={MEDIA_KEYWORDS} />
             <NewsFeedPanel title="Sports & Broadcasting" feeds={SPORTS_FEEDS} keywords={SPORTS_KEYWORDS} />
             <LiveTVPanel />
           </div>
 
-          {/* Streaming Scoreboard */}
           <StreamingScoreboard />
+          <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
 
-          {/* Stock Table */}
-          <StockTable stocks={STOCKS} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
-
-          {/* Row: Sports Rights + Earnings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SportsRightsPanel />
-            <EarningsCalendar symbols={EARNINGS_SYMBOLS} />
+            <EarningsCalendar symbols={earningsSymbols} />
           </div>
         </div>
       </div>

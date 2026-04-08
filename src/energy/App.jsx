@@ -1,6 +1,7 @@
 import { useMemo, Component } from 'react';
 import StickyHeader from '@shared/components/StickyHeader';
 import useQuotes from '@shared/hooks/useQuotes';
+import useSymbols from '@shared/hooks/useSymbols';
 import LiveTVPanel from '@shared/components/LiveTVPanel';
 import EIACompact from './components/EIACompact';
 import OilPricesPanel from './components/OilPricesPanel';
@@ -9,7 +10,7 @@ import ForwardCurve from './components/ForwardCurve';
 import StockTable from './components/StockTable';
 import EarningsCalendar from './components/EarningsCalendar';
 import EnergyNewsFeed from './components/EnergyNewsFeed';
-import { ALL_SYMBOLS, STOCKS, EARNINGS_SYMBOLS, WTI_CURVE, HH_CURVE, MARKET_SYMBOLS, TICKER_SYMBOLS, PORTALS } from './config';
+import { STOCKS as DEFAULT_STOCKS, WTI_CURVE, HH_CURVE, MARKET_SYMBOLS, PORTALS } from './config';
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -28,8 +29,20 @@ class ErrorBoundary extends Component {
 }
 
 function App() {
-  const symbols = useMemo(() => ALL_SYMBOLS, []);
-  const { quotes, loading, lastUpdated, refresh } = useQuotes(symbols, 60000);
+  // Load stocks dynamically from /api/symbols, fall back to config.js defaults
+  const { stocks } = useSymbols('energy', DEFAULT_STOCKS);
+
+  // Build symbol list from dynamic stocks + commodities + indices
+  const allSymbols = useMemo(() => [
+    'CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F',
+    '^GSPC', '^DJI', '^TNX', '^VIX',
+    ...stocks.map(s => s.sym),
+  ], [stocks]);
+
+  const tickerSymbols = useMemo(() => stocks.map(s => s.sym), [stocks]);
+  const earningsSymbols = useMemo(() => stocks.map(s => s.sym).join(','), [stocks]);
+
+  const { quotes, loading, lastUpdated, refresh } = useQuotes(allSymbols, 60000);
 
   return (
     <ErrorBoundary>
@@ -41,12 +54,11 @@ function App() {
           dashboardTitle="Upstream Energy"
           dashboardSubtitle="Intelligence Monitor"
           marketSymbols={MARKET_SYMBOLS}
-          tickerSymbols={TICKER_SYMBOLS}
+          tickerSymbols={tickerSymbols}
           portals={PORTALS}
         />
 
         <div className="p-4 flex flex-col gap-4">
-          {/* Top row: 4 boxes across — EIA | Oil & Gasoline | Gas | TV */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <EIACompact />
             <OilPricesPanel quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
@@ -54,19 +66,16 @@ function App() {
             <LiveTVPanel />
           </div>
 
-          {/* Forward Curves */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ForwardCurve title="WTI Crude Forward Curve" contracts={WTI_CURVE} color="#DCB96E" unit="$/bbl" />
             <ForwardCurve title="Henry Hub Forward Curve" contracts={HH_CURVE} color="#4CAF7D" unit="$/MMBtu" />
           </div>
 
-          {/* Stock Table */}
-          <StockTable stocks={STOCKS} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
+          <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
 
-          {/* News + Earnings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EnergyNewsFeed />
-            <EarningsCalendar symbols={EARNINGS_SYMBOLS} />
+            <EarningsCalendar symbols={earningsSymbols} />
           </div>
         </div>
       </div>
