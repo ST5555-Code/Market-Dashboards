@@ -17,9 +17,9 @@ function colorClass(v) {
   return v > 0 ? 'text-pos' : 'text-neg';
 }
 
-function SectorColumn({ sectors, quotes }) {
+function SectorColumn({ sectors, quotes, className = '' }) {
   return (
-    <div>
+    <div className={className}>
       {sectors.map(([sector, stocks]) => (
         <div key={sector} className="mb-2">
           <div className="text-[9px] font-bold tracking-wider text-gold/70 uppercase mb-0.5">{sector}</div>
@@ -91,9 +91,9 @@ export default function StockTable({ stocks, quotes, loading, lastUpdated, colum
 
   return (
     <PanelCard title="Equities — Live" loading={loading} lastUpdated={lastUpdated}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:divide-x md:divide-gold/15">
         {columns.map((col, i) => (
-          <SectorColumn key={i} sectors={col} quotes={quotes} />
+          <SectorColumn key={i} sectors={col} quotes={quotes} className={i > 0 ? 'md:pl-4' : ''} />
         ))}
       </div>
     </PanelCard>
