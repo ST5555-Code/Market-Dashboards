@@ -3,6 +3,8 @@ export default {
   content: [
     "./index.html",
     "./ma/index.html",
+    "./energy/index.html",
+    "./cleantech/index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {

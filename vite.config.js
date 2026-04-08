@@ -10,6 +10,7 @@ export default defineConfig({
         landing: resolve(__dirname, 'index.html'),
         ma: resolve(__dirname, 'ma/index.html'),
         energy: resolve(__dirname, 'energy/index.html'),
+        cleantech: resolve(__dirname, 'cleantech/index.html'),
       },
     },
   },
