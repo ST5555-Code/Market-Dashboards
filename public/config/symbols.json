@@ -1,0 +1,401 @@
+{
+  "_comment": "Edit this file and push to update stock lists across all dashboards.",
+  "energy": {
+    "stocks": [
+      {
+        "sym": "XOM",
+        "name": "Exxon Mobil",
+        "sector": "major"
+      },
+      {
+        "sym": "CVX",
+        "name": "Chevron",
+        "sector": "major"
+      },
+      {
+        "sym": "SHEL",
+        "name": "Shell PLC",
+        "sector": "major"
+      },
+      {
+        "sym": "TTE",
+        "name": "TotalEnergies SE",
+        "sector": "major"
+      },
+      {
+        "sym": "BP",
+        "name": "BP p.l.c.",
+        "sector": "major"
+      },
+      {
+        "sym": "XLE",
+        "name": "Energy Select SPDR",
+        "sector": "etf"
+      },
+      {
+        "sym": "XOP",
+        "name": "SPDR Oil & Gas E&P",
+        "sector": "etf"
+      },
+      {
+        "sym": "COP",
+        "name": "ConocoPhillips",
+        "sector": "large_cap_oil"
+      },
+      {
+        "sym": "EOG",
+        "name": "EOG Resources",
+        "sector": "large_cap_oil"
+      },
+      {
+        "sym": "FANG",
+        "name": "Diamondback Energy",
+        "sector": "large_cap_oil"
+      },
+      {
+        "sym": "OXY",
+        "name": "Occidental",
+        "sector": "large_cap_oil"
+      },
+      {
+        "sym": "DVN",
+        "name": "Devon Energy",
+        "sector": "large_cap_oil"
+      },
+      {
+        "sym": "PR",
+        "name": "Permian Resources",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "OVV",
+        "name": "Ovintiv Inc. (DE)",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "APA",
+        "name": "APA Corp",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "SM",
+        "name": "SM Energy Company",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "MTDR",
+        "name": "Matador Resources Company",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "CRGY",
+        "name": "Crescent Energy Company",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "CHRD",
+        "name": "Chord Energy Corporation",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "CRC",
+        "name": "California Resources Corporatio",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "MUR",
+        "name": "Murphy Oil Corporation",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "MGY",
+        "name": "Magnolia Oil & Gas Corporation",
+        "sector": "mid_cap_oil"
+      },
+      {
+        "sym": "EQT",
+        "name": "EQT Corp",
+        "sector": "gas"
+      },
+      {
+        "sym": "EXE",
+        "name": "Expand Energy Corporation",
+        "sector": "gas"
+      },
+      {
+        "sym": "AR",
+        "name": "Antero Resources",
+        "sector": "gas"
+      },
+      {
+        "sym": "NFG",
+        "name": "National Fuel Gas Company",
+        "sector": "gas"
+      },
+      {
+        "sym": "RRC",
+        "name": "Range Resources",
+        "sector": "gas"
+      },
+      {
+        "sym": "CRK",
+        "name": "Comstock Resources, Inc.",
+        "sector": "gas"
+      },
+      {
+        "sym": "CNX",
+        "name": "CNX Resources Corporation",
+        "sector": "gas"
+      },
+      {
+        "sym": "GPOR",
+        "name": "Gulfport Energy Corporation",
+        "sector": "gas"
+      },
+      {
+        "sym": "CTRA",
+        "name": "Coterra Energy",
+        "sector": "gas"
+      },
+      {
+        "sym": "SWN",
+        "name": "SWN Energy",
+        "sector": "gas"
+      },
+      {
+        "sym": "BKV",
+        "name": "BKV Corporation",
+        "sector": "gas"
+      },
+      {
+        "sym": "INR",
+        "name": "Infinity Natural Resources, Inc",
+        "sector": "gas"
+      }
+    ],
+    "_sectors": {
+      "large_cap_oil": "Large Cap Oil",
+      "mid_cap_oil": "Mid Cap Oil"
+    }
+  },
+  "cleantech": {
+    "stocks": [
+      {
+        "sym": "ICLN",
+        "name": "iShares Clean Energy ETF",
+        "sector": "etf"
+      },
+      {
+        "sym": "QCLN",
+        "name": "First Trust Clean Energy",
+        "sector": "etf"
+      },
+      {
+        "sym": "NEE",
+        "name": "NextEra Energy",
+        "sector": "power"
+      },
+      {
+        "sym": "AES",
+        "name": "AES Corporation",
+        "sector": "power"
+      },
+      {
+        "sym": "FSLR",
+        "name": "First Solar",
+        "sector": "solar"
+      },
+      {
+        "sym": "ENPH",
+        "name": "Enphase Energy",
+        "sector": "solar"
+      },
+      {
+        "sym": "ARRY",
+        "name": "Array Technologies",
+        "sector": "solar"
+      },
+      {
+        "sym": "BEP",
+        "name": "Brookfield Renewable",
+        "sector": "wind"
+      },
+      {
+        "sym": "CWEN",
+        "name": "Clearway Energy",
+        "sector": "wind"
+      },
+      {
+        "sym": "BEPC",
+        "name": "Brookfield RE Corp",
+        "sector": "wind"
+      },
+      {
+        "sym": "CEG",
+        "name": "Constellation Energy",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "VST",
+        "name": "Vistra Energy",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "CCJ",
+        "name": "Cameco",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "NNE",
+        "name": "Nano Nuclear Energy",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "SMR",
+        "name": "NuScale Power",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "OKLO",
+        "name": "Oklo",
+        "sector": "nuclear"
+      },
+      {
+        "sym": "BE",
+        "name": "Bloom Energy",
+        "sector": "h2"
+      },
+      {
+        "sym": "PLUG",
+        "name": "Plug Power",
+        "sector": "h2"
+      },
+      {
+        "sym": "ALB",
+        "name": "Albemarle",
+        "sector": "mineral"
+      },
+      {
+        "sym": "MP",
+        "name": "MP Materials",
+        "sector": "mineral"
+      }
+    ]
+  },
+  "media": {
+    "stocks": [
+      {
+        "sym": "NFLX",
+        "name": "Netflix"
+      },
+      {
+        "sym": "DIS",
+        "name": "Disney"
+      },
+      {
+        "sym": "WBD",
+        "name": "Warner Bros"
+      },
+      {
+        "sym": "CMCSA",
+        "name": "Comcast"
+      },
+      {
+        "sym": "PARA",
+        "name": "Paramount"
+      },
+      {
+        "sym": "SPOT",
+        "name": "Spotify"
+      },
+      {
+        "sym": "LYV",
+        "name": "Live Nation"
+      },
+      {
+        "sym": "AMZN",
+        "name": "Amazon"
+      },
+      {
+        "sym": "AAPL",
+        "name": "Apple"
+      },
+      {
+        "sym": "GOOGL",
+        "name": "Alphabet"
+      },
+      {
+        "sym": "META",
+        "name": "Meta"
+      },
+      {
+        "sym": "MSFT",
+        "name": "Microsoft"
+      }
+    ]
+  },
+  "privateBanking": {
+    "stocks": [
+      {
+        "sym": "HSBC",
+        "name": "HSBC Holdings"
+      },
+      {
+        "sym": "UBS",
+        "name": "UBS Group"
+      },
+      {
+        "sym": "GS",
+        "name": "Goldman Sachs"
+      },
+      {
+        "sym": "MS",
+        "name": "Morgan Stanley"
+      },
+      {
+        "sym": "JPM",
+        "name": "JPMorgan Chase"
+      },
+      {
+        "sym": "C",
+        "name": "Citigroup"
+      },
+      {
+        "sym": "BCS",
+        "name": "Barclays"
+      },
+      {
+        "sym": "DB",
+        "name": "Deutsche Bank"
+      },
+      {
+        "sym": "BX",
+        "name": "Blackstone"
+      },
+      {
+        "sym": "KKR",
+        "name": "KKR & Co."
+      },
+      {
+        "sym": "APO",
+        "name": "Apollo Global"
+      },
+      {
+        "sym": "CG",
+        "name": "Carlyle Group"
+      },
+      {
+        "sym": "ARES",
+        "name": "Ares Management"
+      },
+      {
+        "sym": "BLK",
+        "name": "BlackRock"
+      },
+      {
+        "sym": "SCHW",
+        "name": "Charles Schwab"
+      }
+    ]
+  }
+}

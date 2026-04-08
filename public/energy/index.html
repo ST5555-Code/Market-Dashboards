@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=CL%3DF,BZ%3DF,NG%3DF,TTF%3DF,RB%3DF">
+<title>UPSTREAM ENERGY INTELLIGENCE MONITOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+// Lazy-load Chart.js — only needed for forward curve, not above-the-fold
+window._loadChartJS = function() {
+  if (window.Chart) return Promise.resolve();
+  return new Promise(function(resolve) {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.integrity = 'sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD';
+    s.crossOrigin = 'anonymous';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
+<style>
+  :root {
+    --oxford: #1E2846;
+    --glacier: #5A82AF;
+    --sandstone: #DCB96E;
+    --bluegrey: #D2DCE6;
+    --midscale: #737887;
+    --maroon: #A0415A;
+    --turquoise: #50AF8C;
+    --white: #FFFFFF;
+    --dark-card: #253157;
+    --bg: #0F1525;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); font-size: 13px; overflow-x: hidden; }
+
+  /* STICKY HEADER */
+  .sticky-header { position: sticky; top: 0; z-index: 1000; }
+
+  /* HEADER */
+  .header { background: var(--oxford); border-bottom: 3px solid var(--sandstone); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-title { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--white); text-transform: uppercase; }
+  .header-title span { color: var(--sandstone); }
+  .header-meta { font-size: 11px; color: var(--midscale); text-align: right; }
+  #clock { color: var(--sandstone); font-weight: 600; }
+
+  /* BREAKING BAR — MARKET INDICATORS */
+  .breaking-bar { background: var(--maroon); padding: 6px 20px; display: flex; align-items: center; gap: 16px; overflow: hidden; }
+  .breaking-label { background: var(--white); color: var(--maroon); font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; flex-shrink: 0; }
+  .mkt-indicators { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden; }
+  .mkt-ind-item { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 18px 0 0; white-space: nowrap; }
+  .mkt-ind-item + .mkt-ind-item { border-left: 1px solid rgba(255,255,255,0.25); padding-left: 18px; }
+  .mkt-ind-name { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .mkt-ind-price { color: var(--white); font-size: 13px; font-weight: 700; }
+  .mkt-ind-chg { font-size: 10px; font-weight: 600; }
+  .breaking-text a { color: var(--white); text-decoration: none; }
+  .breaking-text a:hover { text-decoration: underline; }
+
+  /* VERCEL TOOLBAR — hide */
+  vercel-toolbar, #__vercel_toolbar, #vercel-live-feedback, #vercel-speed-insights { display: none !important; }
+
+  /* TICKER */
+  .ticker-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 6px 0; overflow: hidden; }
+  .ticker-wrap { display: flex; animation: ticker-scroll 70s linear infinite; width: max-content; }
+  .ticker-wrap:hover { animation-play-state: paused; }
+  @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 18px; white-space: nowrap; border-right: 1px solid #3a4570; }
+  .ticker-item a { color: var(--white); text-decoration: none; font-weight: 600; font-size: 12px; }
+  .ticker-item a:hover { color: var(--sandstone); }
+  .tick-label { color: var(--midscale); font-size: 10px; }
+  .tick-price { color: var(--bluegrey); font-size: 12px; }
+  .tick-unit { color: var(--midscale); font-size: 10px; }
+  .tick-up { color: var(--turquoise); font-size: 11px; }
+  .tick-down { color: var(--maroon); font-size: 11px; }
+  .tick-flat { color: var(--midscale); font-size: 11px; }
+
+  /* GRIDS */
+  .row-tv-top { display: grid; grid-template-columns: 1fr 0.8fr; gap: 2px; padding: 2px; }
+  .row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-chart { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; }
+  .row-full { padding: 2px; }
+  /* COMM-CURVE ROW */
+  .row-comm-curve { display: grid; grid-template-columns: 1fr 2fr; gap: 2px; padding: 2px; }
+  /* TV */
+  .tv-wrap { position: relative; width: 100%; padding-top: 40%; background: #000; }
+  .tv-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+  /* TV panel fills row height — eliminates black space below player */
+  .panel-tv { display: flex; flex-direction: column; }
+  .panel-tv .tv-wrap { flex: 1; padding-top: 0; min-height: 200px; }
+  .tv-overlay-label { position: absolute; top: 6px; left: 6px; background: rgba(160,65,90,0.92); color: var(--white); font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 1px; border-radius: 2px; pointer-events: none; }
+  .tv-ch-bar { display: flex; gap: 4px; padding: 8px 10px; background: var(--dark-card); border-top: 1px solid #2a3560; flex-wrap: wrap; }
+  .tv-ch-btn { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 10px; font-weight: 600; padding: 4px 9px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; flex: 1; min-width: 55px; text-align: center; }
+  .tv-ch-btn:hover { background: #253157; color: var(--white); border-color: var(--glacier); }
+  .tv-ch-btn.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
+
+  /* PANELS */
+  .panel { background: var(--oxford); border: 1px solid #2a3560; border-radius: 3px; overflow: hidden; }
+  .panel-header { background: var(--dark-card); border-bottom: 2px solid var(--glacier); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sandstone); }
+  .panel-sub { font-size: 10px; color: var(--midscale); display:flex; align-items:center; gap:5px; }
+  .refresh-btn { background:none; border:none; color:var(--midscale); font-size:13px; padding:0 2px; cursor:pointer; line-height:1; transition:color .15s, transform .2s; }
+  .refresh-btn:hover { color:var(--sandstone); transform:rotate(180deg); }
+  .refresh-all-btn { background:var(--dark-card); border:1px solid var(--sandstone); color:var(--sandstone); font-size:10px; padding:4px 10px; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; letter-spacing:.5px; transition:all .15s; }
+  .refresh-all-btn:hover { background:var(--sandstone); color:var(--oxford); }
+  .panel-body { padding: 12px; }
+  .panel-body-scroll { padding: 12px; max-height: 340px; overflow-y: auto; }
+
+  /* COMMODITY PRICES */
+  .comm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .comm-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid var(--glacier); }
+  .comm-card.oil { border-left-color: var(--sandstone); }
+  .comm-card.gas { border-left-color: var(--turquoise); }
+  .comm-card.spread { border-left-color: var(--midscale); }
+  .comm-name { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .comm-price { font-size: 20px; font-weight: 700; color: var(--white); }
+  .comm-unit { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .comm-change { font-size: 11px; margin-top: 3px; display: flex; gap: 10px; }
+  .up { color: var(--turquoise); }
+  .down { color: var(--maroon); }
+  .flat { color: var(--midscale); }
+  .comm-sub { font-size: 10px; color: var(--midscale); margin-top: 2px; }
+  .source-note { font-size: 9px; color: var(--midscale); margin-top: 10px; border-top: 1px solid #2a3560; padding-top: 6px; }
+
+  /* EIA FUNDAMENTALS */
+  .eia-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .eia-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid #5a4a8a; }
+  .eia-card.stocks  { border-left-color: var(--sandstone); }
+  .eia-card.prod    { border-left-color: var(--turquoise); }
+  .eia-card.refine  { border-left-color: var(--glacier); }
+  .eia-label { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .eia-value { font-size: 18px; font-weight: 700; color: var(--white); }
+  .eia-unit  { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .eia-chg   { font-size: 11px; margin-top: 3px; font-weight: 600; }
+  .eia-chg.build { color: var(--maroon); }   /* build = bearish */
+  .eia-chg.draw  { color: var(--turquoise); } /* draw  = bullish */
+  .eia-chg.flat  { color: var(--midscale); }
+  .eia-badge { display: inline-block; font-size: 9px; color: var(--midscale); background: #1a2040; border-radius: 2px; padding: 2px 6px; margin-bottom: 6px; }
+
+  /* NEWS */
+  .news-list { list-style: none; }
+  .news-item { padding: 7px 0; border-bottom: 1px solid #1a2040; display: flex; flex-direction: column; gap: 3px; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item a { color: var(--white); text-decoration: none; font-size: 12px; line-height: 1.4; font-weight: 500; }
+  .news-item a:hover { color: var(--sandstone); }
+  .news-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .news-source { font-size: 9px; color: var(--glacier); text-transform: uppercase; letter-spacing: 0.5px; }
+  .news-time { font-size: 9px; color: var(--midscale); }
+  .news-tag { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .tag-ma { background: #3d1a24; color: var(--maroon); }
+  .tag-opec { background: #2a2010; color: var(--sandstone); }
+  .tag-price { background: #1a2d3d; color: var(--glacier); }
+  .tag-financing { background: #25203a; color: #9a85d0; }
+  .tag-upstream { background: #1a3028; color: var(--turquoise); }
+  .tag-energy { background: #2a2a2a; color: var(--midscale); }
+  .news-loading { color: var(--midscale); font-size: 12px; padding: 20px 0; text-align: center; }
+
+  /* EARNINGS */
+  .earn-list { list-style: none; }
+  .earn-item { padding: 6px 0; border-bottom: 1px solid #1a2040; display: flex; align-items: center; justify-content: space-between; }
+  .earn-item:last-child { border-bottom: none; }
+  .earn-co { font-weight: 600; color: var(--white); font-size: 12px; }
+  .earn-ticker { color: var(--glacier); font-size: 10px; }
+  .earn-date { color: var(--midscale); font-size: 11px; }
+  .earn-days { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 2px; }
+  .earn-soon { background: #3d1a1a; color: var(--maroon); }
+  .earn-near { background: #3d2a10; color: var(--sandstone); }
+  .earn-far { background: #1a2d1a; color: var(--turquoise); }
+
+  /* FORWARD CURVE CHART */
+  .chart-wrap { padding: 12px; }
+  .chart-container { position: relative; height: 280px; }
+  .chart-tabs { display: flex; gap: 6px; padding: 8px 12px 0; }
+  .chart-tab { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 11px; font-weight: 600; padding: 4px 12px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; }
+  .chart-tab.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
+  .chart-status { font-size: 10px; color: var(--midscale); padding: 4px 12px 0; }
+
+  /* STOCKS — THREE-COLUMN LAYOUT */
+  .stocks-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 1px; padding: 0 0 8px; background: #1a2040; }
+  @media (max-width: 900px) { .stocks-grid { grid-template-columns: 1fr; } }
+  .stocks-col { background: var(--bg); padding: 0 14px; }
+  .stocks-col table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  /* Column widths — fixed so all three tables align identically */
+  .stocks-col col.c-ticker { width: 14%; }
+  .stocks-col col.c-name   { width: 38%; }
+  .stocks-col col.c-price  { width: 14%; }
+  .stocks-col col.c-pct    { width: 14%; }
+  .stocks-col col.c-range  { width: 20%; }
+  /* Single column header row */
+  .tbl-header td { padding: 6px 0 4px; font-size: 8px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #2a3560; white-space: nowrap; }
+  .tbl-header td.r { text-align: right; }
+  /* Sector group dividers */
+  .sector-divider td { padding: 7px 0 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #2a3560; }
+  .sector-divider.sec-major td { color: var(--glacier); }
+  .sector-divider.sec-oil td   { color: var(--sandstone); }
+  .sector-divider.sec-gas td   { color: var(--turquoise); }
+  .sector-divider.sec-ofs td   { color: #9a85d0; }
+  .sector-divider.sec-etf td   { color: var(--midscale); }
+  /* Data rows */
+  .stock-row td { padding: 3px 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid #131929; }
+  .stock-row:last-child td, .stock-row:hover td { background: #1a2040; border-bottom-color: #1a2040; }
+  .stock-row .sr-ticker { font-weight: 700; color: var(--glacier); }
+  .stock-row .sr-name   { color: var(--midscale); font-size: 10px; padding-left: 4px; }
+  .stock-row .sr-price  { color: var(--white); font-weight: 600; text-align: right; }
+  .stock-row .sr-pct    { text-align: right; font-weight: 600; padding-right: 2px; }
+  .stock-row .sr-range  { text-align: right; color: var(--midscale); font-size: 10px; }
+  .s-up { color: var(--turquoise); }
+  .s-down { color: var(--maroon); }
+  .s-flat { color: var(--midscale); }
+
+  /* M&A TABLE */
+  .deal-table { width: 100%; border-collapse: collapse; }
+  .deal-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; text-align: left; border-bottom: 1px solid #2a3560; }
+  .deal-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; vertical-align: top; line-height: 1.4; }
+  .deal-table tr:last-child td { border-bottom: none; }
+  .deal-date { color: var(--midscale); font-size: 10px; white-space: nowrap; }
+  .deal-desc { color: var(--white); }
+  .deal-badge { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 700; white-space: nowrap; }
+  .badge-ma { background: #3d1a24; color: var(--maroon); }
+  .badge-div { background: #2a2010; color: var(--sandstone); }
+  .badge-fin { background: #25203a; color: #9a85d0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--oxford); }
+  ::-webkit-scrollbar-thumb { background: var(--glacier); border-radius: 2px; }
+
+  /* FOOTER */
+  .footer { background: var(--oxford); border-top: 2px solid var(--sandstone); padding: 8px 20px; display: flex; justify-content: space-between; font-size: 10px; color: var(--midscale); }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .row-tv-top, .row-3col, .row-chart, .row-2col, .row-comm-curve { grid-template-columns: 1fr; }
+    .panel-tv .tv-wrap { flex: none; padding-top: 56.25%; }
+    .header { flex-direction: column; gap: 4px; padding: 10px 12px; }
+    .header-title { font-size: 13px; }
+    .comm-grid { grid-template-columns: 1fr 1fr; }
+    .panel-body, .panel-body-scroll { padding: 10px; }
+    .panel-body-scroll { max-height: none; }
+    .footer { flex-direction: column; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sticky-header">
+<!-- NAV BAR -->
+<div style="background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-family:inherit;">
+  <a href="/" style="color:#C9A84C;text-decoration:none;font-weight:700;letter-spacing:1px;padding:4px 10px;border:1px solid #C9A84C;border-radius:3px;">⌂ HOME</a>
+  <span style="color:#333;">|</span>
+  <a href="/hormuz/"   target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Strait of Hormuz ↗</a>
+  <a href="/cleantech/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Cleantech &amp; Transition ↗</a>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">UPSTREAM ENERGY <span>INTELLIGENCE</span> MONITOR</div>
+    <div style="font-size:10px;color:var(--midscale);margin-top:2px;">E&P · Commodities · M&A · Capital Markets · Forward Curves</div>
+  </div>
+  <div class="header-meta" style="display:flex;align-items:center;gap:14px;">
+    <div style="text-align:right;">
+      <div id="clock">--:-- --</div>
+      <div>Live Data · Stocks 60s · Feeds 10min</div>
+    </div>
+    <button class="refresh-all-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
+  </div>
+</div>
+
+<!-- BREAKING BAR — MARKET INDICATORS -->
+<div class="breaking-bar">
+  <div class="breaking-label">MARKETS</div>
+  <div class="mkt-indicators" id="mkt-indicators">Loading...</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-item" style="color:var(--midscale)">Loading market data...</div>
+  </div>
+</div>
+</div><!-- /sticky-header -->
+
+<!-- EIA WEEKLY FUNDAMENTALS BAND -->
+<div class="panel" style="margin:2px 2px 0;border-radius:0;padding-bottom:6px;">
+  <div class="panel-header" style="padding-bottom:4px;">
+    <div class="panel-title">EIA Weekly Fundamentals <span id="eia-report-badge" style="font-size:9px;font-weight:400;color:var(--midscale);margin-left:6px;">EIA WPSR · Loading...</span></div>
+    <div class="panel-sub" style="gap:10px;">
+      <span style="font-size:9px;color:var(--midscale);">Released Wed ~10:30am ET · Cached 6h</span>
+      <span id="eia-update">Loading...</span>
+      <button class="refresh-btn" onclick="loadEIA()" title="Refresh">↻</button>
+    </div>
+  </div>
+  <div class="eia-grid" style="margin-top:4px;">
+    <div class="eia-card stocks">
+      <div class="eia-label">US Crude Stocks (ex-SPR)</div>
+      <div><span class="eia-value" id="eia-stocks">--</span><span class="eia-unit">MMBbl</span></div>
+      <div class="eia-chg flat" id="eia-stocks-chg">-- w/w</div>
+    </div>
+    <div class="eia-card prod">
+      <div class="eia-label">US Crude Production</div>
+      <div><span class="eia-value" id="eia-prod">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-prod-sub">Weekly estimate</div>
+    </div>
+    <div class="eia-card refine">
+      <div class="eia-label">Refinery Crude Inputs</div>
+      <div><span class="eia-value" id="eia-refine">--</span><span class="eia-unit">MBbl/d</span></div>
+      <div class="eia-chg flat" id="eia-refine-sub">Net weekly inputs</div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 1: Commodity Prices | Energy Business News | TV -->
+<div class="row-3col">
+
+  <!-- COMMODITY PRICES -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Commodity Prices</div>
+      <div class="panel-sub"><span id="comm-update">Loading...</span><button class="refresh-btn" onclick="loadCommodities()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body">
+      <div class="comm-grid">
+        <div class="comm-card oil" id="card-wti">
+          <div class="comm-name">WTI Crude</div>
+          <div><span class="comm-price" id="wti-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="wti-chg" class="flat">--</span><span id="wti-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+        <div class="comm-card oil" id="card-brent">
+          <div class="comm-name">Brent Crude</div>
+          <div><span class="comm-price" id="brent-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="brent-chg" class="flat">--</span><span id="brent-pct" class="flat">--</span></div>
+          <div class="comm-sub">ICE Front Month</div>
+        </div>
+        <div class="comm-card gas" id="card-hh">
+          <div class="comm-name">Henry Hub</div>
+          <div><span class="comm-price" id="hh-price">--</span><span class="comm-unit">$/MMBtu</span></div>
+          <div class="comm-change"><span id="hh-chg" class="flat">--</span><span id="hh-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+        <div class="comm-card gas" id="card-ttf">
+          <div class="comm-name">TTF Natural Gas</div>
+          <div><span class="comm-price" id="ttf-price">--</span><span class="comm-unit">$/MMBtu</span></div>
+          <div class="comm-change"><span id="ttf-chg" class="flat">--</span><span id="ttf-pct" class="flat">--</span></div>
+          <div class="comm-sub">European Benchmark</div>
+        </div>
+        <div class="comm-card spread" id="card-brent-wti">
+          <div class="comm-name">Brent–WTI Spread</div>
+          <div><span class="comm-price" id="spread-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="spread-sub" class="flat">Brent premium to WTI</span></div>
+        </div>
+        <div class="comm-card oil" id="card-gasoline">
+          <div class="comm-name">RBOB Gasoline</div>
+          <div><span class="comm-price" id="gasoline-price">--</span><span class="comm-unit">$/gal</span></div>
+          <div class="comm-change"><span id="gasoline-chg" class="flat">--</span><span id="gasoline-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX Front Month</div>
+        </div>
+      </div>
+      <div class="source-note">Source: Yahoo Finance (CL=F, BZ=F, NG=F, TTF=F, RB=F) · Live</div>
+    </div>
+  </div>
+
+  <!-- ENERGY BUSINESS NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Energy Business News</div>
+      <div class="panel-sub"><span id="news-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="news-list">
+        <li class="news-loading">Fetching live energy headlines...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- LIVE TV -->
+  <div class="panel panel-tv">
+    <div class="panel-header">
+      <div class="panel-title">Live TV</div>
+      <div class="panel-sub" id="tv-now-channel">Bloomberg Television</div>
+    </div>
+    <div class="tv-wrap" id="tv-player-wrap">
+      <iframe id="tv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="tv-overlay-label">● LIVE</div>
+    </div>
+    <div id="tv-local-fallback" style="display:none; padding:20px 12px; text-align:center; background:#0a0f1e;">
+      <div style="color:var(--sandstone);font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">LIVE TV</div>
+      <div style="color:var(--midscale);font-size:10px;margin-bottom:14px;line-height:1.6;">Player loading — or click a channel below to open on YouTube.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;" id="tv-yt-links"></div>
+    </div>
+    <div class="tv-ch-bar">
+      <button class="tv-ch-btn active" onclick="switchTV(this,0)">Bloomberg</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,1)">CNBC</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,2)">Al Jazeera</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,3)">Sky News</button>
+    </div>
+    <div style="font-size:9px;color:var(--midscale);padding:5px 10px;">Auto-muted on load · Click unmute in player · Refresh if stream blank</div>
+  </div>
+
+</div>
+
+<!-- ROW 2: Forward Curves — WTI (left) | Henry Hub (right) -->
+<div class="row-2col">
+
+  <!-- WTI Crude -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">WTI Crude Forward Curve</div>
+      <div class="panel-sub"><span id="curve-update-oil">Loading strip...</span><button class="refresh-btn" onclick="loadCurve()" title="Refresh">↻</button></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-container"><canvas id="curveChartOil"></canvas></div>
+    </div>
+    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX · Spot + Quarterly '26-'27 + Dec '28/'29</div>
+  </div>
+
+  <!-- Henry Hub -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Henry Hub Forward Curve</div>
+      <div class="panel-sub"><span id="curve-update-gas">Loading strip...</span></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-container"><canvas id="curveChartGas"></canvas></div>
+    </div>
+    <div class="source-note" style="padding:0 12px 10px;">Source: Yahoo Finance NYMEX · Spot + Quarterly '26-'27 + Dec '28/'29</div>
+  </div>
+
+</div>
+
+<!-- ROW 3: E&P Stocks (moved up) -->
+<div class="row-full">
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">E&amp;P &amp; Energy Stocks — Live</div>
+      <div class="panel-sub"><span id="stocks-update">Loading...</span><button class="refresh-btn" onclick="loadStocks()" title="Refresh">↻</button></div>
+    </div>
+    <div id="stocks-grid" class="stocks-grid">
+      <div class="stocks-col" style="text-align:center;padding:20px;color:var(--midscale);grid-column:1/-1;">Loading stock data...</div>
+    </div>
+    <div class="source-note" style="padding:6px 12px 10px;">Source: Yahoo Finance Direct · Refreshes every 60s · ~ = approx</div>
+  </div>
+
+</div>
+
+<!-- ROW 4: Earnings | M&A | Financing -->
+<div class="row-3col">
+
+  <!-- EARNINGS CALENDAR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">E&P Earnings Calendar</div>
+      <div class="panel-sub">Q1 2026 · Upcoming</div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="earn-list" id="earn-list"></ul>
+      <div class="source-note">Source: Company IR calendars · Compiled manually</div>
+    </div>
+  </div>
+
+  <!-- M&A NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">M&A &amp; Deal Activity</div>
+      <div class="panel-sub"><span id="ma-update">Loading...</span><button class="refresh-btn" onclick="loadAllNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Recent Transactions</div>
+      <table class="deal-table">
+        <thead><tr><th>Date</th><th>Transaction</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td class="deal-date">Mar 25</td><td class="deal-desc">Cross Timbers sells oil &amp; gas assets to CTTC Energy</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Mar 25</td><td class="deal-desc">Diversified acquires Harmsworth assets from Sheridan Production (East Texas)</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Feb 28</td><td class="deal-desc">Clearvent Energy acquires Eagle Ford assets in Texas</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Feb 28</td><td class="deal-desc">SM Energy sells Carbon Ranch assets to Matador Energy (South Texas)</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Feb 12</td><td class="deal-desc">Ovintiv divests Anadarko Basin assets in Oklahoma</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+          <tr><td class="deal-date">Feb 11</td><td class="deal-desc">Devon Energy and Citizens Energy agree to all-stock transaction</td><td><span class="deal-badge badge-ma">M&A</span></td></tr>
+          <tr><td class="deal-date">Jan 30</td><td class="deal-desc">EOG Resources divests Woodbine assets</td><td><span class="deal-badge badge-div">Divest</span></td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px;">Live Deal Headlines</div>
+      <ul class="news-list" id="ma-list">
+        <li class="news-loading">Fetching deal news...</li>
+      </ul>
+      <div class="source-note">Static: Moelis Upstream Weekly, Mar 20 2026 · Live: RSS feeds</div>
+    </div>
+  </div>
+
+  <!-- FINANCING ACTIVITY -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Debt &amp; Financing</div>
+      <div class="panel-sub">Recent E&P Issuances</div>
+    </div>
+    <div class="panel-body-scroll">
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Senior Unsecured Notes</div>
+      <table class="deal-table">
+        <thead><tr><th>Issuer</th><th>Amount</th><th>Coupon / Due</th></tr></thead>
+        <tbody>
+          <tr><td class="deal-desc">Infinity Natural Resources</td><td class="deal-date">$350M</td><td class="deal-date">7.625% / 2031</td></tr>
+          <tr><td class="deal-desc">NW Energy</td><td class="deal-date">$1.1B</td><td class="deal-date">Sr. Notes / 2034</td></tr>
+          <tr><td class="deal-desc">CNX Resources</td><td class="deal-date">$500M</td><td class="deal-date">Sr. Notes / 2034</td></tr>
+          <tr><td class="deal-desc">Mewbourne Oil Co.</td><td class="deal-date">$1.1B</td><td class="deal-date">Sr. Notes / 2031</td></tr>
+          <tr><td class="deal-desc">Crescent Energy Finance</td><td class="deal-date">$600M</td><td class="deal-date">9.25% / 2031</td></tr>
+          <tr><td class="deal-desc">CNX Resources</td><td class="deal-date">$500M</td><td class="deal-date">7.875% / 2031</td></tr>
+          <tr><td class="deal-desc">Northern Oil &amp; Gas</td><td class="deal-date">$400M</td><td class="deal-date">Sr. Notes / 2031</td></tr>
+          <tr><td class="deal-desc">APA Corp</td><td class="deal-date">$750M</td><td class="deal-date">6.875% / 2033</td></tr>
+          <tr><td class="deal-desc">CrossAmerica Partners</td><td class="deal-date">$500M</td><td class="deal-date">5.375% / 2034</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:9px;color:var(--sandstone);text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px;">Live Financing Headlines</div>
+      <ul class="news-list" id="fin-list">
+        <li class="news-loading">Fetching financing news...</li>
+      </ul>
+      <div class="source-note">Source: Moelis Upstream Weekly, Mar 20 2026 · Bloomberg · S&P Capital IQ</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Live: Yahoo Finance · OilPrice.com · CNBC Energy · Rigzone · rss2json</div>
+  <div>Static: Moelis Upstream Weekly Mar 20 2026 · Bloomberg · S&P Capital IQ | ~ = estimated</div>
+</div>
+
+<script>
+// =====================
+// SHARED LIBRARY ALIASES
+// =====================
+const cachedFetch = Dash.cachedFetch;
+const yf = Dash.yf;
+const yfBatch = Dash.yfBatch;
+const fetchRSS = Dash.fetchRSS;
+const fmt = Dash.fmt;
+const fmtChg = Dash.fmtChg;
+const fmtPct = Dash.fmtPct;
+const cls = Dash.cls;
+const timeAgo = Dash.timeAgo;
+
+// =====================
+// CLOCK
+// =====================
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short'
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// =====================
+// DASHBOARD-SPECIFIC HELPERS
+// =====================
+function sCls(v) { return v > 0 ? 's-up' : v < 0 ? 's-down' : 's-flat'; }
+
+// =====================
+// COMMODITY PRICES
+// =====================
+async function loadCommodities() {
+  Dash.time.start('energy:loadCommodities');
+  const [wti, brent, hh, ttf, rb] = await Dash.yfBatch(['CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F']);
+
+  function setComm(idPrice, idChg, idPct, data, dec) {
+    document.getElementById(idPrice).textContent = fmt(data.price, dec);
+    const c = document.getElementById(idChg);
+    const p = document.getElementById(idPct);
+    c.textContent = fmtChg(data.chg, dec);
+    c.className = cls(data.chg);
+    p.textContent = fmtPct(data.pct);
+    p.className = cls(data.pct);
+  }
+
+  setComm('wti-price', 'wti-chg', 'wti-pct', wti, 2);
+  setComm('brent-price', 'brent-chg', 'brent-pct', brent, 2);
+  setComm('hh-price', 'hh-chg', 'hh-pct', hh, 3);
+  setComm('ttf-price', 'ttf-chg', 'ttf-pct', ttf, 2);
+  setComm('gasoline-price', 'gasoline-chg', 'gasoline-pct', rb, 3);
+
+  // Brent-WTI spread
+  if (brent.price && wti.price) {
+    const sp = brent.price - wti.price;
+    document.getElementById('spread-price').textContent = fmt(sp, 2);
+    const sub = document.getElementById('spread-sub');
+    sub.textContent = sp >= 0 ? `Brent premium to WTI` : `WTI premium to Brent`;
+    sub.className = 'flat';
+  }
+
+  document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  Dash.time.end('energy:loadCommodities');
+}
+
+// =====================
+// FORWARD CURVE
+// =====================
+let curveChartOil = null;
+let curveChartGas = null;
+let oilData = { points: [], liveCount: 0, total: 0 };
+
+// Inline Chart.js plugin — draws price labels above each data point
+const priceLabelsPlugin = {
+  id: 'priceLabels',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((dataset, dsIdx) => {
+      const meta = chart.getDatasetMeta(dsIdx);
+      const isMmBtu = dataset.label && dataset.label.includes('MMBtu');
+      const dec = isMmBtu ? 3 : 2;
+      meta.data.forEach((element, idx) => {
+        const pt = dataset.data[idx];
+        if (!pt || pt.y == null) return;
+        const lbl = '$' + (+pt.y).toFixed(dec);
+        ctx.save();
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillStyle = dataset.borderColor || '#DCB96E';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(lbl, element.x, element.y - 8);
+        ctx.restore();
+      });
+    });
+  }
+};
+let gasData = { points: [], liveCount: 0, total: 0 };
+
+// WTI and HH futures — Spot + quarterly strip (Mar/Jun/Sep/Dec) years 1-2, Dec-only years 3-4
+// x = months from today (Apr 2026). Quarterly near-term, annual far-term.
+// Gap between Dec'27→Dec'28 (12mo) is 4× wider than quarterly gaps (3mo) — correct.
+const OIL_FUTURES = [
+  { sym: 'CL=F',      label: 'Spot',    x: 0  },
+  { sym: 'CLM26.NYM', label: 'Jun\'26', x: 2  },
+  { sym: 'CLU26.NYM', label: 'Sep\'26', x: 5  },
+  { sym: 'CLZ26.NYM', label: 'Dec\'26', x: 8  },
+  { sym: 'CLH27.NYM', label: 'Mar\'27', x: 11 },
+  { sym: 'CLM27.NYM', label: 'Jun\'27', x: 14 },
+  { sym: 'CLU27.NYM', label: 'Sep\'27', x: 17 },
+  { sym: 'CLZ27.NYM', label: 'Dec\'27', x: 20 },
+  { sym: 'CLZ28.NYM', label: 'Dec\'28', x: 32 },
+  { sym: 'CLZ29.NYM', label: 'Dec\'29', x: 44 },
+];
+const GAS_FUTURES = [
+  { sym: 'NG=F',      label: 'Spot',    x: 0  },
+  { sym: 'NGM26.NYM', label: 'Jun\'26', x: 2  },
+  { sym: 'NGU26.NYM', label: 'Sep\'26', x: 5  },
+  { sym: 'NGZ26.NYM', label: 'Dec\'26', x: 8  },
+  { sym: 'NGH27.NYM', label: 'Mar\'27', x: 11 },
+  { sym: 'NGM27.NYM', label: 'Jun\'27', x: 14 },
+  { sym: 'NGU27.NYM', label: 'Sep\'27', x: 17 },
+  { sym: 'NGZ27.NYM', label: 'Dec\'27', x: 20 },
+  { sym: 'NGZ28.NYM', label: 'Dec\'28', x: 32 },
+  { sym: 'NGZ29.NYM', label: 'Dec\'29', x: 44 },
+];
+// Shared label map: monthOffset → label string (used by x-axis tick callback)
+const CURVE_LABEL_MAP = Object.fromEntries(OIL_FUTURES.map(c => [c.x, c.label]));
+
+async function fetchCurve(contracts) {
+  const results = await Dash.yfBatch(contracts.map(c => c.sym));
+  const merged = contracts.map((c, i) => ({
+    x:     c.x,
+    label: c.label,
+    price: results[i]?.price ? +results[i].price.toFixed(2) : null,
+    live:  !!results[i]?.price,
+  }));
+  return {
+    // {x, y} format for linear scale — null prices are omitted (gaps in curve)
+    points:    merged.filter(m => m.price !== null).map(m => ({ x: m.x, y: m.price })),
+    liveCount: merged.filter(m => m.live).length,
+    total:     merged.length,
+  };
+}
+
+function fmtPrice(v, decimals) {
+  return '$' + (+v).toFixed(decimals);
+}
+
+function buildChart(canvasId, datasets, yTitle, y2Title) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  // Tick positions = union of all x values across datasets
+  const xVals = [...new Set(datasets.flatMap(d => (d.data || []).map(p => p.x)))].sort((a,b)=>a-b);
+  const decimalsY  = yTitle  === '$/MMBtu' ? 3 : 2;
+  const decimalsY2 = y2Title === '$/MMBtu' ? 3 : 2;
+
+  return new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { datasets },
+    plugins: [priceLabelsPlugin],
+    options: {
+      parsing: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#D2DCE6', font: { family: 'Inter', size: 11 }, boxWidth: 16 } },
+        tooltip: {
+          backgroundColor: '#1E2846',
+          borderColor: '#5A82AF',
+          borderWidth: 1,
+          titleColor: '#DCB96E',
+          bodyColor: '#D2DCE6',
+          callbacks: {
+            title: items => CURVE_LABEL_MAP[items[0]?.parsed?.x] || '',
+            label: item => {
+              const dec = item.datasetIndex === 0 ? decimalsY : decimalsY2;
+              return ` ${item.dataset.label}: ${fmtPrice(item.parsed.y, dec)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: 44,
+          afterBuildTicks: axis => { axis.ticks = xVals.map(v => ({ value: v })); },
+          ticks: {
+            color: '#737887',
+            font: { size: 10 },
+            maxRotation: 0,
+            callback: v => CURVE_LABEL_MAP[v] || '',
+          },
+          grid: { color: '#1a2040' }
+        },
+        y: {
+          ticks: { color: '#737887', font: { size: 10 }, callback: v => fmtPrice(v, decimalsY) },
+          grid: { color: '#1a2040' },
+          title: { display: true, text: yTitle || '$/bbl', color: '#737887', font: { size: 10 } }
+        },
+        y2: y2Title ? {
+          display: true, position: 'right',
+          ticks: { color: '#50AF8C', font: { size: 10 }, callback: v => fmtPrice(v, decimalsY2) },
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: y2Title, color: '#50AF8C', font: { size: 10 } }
+        } : { display: false }
+      }
+    }
+  });
+}
+
+function renderCurve() {
+  curveChartOil = buildChart('curveChartOil', [{
+    label: 'WTI Crude ($/bbl)',
+    data: oilData.points,
+    borderColor: '#DCB96E',
+    backgroundColor: 'rgba(220,185,110,0.08)',
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#DCB96E',
+    tension: 0.3,
+    spanGaps: false,
+    fill: true,
+  }], '$/bbl');
+  curveChartGas = buildChart('curveChartGas', [{
+    label: 'Henry Hub ($/MMBtu)',
+    data: gasData.points,
+    borderColor: '#50AF8C',
+    backgroundColor: 'rgba(80,175,140,0.08)',
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#50AF8C',
+    tension: 0.3,
+    spanGaps: false,
+    fill: true,
+  }], '$/MMBtu');
+}
+
+function showCurveError() {
+  const errMsg = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--midscale);font-size:12px;">Live data unavailable — refresh to retry</div>';
+  ['curveChartOil','curveChartGas'].forEach(id => {
+    const wrap = document.getElementById(id)?.closest('.chart-wrap');
+    if (wrap) wrap.innerHTML = errMsg;
+  });
+}
+
+async function loadCurve() {
+  Dash.time.start('energy:loadCurve');
+  await window._loadChartJS();
+  if (!window.Chart) return;
+  document.getElementById('curve-update-oil').textContent = 'Fetching...';
+  document.getElementById('curve-update-gas').textContent = 'Fetching...';
+  const [oil, gas] = await Promise.all([fetchCurve(OIL_FUTURES), fetchCurve(GAS_FUTURES)]);
+  oilData = oil;
+  gasData = gas;
+  const t = new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  const oilStatus = oil.liveCount === 0 ? `Unavailable · ${t}` :
+    oil.liveCount < oil.total ? `${oil.liveCount}/${oil.total} live · ${t}` :
+    `${oil.liveCount}/${oil.total} live · ${t}`;
+  const gasStatus = gas.liveCount === 0 ? `Unavailable · ${t}` :
+    gas.liveCount < gas.total ? `${gas.liveCount}/${gas.total} live · ${t}` :
+    `${gas.liveCount}/${gas.total} live · ${t}`;
+  document.getElementById('curve-update-oil').textContent = oilStatus;
+  document.getElementById('curve-update-gas').textContent = gasStatus;
+  if (oil.liveCount === 0 && gas.liveCount === 0) {
+    showCurveError();
+  } else {
+    renderCurve();
+  }
+  Dash.time.end('energy:loadCurve');
+}
+
+// =====================
+// E&P STOCKS — sourced from /config/symbols.json via /api/symbols
+// To add/remove stocks: edit config/symbols.json and push.
+// =====================
+let STOCKS = [
+  { sym: 'XOM',  name: 'Exxon Mobil',        sector: 'major' },
+  { sym: 'CVX',  name: 'Chevron',             sector: 'major' },
+  { sym: 'COP',  name: 'ConocoPhillips',      sector: 'major' },
+  { sym: 'EOG',  name: 'EOG Resources',       sector: 'oil'   },
+  { sym: 'DVN',  name: 'Devon Energy',        sector: 'oil'   },
+  { sym: 'OXY',  name: 'Occidental',          sector: 'oil'   },
+  { sym: 'HES',  name: 'Hess Corp',           sector: 'oil'   },
+  { sym: 'APA',  name: 'APA Corp',            sector: 'oil'   },
+  { sym: 'MRO',  name: 'Marathon Oil',        sector: 'oil'   },
+  { sym: 'FANG', name: 'Diamondback Energy',  sector: 'oil'   },
+  { sym: 'PR',   name: 'Permian Resources',   sector: 'oil'   },
+  { sym: 'EQT',  name: 'EQT Corp',            sector: 'gas'   },
+  { sym: 'AR',   name: 'Antero Resources',    sector: 'gas'   },
+  { sym: 'CTRA', name: 'Coterra Energy',      sector: 'gas'   },
+  { sym: 'RRC',  name: 'Range Resources',     sector: 'gas'   },
+  { sym: 'SWN',  name: 'SWN Energy',          sector: 'gas'   },
+  { sym: 'SLB',  name: 'SLB (Schlumberger)',  sector: 'ofs'   },
+  { sym: 'HAL',  name: 'Halliburton',         sector: 'ofs'   },
+  { sym: 'XLE',  name: 'Energy Select SPDR',  sector: 'etf'   },
+  { sym: 'XOP',  name: 'SPDR Oil & Gas E&P',  sector: 'etf'   },
+];
+
+// Column layout: 3 cols — majors | oil | gas+ofs+etf
+let LEFT_SECTORS   = ['major','etf'];
+let MIDDLE_SECTORS = ['oil'];
+let RIGHT_SECTORS  = ['gas','ofs'];
+const SECTOR_META = {
+  major:         { cls: 'sec-major', label: 'Majors' },
+  oil:           { cls: 'sec-oil',   label: 'Oil E&P' },
+  large_cap_oil: { cls: 'sec-oil',   label: 'Large Cap Oil' },
+  mid_cap_oil:   { cls: 'sec-oil',   label: 'Mid Cap Oil' },
+  gas:           { cls: 'sec-gas',   label: 'Gas E&P' },
+  ofs:           { cls: 'sec-ofs',   label: 'Oilfield Services' },
+  etf:           { cls: 'sec-etf',   label: 'ETFs' },
+};
+
+function fmtMcap(v) {
+  if (!v) return '—';
+  if (v >= 1e12) return '$' + (v/1e12).toFixed(1) + 'T';
+  if (v >= 1e9)  return '$' + (v/1e9).toFixed(0) + 'B';
+  if (v >= 1e6)  return '$' + (v/1e6).toFixed(0) + 'M';
+  return '$' + v.toFixed(0);
+}
+
+function buildColHTML(sectors, stocks, resultMap) {
+  let html = `<table>
+    <colgroup>
+      <col class="c-ticker"><col class="c-name"><col class="c-price"><col class="c-pct"><col class="c-range">
+    </colgroup>
+    <tr class="tbl-header">
+      <td>Ticker</td><td></td>
+      <td class="r">Price</td>
+      <td class="r">Day %</td>
+      <td class="r">52W H/L</td>
+    </tr>`;
+  sectors.forEach(sec => {
+    const m = SECTOR_META[sec];
+    const items = stocks.filter(s => s.sector === sec);
+    if (!items.length) return;
+    html += `<tr class="sector-divider ${m.cls}"><td colspan="5">${m.label}</td></tr>`;
+    items.forEach(s => {
+      const r = resultMap[s.sym] || {};
+      const p  = r.price  ? '$' + fmt(r.price)      : '—';
+      const pct = fmtPct(r.pct);
+      const hi = r.high52 ? '$' + fmt(r.high52, 0)  : '—';
+      const lo = r.low52  ? '$' + fmt(r.low52,  0)  : '—';
+      html += `<tr class="stock-row">
+        <td class="sr-ticker"><a href="https://finance.yahoo.com/quote/${s.sym}" target="_blank" style="color:var(--glacier);text-decoration:none;">${s.sym}</a></td>
+        <td class="sr-name">${s.name}</td>
+        <td class="sr-price">${p}</td>
+        <td class="sr-pct ${sCls(r.pct)}">${pct}</td>
+        <td class="sr-range">${hi}&#8202;/&#8202;${lo}</td>
+      </tr>`;
+    });
+  });
+  html += '</table>';
+  return html;
+}
+
+async function loadStocks() {
+  Dash.time.start('energy:loadStocks');
+  const results = await Promise.all(STOCKS.map(s => yf(s.sym)));
+  const resultMap = {};
+  results.forEach((r, i) => { resultMap[STOCKS[i].sym] = r; });
+
+  const grid = document.getElementById('stocks-grid');
+  grid.innerHTML = DOMPurify.sanitize(
+    '<div class="stocks-col">' + buildColHTML(LEFT_SECTORS,   STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(MIDDLE_SECTORS, STOCKS, resultMap) + '</div>' +
+    '<div class="stocks-col">' + buildColHTML(RIGHT_SECTORS,  STOCKS, resultMap) + '</div>',
+    { ADD_ATTR: ['target'] }
+  );
+
+  document.getElementById('stocks-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('energy:loadStocks');
+  return results;
+}
+
+// =====================
+// TICKER
+// =====================
+// =====================
+// MARKET INDICATORS (breaking bar)
+// =====================
+const MKT_INDS = [
+  { sym: '^GSPC', label: 'S&P 500',  fmt: 'idx' },
+  { sym: '^DJI',  label: 'Dow',      fmt: 'idx' },
+  { sym: '^IXIC', label: 'Nasdaq',   fmt: 'idx' },
+  { sym: '^TNX',  label: '10Y UST',  fmt: 'yld' },
+];
+
+async function loadMarketIndicators() {
+  const results = await Dash.yfBatch(MKT_INDS.map(m => m.sym));
+  const html = MKT_INDS.map((m, i) => {
+    const r = results[i] || {};
+    const isYld = m.fmt === 'yld';
+    const p = r.price != null
+      ? (isYld ? r.price.toFixed(2) + '%' : r.price.toLocaleString('en-US', { maximumFractionDigits: 0 }))
+      : '—';
+    const pct = r.pct != null ? fmtPct(r.pct) : '';
+    const bps = isYld && r.pct != null
+      ? (r.pct > 0 ? '+' : '') + Math.round(r.pct * 10) + 'bp'
+      : '';
+    const chgLabel = isYld ? bps : pct;
+    const cls = r.pct > 0 ? 's-up' : r.pct < 0 ? 's-down' : 's-flat';
+    return `<span class="mkt-ind-item">` +
+      `<span class="mkt-ind-name">${m.label}</span>` +
+      `<span class="mkt-ind-price">${p}</span>` +
+      (chgLabel ? `<span class="mkt-ind-chg ${cls}">${chgLabel}</span>` : '') +
+      `</span>`;
+  }).join('');
+  const el = document.getElementById('mkt-indicators');
+  if (el) el.innerHTML = DOMPurify.sanitize(html);
+}
+
+const TICKER_STOCKS = ['XOM','CVX','COP','EOG','DVN','OXY','APA','MRO','PXD','FANG','EQT','AR','RRC','SWN','SLB','HAL','BKR','NOV','XLE','XOP','OIH'];
+
+async function loadTicker() {
+  Dash.time.start('energy:loadTicker');
+  const results = await Dash.yfBatch(TICKER_STOCKS);
+  const wrap = document.getElementById('ticker-wrap');
+
+  const items = results.map((r, i) => {
+    const sym = TICKER_STOCKS[i];
+    const p = r?.price ? '$' + fmt(r.price) : '—';
+    const pct = fmtPct(r?.pct);
+    const tcls = r?.pct > 0 ? 'tick-up' : r?.pct < 0 ? 'tick-down' : 'tick-flat';
+    return `<div class="ticker-item">
+      <a href="https://finance.yahoo.com/quote/${sym}" target="_blank">${sym}</a>
+      <span class="tick-price">${p}</span>
+      <span class="${tcls}">${pct}</span>
+    </div>`;
+  });
+
+  wrap.innerHTML = DOMPurify.sanitize(items.join('') + items.join(''));
+  Dash.time.end('energy:loadTicker');
+}
+
+// =====================
+// RSS NEWS
+// =====================
+const ENERGY_FEEDS = [
+  { url: 'https://oilprice.com/rss/main', name: 'OilPrice' },
+  { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', name: 'CNBC Energy' },
+  { url: 'https://www.rigzone.com/news/rss/rigzone_latest.aspx', name: 'Rigzone' },
+];
+
+const ENERGY_KW = ['oil','gas','crude','brent','wti','lng','upstream','e&p','permian','shale','energy','petroleum','barrel','opec','natural gas','refin','pipeline','midstream','producer','exploration','production','drilling','well','reservoir','offshore','frack','hydrocarbon','fossil'];
+const MA_KW     = ['acqui','merger','buyout','deal','stake','divestiture','divest','bid','offer','purchase','consolidat','takeover'];
+const FIN_KW    = ['note','bond','debt','issuance','credit','loan','facility','borrow','refinanc','senior','financing','capital market'];
+
+const isEnergy  = t => ENERGY_KW.some(k => t.toLowerCase().includes(k));
+const isMA      = t => MA_KW.some(k => t.toLowerCase().includes(k)) && isEnergy(t);
+const isFin     = t => FIN_KW.some(k => t.toLowerCase().includes(k)) && isEnergy(t);
+
+function getEnergyTag(text) {
+  const t = text.toLowerCase();
+  if (MA_KW.some(k => t.includes(k))) return '<span class="news-tag tag-ma">M&A</span>';
+  if (FIN_KW.some(k => t.includes(k))) return '<span class="news-tag tag-financing">Financing</span>';
+  if (t.includes('opec') || t.includes('saudi') || t.includes('iran') || t.includes('supply')) return '<span class="news-tag tag-opec">OPEC</span>';
+  if (t.includes('price') || t.includes('wti') || t.includes('brent') || t.includes('crude')) return '<span class="news-tag tag-price">Price</span>';
+  return '<span class="news-tag tag-upstream">E&P</span>';
+}
+
+async function fetchFeed(f) {
+  return Dash.fetchRSS(f.url, f.name);
+}
+
+function renderNews(items, listId, updateId, filterFn, limit=12) {
+  const list = document.getElementById(listId);
+  const filtered = items.filter(i => filterFn(i.title))
+    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate)).slice(0, limit);
+  if (!filtered.length) {
+    list.innerHTML = '<li class="news-loading">No headlines found — feeds may be rate-limited. Refresh in a moment.</li>';
+    return;
+  }
+  list.innerHTML = DOMPurify.sanitize(filtered.map(i => `
+    <li class="news-item">
+      <a href="${i.link}" target="_blank">${i.title}</a>
+      <div class="news-meta">
+        <span class="news-source">${i.source}</span>
+        <span class="news-time">${timeAgo(i.pubDate)}</span>
+        ${getEnergyTag(i.title)}
+      </div>
+    </li>`).join(''));
+  if (updateId) document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+// =====================
+// TOP NEWS (general headlines — Row 1 left panel)
+// =====================
+const TOP_FEEDS = [
+  { url: 'https://news.google.com/rss/search?q=oil+gas+upstream+energy&hl=en&gl=US&ceid=US:en', name: 'Google News' },
+  { url: 'https://feeds.bbci.co.uk/news/rss.xml', name: 'BBC' },
+  { url: 'https://www.theguardian.com/world/rss', name: 'Guardian' },
+];
+
+async function loadTopNews() {
+  Dash.time.start('energy:loadTopNews');
+  const results = await Promise.all(TOP_FEEDS.map(fetchFeed));
+  const items = [].concat(...results).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  renderNews(items, 'industry-list', 'industry-update', () => true, 14);
+  Dash.time.end('energy:loadTopNews');
+}
+
+async function loadAllNews() {
+  Dash.time.start('energy:loadAllNews');
+  const results = await Promise.all(ENERGY_FEEDS.map(fetchFeed));
+  const all = [].concat(...results);
+
+  renderNews(all, 'news-list',     'news-update',     isEnergy, 14);
+  renderNews(all, 'ma-list',       'ma-update',       isMA,     10);
+  renderNews(all, 'fin-list',      null,              isFin,    8);
+
+  // Breaking bar removed — replaced with market indicators
+  Dash.time.end('energy:loadAllNews');
+}
+
+// =====================
+// EIA FUNDAMENTALS
+// =====================
+async function loadEIA() {
+  try {
+    const r = await fetch('/api/eia');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+
+    // Crude stocks
+    if (d.crudeStocks?.value != null) {
+      document.getElementById('eia-stocks').textContent = (d.crudeStocks.value / 1000).toFixed(1);
+      const chg = d.crudeStocks.chg;
+      const el  = document.getElementById('eia-stocks-chg');
+      if (chg != null) {
+        const sign  = chg >= 0 ? '+' : '';
+        const label = chg >= 0 ? 'build ▲ bearish' : 'draw ▼ bullish';
+        el.textContent  = `${sign}${(chg / 1000).toFixed(2)} MMBbl w/w · ${label}`;
+        el.className    = `eia-chg ${chg > 0 ? 'build' : chg < 0 ? 'draw' : 'flat'}`;
+      }
+    }
+
+    // Production
+    if (d.crudeProduction?.value != null) {
+      document.getElementById('eia-prod').textContent = d.crudeProduction.value.toLocaleString();
+    }
+
+    // Refinery inputs
+    if (d.refineryInputs?.value != null) {
+      document.getElementById('eia-refine').textContent = d.refineryInputs.value.toLocaleString();
+    }
+
+    // Report date badge
+    if (d.reportDate) {
+      const rpt  = new Date(d.reportDate + 'T12:00:00Z');
+      const next = new Date(d.nextReport  + 'T12:00:00Z');
+      const fmt  = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('eia-report-badge').textContent =
+        `EIA WPSR · ${fmt(rpt)} · Next: ${fmt(next)}`;
+    }
+
+    document.getElementById('eia-update').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  } catch (e) {
+    document.getElementById('eia-update').textContent = 'EIA data unavailable';
+    console.warn('EIA fetch failed:', e.message);
+  }
+}
+
+// =====================
+// EARNINGS
+// =====================
+const EARNINGS = [
+  { co: 'SLB',             sym: 'SLB',  date: '2026-04-17' },
+  { co: 'Halliburton',     sym: 'HAL',  date: '2026-04-22' },
+  { co: 'Hess Corp',       sym: 'HES',  date: '2026-04-30' },
+  { co: 'EQT Corp',        sym: 'EQT',  date: '2026-04-28' },
+  { co: 'Antero Resources',sym: 'AR',   date: '2026-04-29' },
+  { co: 'Exxon Mobil',     sym: 'XOM',  date: '2026-04-25' },
+  { co: 'ConocoPhillips',  sym: 'COP',  date: '2026-05-01' },
+  { co: 'Chevron',         sym: 'CVX',  date: '2026-05-02' },
+  { co: 'Devon Energy',    sym: 'DVN',  date: '2026-05-06' },
+  { co: 'APA Corp',        sym: 'APA',  date: '2026-05-06' },
+  { co: 'Marathon Oil',    sym: 'MRO',  date: '2026-05-06' },
+  { co: 'Diamondback',     sym: 'FANG', date: '2026-05-06' },
+  { co: 'Walt Disney',     sym: 'DIS',  date: '2026-05-06' },
+  { co: 'EOG Resources',   sym: 'EOG',  date: '2026-05-07' },
+  { co: 'Occidental',      sym: 'OXY',  date: '2026-05-07' },
+  { co: 'Coterra Energy',  sym: 'CTRA', date: '2026-05-07' },
+];
+
+function loadEarnings() {
+  const today = new Date();
+  const list = document.getElementById('earn-list');
+  const upcoming = EARNINGS
+    .map(e => { const d = new Date(e.date); return {...e, days: Math.ceil((d-today)/86400000), d}; })
+    .filter(e => e.days >= 0).sort((a,b) => a.days - b.days);
+  list.innerHTML = DOMPurify.sanitize(upcoming.map(e => {
+    const cls = e.days <= 7 ? 'earn-soon' : e.days <= 21 ? 'earn-near' : 'earn-far';
+    const label = e.days === 0 ? 'TODAY' : e.days === 1 ? '1 day' : e.days + ' days';
+    return `<li class="earn-item">
+      <div><div class="earn-co">${e.co}</div><div class="earn-ticker">${e.sym}</div></div>
+      <div style="text-align:right">
+        <div class="earn-date">${e.d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        <span class="earn-days ${cls}">${label}</span>
+      </div>
+    </li>`;
+  }).join(''));
+}
+
+// =====================
+// =====================
+// REFRESH ALL
+// =====================
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function refreshAll() {
+  const btn = document.querySelector('.refresh-all-btn');
+  if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
+  loadCurve();
+  await loadCommodities();
+  await sleep(300);
+  await loadStocks();
+  await sleep(300);
+  loadAllNews();
+  loadTicker();
+  loadEIA();
+  if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
+}
+
+// INIT
+// =====================
+// =====================
+// LIVE TV
+// =====================
+const TV_CHANNELS = [
+  { name: 'Bloomberg Television', videoId: 'iEpJwprxDdk', ytUrl: 'https://www.youtube.com/@BloombergTelevision/live' },
+  { name: 'CNBC Live',            videoId: '9NyxcX3rhQs', ytUrl: 'https://www.youtube.com/@CNBC/live' },
+  { name: 'Al Jazeera English',   videoId: 'gCNeDWCI0vo', ytUrl: 'https://www.youtube.com/@AlJazeeraEnglish/live' },
+  { name: 'Sky News Live',        videoId: 'YDvsBbKfLPA', ytUrl: 'https://www.youtube.com/@SkyNews/live' },
+];
+
+function initTV() {
+  const iframe = document.getElementById('tv-iframe');
+  const ch = TV_CHANNELS[0];
+  iframe.src = `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+  // Also populate fallback links in case iframe fails
+  document.getElementById('tv-yt-links').innerHTML = DOMPurify.sanitize(TV_CHANNELS.map(c =>
+    `<a href="${c.ytUrl}" target="_blank" style="background:var(--dark-card);border:1px solid #3a4570;color:var(--white);text-decoration:none;padding:5px 10px;border-radius:3px;font-size:10px;font-weight:600;">▶ ${c.name}</a>`
+  ).join(''));
+}
+
+function switchTV(btn, idx) {
+  const ch = TV_CHANNELS[idx];
+  document.getElementById('tv-iframe').src =
+    `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+  document.getElementById('tv-now-channel').textContent = ch.name;
+  document.querySelectorAll('.tv-ch-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// =====================
+// SYMBOL CONFIG LOADER
+// =====================
+async function loadSymbolConfig() {
+  try {
+    const r = await cachedFetch('/api/symbols', 300000);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    if (!cfg.energy) return;
+
+    // Update stock list
+    if (Array.isArray(cfg.energy.stocks) && cfg.energy.stocks.length) {
+      STOCKS = cfg.energy.stocks;
+    }
+
+    // Merge custom sectors into SECTOR_META
+    const custom = cfg.energy._sectors || {};
+    Object.keys(custom).forEach(key => {
+      if (!SECTOR_META[key]) {
+        // Pick CSS class by keyword
+        const cls = /gas/i.test(key) ? 'sec-gas'
+          : /ofs|service/i.test(key) ? 'sec-ofs'
+          : /etf/i.test(key) ? 'sec-etf'
+          : /major/i.test(key) ? 'sec-major'
+          : 'sec-oil';
+        SECTOR_META[key] = { cls, label: custom[key] };
+      }
+    });
+
+    // Recompute column layout from actual sectors present in STOCKS
+    const present = [...new Set(STOCKS.map(s => s.sector).filter(Boolean))];
+    const oilLike  = present.filter(s => /oil|upstream|e.?p|permian|shale/i.test(s) && s !== 'major' && s !== 'etf');
+    const gasLike  = present.filter(s => /gas|lng/i.test(s));
+    const ofsMeta  = present.filter(s => /ofs|service/i.test(s));
+    const etfMeta  = present.filter(s => /etf/i.test(s));
+    const majorMeta = present.filter(s => /major/i.test(s));
+    const other    = present.filter(s => !majorMeta.includes(s) && !oilLike.includes(s) && !gasLike.includes(s) && !ofsMeta.includes(s) && !etfMeta.includes(s));
+
+    if (oilLike.length || gasLike.length) {
+      LEFT_SECTORS   = majorMeta.length   ? majorMeta   : LEFT_SECTORS;
+      MIDDLE_SECTORS = oilLike.length     ? oilLike     : MIDDLE_SECTORS;
+      RIGHT_SECTORS  = [...gasLike, ...ofsMeta, ...etfMeta, ...other];
+    }
+  } catch (e) { console.warn('symbols config:', e.message); }
+}
+
+// INIT — above-the-fold priority
+initTV();
+loadEarnings();
+// Above the fold — start immediately, don't block
+loadCommodities();
+loadMarketIndicators();
+// Secondary panels — load symbol config first, then stocks
+setTimeout(loadTicker, 200);
+setTimeout(async () => { await loadSymbolConfig(); loadStocks(); }, 400);
+// Tertiary — deferred
+setTimeout(loadAllNews, 600);
+setTimeout(loadCurve, 800);
+setTimeout(loadEIA, 1200);  // EIA data — cached 6h, no need to rush
+// Stagger refresh intervals
+Dash.stagger([loadCommodities, loadMarketIndicators, loadTicker, loadStocks], 60000, 5000);
+Dash.stagger([loadAllNews], 600000, 5000);
+// Keep loadCurve on its own long interval
+setTimeout(() => setInterval(loadCurve, 3600000), 15000);
+// EIA refreshes every 6 hours (matches server cache)
+setTimeout(() => setInterval(loadEIA, 21600000), 15000);
+</script>
+</body>
+</html>

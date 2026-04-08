@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="/api" crossorigin>
+<link rel="prefetch" href="/api/quotes?syms=BZ%3DF,CL%3DF,TTF%3DF,RB%3DF,GC%3DF">
+<title>STRAIT OF HORMUZ — GEOPOLITICAL MONITOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="/shared/dash.js"></script>
+<style>
+  :root {
+    --oxford:    #1E2846;
+    --glacier:   #5A82AF;
+    --sandstone: #C94040;
+    --bluegrey:  #D2DCE6;
+    --midscale:  #737887;
+    --maroon:    #A0415A;
+    --turquoise: #50AF8C;
+    --white:     #FFFFFF;
+    --dark-card: #253157;
+    --bg:        #0F1525;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); font-size: 13px; overflow-x: hidden; }
+
+  /* STICKY HEADER */
+  .sticky-header { position: sticky; top: 0; z-index: 1000; }
+
+  /* HEADER */
+  .header { background: var(--oxford); border-bottom: 3px solid var(--sandstone); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-title { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--white); text-transform: uppercase; }
+  .header-title span { color: var(--sandstone); }
+  .header-meta { font-size: 11px; color: var(--midscale); text-align: right; }
+  #clock { color: var(--sandstone); font-weight: 600; }
+
+  /* BREAKING BAR */
+  .breaking-bar { background: #5a0a0a; padding: 6px 20px; display: flex; align-items: center; gap: 12px; overflow: hidden; border-bottom: 1px solid #8a1a1a; }
+  .breaking-label { background: var(--sandstone); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 6px; white-space: nowrap; letter-spacing: 1px; }
+  .breaking-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .breaking-text a { color: var(--white); text-decoration: none; }
+  .breaking-text a:hover { text-decoration: underline; }
+
+  /* VERCEL TOOLBAR SUPPRESSION */
+  vercel-toolbar, #__vercel_toolbar, #vercel-live-feedback, #vercel-speed-insights { display: none !important; }
+
+  /* MARKET INDICATORS BAR */
+  .mkt-bar { background: var(--dark-card); border-bottom: 1px solid #2a3560; padding: 5px 20px; display: flex; align-items: center; gap: 0; overflow: hidden; }
+  .mkt-bar-label { background: var(--glacier); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 8px; white-space: nowrap; letter-spacing: 1px; margin-right: 16px; flex-shrink: 0; }
+  .mkt-indicators { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden; }
+  .mkt-ind-item { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 18px 0 0; white-space: nowrap; }
+  .mkt-ind-item + .mkt-ind-item { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 18px; }
+  .mkt-ind-name  { color: rgba(255,255,255,0.65); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .mkt-ind-price { color: var(--white); font-size: 13px; font-weight: 700; }
+  .mkt-ind-chg   { font-size: 10px; font-weight: 600; }
+  .s-up   { color: var(--turquoise); }
+  .s-down { color: var(--maroon); }
+  .s-flat { color: var(--midscale); }
+
+  /* OIL MARKET STRIP */
+  .strip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; padding: 6px 12px 8px; }
+  .strip-card { background: var(--dark-card); border-radius: 3px; padding: 9px 12px; border-left: 3px solid var(--glacier); }
+  .strip-card.brent  { border-left-color: var(--sandstone); }
+  .strip-card.wti    { border-left-color: #DCB96E; }
+  .strip-card.spread { border-left-color: var(--midscale); }
+  .strip-card.gold   { border-left-color: var(--turquoise); }
+  .strip-label { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .strip-value { font-size: 18px; font-weight: 700; color: var(--white); }
+  .strip-unit  { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .strip-chg   { font-size: 11px; margin-top: 3px; font-weight: 600; }
+
+  /* GRIDS */
+  .row-map-tv { display: grid; grid-template-columns: 2fr 1fr; gap: 2px; padding: 2px; height: 500px; }
+  .row-3col   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 2px; }
+
+  /* PANELS */
+  .panel { background: var(--oxford); border: 1px solid #2a3560; border-radius: 3px; overflow: hidden; }
+  .panel-header { background: var(--dark-card); border-bottom: 2px solid var(--glacier); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sandstone); }
+  .panel-sub { font-size: 10px; color: var(--midscale); display: flex; align-items: center; gap: 5px; }
+  .refresh-btn { background: none; border: none; color: var(--midscale); font-size: 13px; padding: 0 2px; cursor: pointer; line-height: 1; transition: color .15s, transform .2s; }
+  .refresh-btn:hover { color: var(--sandstone); transform: rotate(180deg); }
+  .refresh-all-btn { background: var(--dark-card); border: 1px solid var(--sandstone); color: var(--sandstone); font-size: 10px; padding: 4px 10px; border-radius: 2px; cursor: pointer; font-family: 'Inter', sans-serif; letter-spacing: .5px; transition: all .15s; }
+  .refresh-all-btn:hover { background: var(--sandstone); color: var(--white); }
+  .panel-body { padding: 12px; }
+  .panel-body-scroll { padding: 12px; max-height: 340px; overflow-y: auto; }
+
+  /* MAP */
+  .panel-map { display: flex; flex-direction: column; }
+  .map-container { flex: 1; position: relative; min-height: 0; }
+  #map { width: 100%; height: 100%; }
+  .map-controls { display: flex; gap: 6px; padding: 6px 10px; background: var(--dark-card); border-top: 1px solid #2a3560; flex-wrap: wrap; flex-shrink: 0; }
+  .map-toggle { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--midscale); cursor: pointer; letter-spacing: 0.5px; user-select: none; }
+  .map-toggle input { cursor: pointer; accent-color: var(--sandstone); }
+  .map-toggle:hover { color: var(--white); }
+  .map-divider { width: 1px; background: #3a4570; align-self: stretch; }
+  /* Leaflet dark overrides */
+  .leaflet-container { background: #0d1220; }
+  /* OSM tiles dark-filtered — only tiles inverted, markers stay normal */
+  .leaflet-tile-pane { filter: invert(1) hue-rotate(195deg) brightness(0.9) saturate(0.5) contrast(0.7); }
+  .leaflet-control-zoom a { background: var(--dark-card); color: var(--bluegrey); border-color: #3a4570; }
+  .leaflet-control-zoom a:hover { background: #1a2040; color: var(--white); }
+  .leaflet-popup-content-wrapper { background: #1a2535; border: 1px solid #3a4570; color: var(--bluegrey); border-radius: 3px; }
+  .leaflet-popup-tip { background: #1a2535; }
+  .leaflet-popup-content { font-size: 11px; line-height: 1.5; }
+  .map-tip-title { font-weight: 700; color: var(--white); margin-bottom: 3px; font-size: 11px; }
+  .map-tip-body  { color: var(--midscale); font-size: 10px; line-height: 1.5; }
+  .map-tip-flag  { font-size: 13px; }
+  .leaflet-tooltip { background: #1a2535; border: 1px solid #3a4570; color: var(--bluegrey); font-size: 10px; padding: 4px 7px; border-radius: 2px; }
+  .leaflet-tooltip::before { border-top-color: #3a4570; }
+
+  /* TV */
+  .panel-tv { display: flex; flex-direction: column; }
+  .panel-tv .tv-wrap { flex: 1; padding-top: 0; min-height: 200px; position: relative; }
+  .tv-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+  .tv-overlay-label { position: absolute; top: 6px; left: 6px; background: rgba(160,65,90,0.92); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; letter-spacing: 1px; border-radius: 2px; pointer-events: none; z-index: 1; }
+  .tv-ch-bar { display: flex; gap: 4px; padding: 8px 10px; background: var(--dark-card); border-top: 1px solid #2a3560; flex-wrap: wrap; flex-shrink: 0; }
+  .tv-ch-btn { background: #1a2040; border: 1px solid #3a4570; color: var(--midscale); font-size: 10px; font-weight: 600; padding: 4px 9px; cursor: pointer; border-radius: 3px; font-family: 'Inter', sans-serif; flex: 1; min-width: 55px; text-align: center; }
+  .tv-ch-btn:hover { background: #253157; color: var(--white); border-color: var(--glacier); }
+  .tv-ch-btn.active { background: var(--glacier); color: var(--white); border-color: var(--glacier); }
+
+  /* COMM CARDS */
+  .comm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .comm-card { background: var(--dark-card); border-radius: 3px; padding: 10px 12px; border-left: 3px solid var(--glacier); }
+  .comm-card.oil  { border-left-color: var(--sandstone); }
+  .comm-card.gas  { border-left-color: var(--turquoise); }
+  .comm-card.spread { border-left-color: var(--midscale); }
+  .comm-name   { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  .comm-price  { font-size: 20px; font-weight: 700; color: var(--white); }
+  .comm-unit   { font-size: 10px; color: var(--midscale); margin-left: 3px; }
+  .comm-change { font-size: 11px; margin-top: 3px; display: flex; gap: 10px; }
+  .comm-sub    { font-size: 10px; color: var(--midscale); margin-top: 2px; }
+  .up   { color: var(--turquoise); }
+  .down { color: var(--maroon); }
+  .flat { color: var(--midscale); }
+  .source-note { font-size: 9px; color: var(--midscale); margin-top: 10px; border-top: 1px solid #2a3560; padding-top: 6px; }
+
+  /* SCENARIO TABLE */
+  .scenario-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .scenario-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 8px; text-align: left; border-bottom: 1px solid #2a3560; }
+  .scenario-table td { padding: 6px 8px; font-size: 11px; border-bottom: 1px solid #1a2040; vertical-align: middle; }
+  .scenario-table tr:last-child td { border-bottom: none; }
+  .s-label { color: var(--midscale); font-size: 10px; }
+  .s-price { font-weight: 700; color: var(--white); }
+  .s-pct { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; }
+  .s-partial  { background: #2a2010; color: #DCB96E; }
+  .s-full     { background: #3d1a10; color: #E87D2B; }
+  .s-extended { background: #3d0a0a; color: var(--sandstone); }
+
+  /* BYPASS TABLE */
+  .bypass-table { width: 100%; border-collapse: collapse; }
+  .bypass-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 6px; text-align: left; border-bottom: 1px solid #2a3560; }
+  .bypass-table td { padding: 6px 6px; font-size: 10px; border-bottom: 1px solid #1a2040; vertical-align: top; line-height: 1.4; }
+  .bypass-table tr:last-child td { border-bottom: none; }
+  .b-name { color: var(--white); font-weight: 600; }
+  .b-cap  { color: var(--sandstone); font-weight: 700; text-align: right; }
+  .b-status { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; }
+  .stat-active   { background: #1a3028; color: var(--turquoise); }
+  .stat-limited  { background: #2a2010; color: #DCB96E; }
+  .stat-inactive { background: #2a1a1a; color: var(--maroon); }
+
+  /* NEWS */
+  .news-list { list-style: none; }
+  .news-item { padding: 7px 0; border-bottom: 1px solid #1a2040; display: flex; flex-direction: column; gap: 3px; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item a { color: var(--white); text-decoration: none; font-size: 12px; line-height: 1.4; font-weight: 500; }
+  .news-item a:hover { color: var(--sandstone); }
+  .news-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .news-source { font-size: 9px; color: var(--glacier); text-transform: uppercase; letter-spacing: 0.5px; }
+  .news-time   { font-size: 9px; color: var(--midscale); }
+  .news-tag    { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .tag-war     { background: #3d0a0a; color: var(--sandstone); }
+  .tag-oil     { background: #2a2010; color: #DCB96E; }
+  .tag-diplo   { background: #1a2d3d; color: var(--glacier); }
+  .tag-shipping{ background: #1a3028; color: var(--turquoise); }
+  .news-loading { color: var(--midscale); font-size: 12px; padding: 20px 0; text-align: center; }
+
+  /* SPR TABLE */
+  .spr-table { width: 100%; border-collapse: collapse; }
+  .spr-table th { font-size: 9px; color: var(--midscale); text-transform: uppercase; letter-spacing: 1px; padding: 5px 6px; text-align: right; border-bottom: 1px solid #2a3560; }
+  .spr-table th:first-child { text-align: left; }
+  .spr-table td { padding: 5px 6px; font-size: 11px; border-bottom: 1px solid #1a2040; text-align: right; }
+  .spr-table td:first-child { text-align: left; color: var(--midscale); }
+  .spr-table tr:last-child td { border-bottom: none; }
+  .spr-vol  { color: var(--white); font-weight: 600; }
+  .spr-days { color: var(--turquoise); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--oxford); }
+  ::-webkit-scrollbar-thumb { background: var(--glacier); border-radius: 2px; }
+
+  /* FOOTER */
+  .footer { background: var(--oxford); border-top: 2px solid var(--sandstone); padding: 8px 20px; display: flex; justify-content: space-between; font-size: 10px; color: var(--midscale); }
+
+  /* SECTION HEADER */
+  .section-hdr { font-size: 9px; color: var(--sandstone); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .row-map-tv { grid-template-columns: 1fr; height: auto; }
+    .map-container { height: 300px; }
+    .row-3col { grid-template-columns: 1fr; }
+    .panel-tv .tv-wrap { flex: none; padding-top: 56.25%; }
+    .header { flex-direction: column; gap: 4px; }
+    .comm-grid { grid-template-columns: 1fr 1fr; }
+    .panel-body-scroll { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sticky-header">
+<!-- NAV BAR -->
+<div id="nav-bar" style="background:#0a0a0a;border-bottom:1px solid #2a2a2a;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-family:inherit;">
+  <a id="nav-home" href="/" style="color:#C94040;text-decoration:none;font-weight:700;letter-spacing:1px;padding:4px 10px;border:1px solid #C94040;border-radius:3px;">⌂ HOME</a>
+  <span style="color:#333;">|</span>
+  <a id="nav-energy"    href="/energy/"    target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Upstream Energy ↗</a>
+  <a id="nav-cleantech" href="/cleantech/" target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Cleantech ↗</a>
+  <a id="nav-media"     href="/media/"     target="_blank" rel="noopener" style="color:#aaa;text-decoration:none;padding:4px 10px;border:1px solid #333;border-radius:3px;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Media &amp; Entertainment ↗</a>
+</div>
+<script>
+(function() {
+  var portal = new URLSearchParams(window.location.search).get('portal');
+  if (portal === 'media') {
+    document.getElementById('nav-home').href = 'https://media-dashboards.vercel.app/';
+    document.getElementById('nav-energy').style.display    = 'none';
+    document.getElementById('nav-cleantech').style.display = 'none';
+  } else {
+    // Energy portal (default) — hide media link
+    document.getElementById('nav-media').style.display = 'none';
+  }
+})();
+</script>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">STRAIT OF HORMUZ — <span>GEOPOLITICAL MONITOR</span></div>
+    <div style="font-size:10px;color:var(--midscale);margin-top:2px;">Live Commodity Prices · Conflict Intelligence · Shipping · Bypass Infrastructure · SPR</div>
+  </div>
+  <div class="header-meta" style="display:flex;align-items:center;gap:14px;">
+    <div style="text-align:right;">
+      <div id="clock">--:-- --</div>
+      <div>Prices 60s · Feeds 10min</div>
+    </div>
+    <button class="refresh-all-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
+  </div>
+</div>
+
+<!-- BREAKING BAR -->
+<div class="breaking-bar">
+  <div class="breaking-label">IRAN WAR</div>
+  <div class="breaking-text" id="breaking-text">Loading conflict headlines...</div>
+</div>
+
+<!-- MARKET INDICATORS -->
+<div class="mkt-bar">
+  <div class="mkt-bar-label">MARKETS</div>
+  <div class="mkt-indicators" id="mkt-indicators">Loading...</div>
+</div>
+</div><!-- /sticky-header -->
+
+<!-- OIL MARKET CONTEXT STRIP -->
+<div class="panel" style="margin:2px 2px 0;border-radius:0;padding-bottom:2px;">
+  <div class="panel-header" style="padding-bottom:4px;">
+    <div class="panel-title">Oil Market <span id="strip-badge" style="font-size:9px;font-weight:400;color:var(--midscale);margin-left:6px;">Live Prices</span></div>
+    <div class="panel-sub" style="gap:10px;">
+      <span style="font-size:9px;color:var(--midscale);">Yahoo Finance · 60s refresh</span>
+      <span id="strip-update">Loading...</span>
+      <button class="refresh-btn" onclick="loadCommodities()" title="Refresh">↻</button>
+    </div>
+  </div>
+  <div class="strip-grid">
+    <div class="strip-card brent">
+      <div class="strip-label">Brent Crude</div>
+      <div><span class="strip-value" id="strip-brent">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-brent-chg">-- d/d</div>
+    </div>
+    <div class="strip-card wti">
+      <div class="strip-label">WTI Crude</div>
+      <div><span class="strip-value" id="strip-wti">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-wti-chg">-- d/d</div>
+    </div>
+    <div class="strip-card spread">
+      <div class="strip-label">Brent–WTI Spread</div>
+      <div><span class="strip-value" id="strip-spread">--</span><span class="strip-unit">$/bbl</span></div>
+      <div class="strip-chg s-flat" id="strip-spread-sub">premium</div>
+    </div>
+    <div class="strip-card gold">
+      <div class="strip-label">Gold (Risk-Off)</div>
+      <div><span class="strip-value" id="strip-gold">--</span><span class="strip-unit">$/oz</span></div>
+      <div class="strip-chg s-flat" id="strip-gold-chg">-- d/d</div>
+    </div>
+  </div>
+  <div class="source-note" style="padding:0 12px 6px;margin-top:2px;border-top:none;">Source: Yahoo Finance (BZ=F · CL=F · GC=F) · Spread computed live</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ROW 1: MAP (2 cols) | TV (1 col)
+═══════════════════════════════════════════════════ -->
+<div class="row-map-tv">
+
+  <!-- INTERACTIVE MAP -->
+  <div class="panel panel-map">
+    <div class="panel-header">
+      <div class="panel-title">Strait of Hormuz — Regional Map</div>
+      <div class="panel-sub" id="map-status">Leaflet · OpenStreetMap · CartoDB Dark</div>
+    </div>
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+    <div class="map-controls">
+      <label class="map-toggle"><input type="checkbox" id="tog-lanes" checked onchange="toggleLayer('lanes',this.checked)"> <span style="color:#38BDF8">━</span> Shipping Lanes</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-pipes" checked onchange="toggleLayer('pipes',this.checked)"> <span style="color:#F59E0B">━</span> Pipelines</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-oil" checked onchange="toggleLayer('oil',this.checked)"> <span style="color:#F59E0B">⛽</span> Oil Fields &amp; Ports</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-ref" checked onchange="toggleLayer('ref',this.checked)"> <span style="color:#A855F7">🏭</span> GCC Refineries</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-term" checked onchange="toggleLayer('term',this.checked)"> <span style="color:#06B6D4">⚓</span> Terminals</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-us" checked onchange="toggleLayer('us',this.checked)"> 🇺🇸 US Bases</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-gcc" checked onchange="toggleLayer('gcc',this.checked)"> 🛡 GCC Bases</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-ir" checked onchange="toggleLayer('ir',this.checked)"> 🇮🇷 IRGC / Iran</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-nuc" checked onchange="toggleLayer('nuc',this.checked)"> ☢ Nuclear Sites</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-cities" checked onchange="toggleLayer('cities',this.checked)"> ● Cities</label>
+      <div class="map-divider"></div>
+      <label class="map-toggle"><input type="checkbox" id="tog-firms" checked onchange="toggleFIRMS(this.checked)"> <span style="color:#FF6600">🔥</span> Thermal Hotspots</label>
+    </div>
+  </div>
+
+  <!-- LIVE TV -->
+  <div class="panel panel-tv">
+    <div class="panel-header">
+      <div class="panel-title">Live TV</div>
+      <div class="panel-sub" id="tv-now-channel">Al Jazeera English</div>
+    </div>
+    <div class="tv-wrap">
+      <iframe id="tv-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="tv-overlay-label">● LIVE</div>
+    </div>
+    <div class="tv-ch-bar">
+      <button class="tv-ch-btn" onclick="switchTV(this,0)">Bloomberg</button>
+      <button class="tv-ch-btn active" onclick="switchTV(this,1)">Al Jazeera</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,2)">Sky News</button>
+      <button class="tv-ch-btn" onclick="switchTV(this,3)">CNBC</button>
+    </div>
+    <div style="font-size:9px;color:var(--midscale);padding:5px 10px;flex-shrink:0;">Auto-muted · Click unmute in player · Refresh if blank</div>
+  </div>
+
+</div><!-- /row 1 -->
+
+<!-- ═══════════════════════════════════════════════════
+     ROW 2: Commodity Prices | Iran War News | Bypass & SPR
+═══════════════════════════════════════════════════ -->
+<div class="row-3col">
+
+  <!-- COMMODITY PRICES + SCENARIOS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Commodity Prices</div>
+      <div class="panel-sub"><span id="comm-update">Loading...</span><button class="refresh-btn" onclick="loadCommodities()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <div class="comm-grid">
+        <div class="comm-card oil">
+          <div class="comm-name">Brent Crude</div>
+          <div><span class="comm-price" id="brent-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="brent-chg" class="flat">--</span><span id="brent-pct" class="flat">--</span></div>
+          <div class="comm-sub">ICE BZ=F</div>
+        </div>
+        <div class="comm-card oil">
+          <div class="comm-name">WTI Crude</div>
+          <div><span class="comm-price" id="wti-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="wti-chg" class="flat">--</span><span id="wti-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX CL=F</div>
+        </div>
+        <div class="comm-card gas">
+          <div class="comm-name">TTF Natural Gas</div>
+          <div><span class="comm-price" id="ttf-price">--</span><span class="comm-unit">€/MWh</span></div>
+          <div class="comm-change"><span id="ttf-chg" class="flat">--</span><span id="ttf-pct" class="flat">--</span></div>
+          <div class="comm-sub">European Benchmark</div>
+        </div>
+        <div class="comm-card gas">
+          <div class="comm-name">RBOB Gasoline</div>
+          <div><span class="comm-price" id="rb-price">--</span><span class="comm-unit">$/gal</span></div>
+          <div class="comm-change"><span id="rb-chg" class="flat">--</span><span id="rb-pct" class="flat">--</span></div>
+          <div class="comm-sub">NYMEX RB=F</div>
+        </div>
+        <div class="comm-card spread">
+          <div class="comm-name">Brent–WTI Spread</div>
+          <div><span class="comm-price" id="spread-price">--</span><span class="comm-unit">$/bbl</span></div>
+          <div class="comm-change"><span id="spread-sub" class="flat">Brent premium to WTI</span></div>
+        </div>
+        <div class="comm-card oil">
+          <div class="comm-name">Gold</div>
+          <div><span class="comm-price" id="gold-price">--</span><span class="comm-unit">$/oz</span></div>
+          <div class="comm-change"><span id="gold-chg" class="flat">--</span><span id="gold-pct" class="flat">--</span></div>
+          <div class="comm-sub">Safe haven / GC=F</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- IRAN WAR NEWS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Iran War &amp; Conflict Intelligence</div>
+      <div class="panel-sub"><span id="war-update">Loading...</span><button class="refresh-btn" onclick="loadWarNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="war-list"><li class="news-loading">Fetching conflict intelligence...</li></ul>
+    </div>
+  </div>
+
+  <!-- SHIPPING INTELLIGENCE -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Shipping Intelligence</div>
+      <div class="panel-sub"><span id="ship-update">Loading...</span><button class="refresh-btn" onclick="loadShippingNews()" title="Refresh">↻</button></div>
+    </div>
+    <div class="panel-body-scroll">
+      <ul class="news-list" id="ship-list"><li class="news-loading">Fetching shipping news...</li></ul>
+    </div>
+  </div>
+
+</div><!-- /row 2 -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Live: Yahoo Finance (BZ=F, CL=F, TTF=F, RB=F, GC=F) · CNBC Energy · Al Jazeera · Google News · rss2json</div>
+  <div>Static: EIA · IEA · S&P Global Platts · Goldman Sachs · JP Morgan · ONI · IGU 2024</div>
+</div>
+
+<script>
+// ── Aliases from shared library ──
+const cachedFetch = Dash.cachedFetch;
+const yf          = Dash.yf;
+const timeAgo     = Dash.timeAgo;
+const fmt         = Dash.fmt;
+const fmtChg      = Dash.fmtChg;
+const fmtPct      = Dash.fmtPct;
+const cls         = Dash.cls;
+const yfBatch     = Dash.yfBatch;
+
+// =====================
+// CLOCK
+// =====================
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short'
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// =====================
+// COMMODITY PRICES
+// =====================
+async function loadCommodities() {
+  Dash.time.start('hormuz:loadCommodities');
+  const [brent, wti, ttf, rb, gold] = await yfBatch(['BZ=F', 'CL=F', 'TTF=F', 'RB=F', 'GC=F']);
+
+  function set(idP, idC, idPct, d, dec) {
+    document.getElementById(idP).textContent = fmt(d.price, dec);
+    const c = document.getElementById(idC), p = document.getElementById(idPct);
+    if (c) { c.textContent = fmtChg(d.chg, dec); c.className = cls(d.chg); }
+    if (p) { p.textContent = fmtPct(d.pct);      p.className = cls(d.pct); }
+  }
+
+  set('brent-price', 'brent-chg', 'brent-pct', brent, 2);
+  set('wti-price',   'wti-chg',   'wti-pct',   wti,   2);
+  set('ttf-price',   'ttf-chg',   'ttf-pct',   ttf,   2);
+  set('rb-price',    'rb-chg',    'rb-pct',     rb,    3);
+  set('gold-price',  'gold-chg',  'gold-pct',   gold,  0);
+
+  if (brent.price && wti.price) {
+    const sp = brent.price - wti.price;
+    document.getElementById('spread-price').textContent = fmt(sp, 2);
+    document.getElementById('spread-sub').textContent = sp >= 0 ? 'Brent premium to WTI' : 'WTI premium to Brent';
+    document.getElementById('spread-sub').className = 'flat';
+  }
+  document.getElementById('comm-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  // Update oil market context strip
+  if (brent.price != null) {
+    document.getElementById('strip-brent').textContent = fmt(brent.price, 2);
+    const sc = document.getElementById('strip-brent-chg');
+    sc.textContent = fmtChg(brent.chg, 2) + ' d/d';
+    sc.className = `strip-chg ${cls(brent.chg)}`;
+  }
+  if (wti.price != null) {
+    document.getElementById('strip-wti').textContent = fmt(wti.price, 2);
+    const wc = document.getElementById('strip-wti-chg');
+    wc.textContent = fmtChg(wti.chg, 2) + ' d/d';
+    wc.className = `strip-chg ${cls(wti.chg)}`;
+  }
+  if (brent.price && wti.price) {
+    const sp = brent.price - wti.price;
+    document.getElementById('strip-spread').textContent = fmt(Math.abs(sp), 2);
+    const ss = document.getElementById('strip-spread-sub');
+    ss.textContent = sp >= 0 ? 'Brent premium to WTI' : 'WTI premium to Brent';
+    ss.className = 'strip-chg s-flat';
+  }
+  if (gold.price != null) {
+    document.getElementById('strip-gold').textContent = fmt(gold.price, 0);
+    const gc = document.getElementById('strip-gold-chg');
+    gc.textContent = fmtChg(gold.chg, 0) + ' d/d';
+    gc.className = `strip-chg ${cls(gold.chg)}`;
+  }
+  document.getElementById('strip-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  Dash.time.end('hormuz:loadCommodities');
+}
+
+// =====================
+// MARKET INDICATORS
+// =====================
+const MKT_INDS = [
+  { sym: '^GSPC', label: 'S&P 500', fmt: 'idx' },
+  { sym: '^DJI',  label: 'Dow',     fmt: 'idx' },
+  { sym: '^IXIC', label: 'Nasdaq',  fmt: 'idx' },
+  { sym: '^TNX',  label: '10Y UST', fmt: 'yld' },
+];
+async function loadMarketIndicators() {
+  const results = await yfBatch(MKT_INDS.map(m => m.sym));
+  const html = MKT_INDS.map((m, i) => {
+    const r = results[i] || {};
+    const isYld = m.fmt === 'yld';
+    const p = r.price != null
+      ? (isYld ? r.price.toFixed(2) + '%' : r.price.toLocaleString('en-US', { maximumFractionDigits: 0 }))
+      : '—';
+    const pct = r.pct != null ? fmtPct(r.pct) : '';
+    const bps = isYld && r.pct != null ? (r.pct > 0 ? '+' : '') + Math.round(r.pct * 10) + 'bp' : '';
+    const chgLabel = isYld ? bps : pct;
+    const c = r.pct > 0 ? 's-up' : r.pct < 0 ? 's-down' : 's-flat';
+    return `<span class="mkt-ind-item">` +
+      `<span class="mkt-ind-name">${m.label}</span>` +
+      `<span class="mkt-ind-price">${p}</span>` +
+      (chgLabel ? `<span class="mkt-ind-chg ${c}">${chgLabel}</span>` : '') +
+      `</span>`;
+  }).join('');
+  const el = document.getElementById('mkt-indicators');
+  if (el) el.innerHTML = DOMPurify.sanitize(html);
+}
+
+// =====================
+// RSS NEWS — delegates to Dash.fetchRSS
+// =====================
+async function fetchFeed(feed) {
+  const url  = typeof feed === 'string' ? feed : feed.url;
+  const name = typeof feed === 'string' ? feed : (feed.name || feed.url);
+  const items = await Dash.fetchRSS(url, name);
+  return items.map(i => ({ ...i, sourceName: name }));
+}
+
+const WAR_FEEDS = [
+  { url: 'https://news.google.com/rss/search?q=Iran+IRGC+Hormuz+tanker+war&hl=en&gl=US&ceid=US:en', name: 'Google News' },
+  { url: 'https://www.aljazeera.com/xml/rss/all.xml',                                               name: 'Al Jazeera' },
+  { url: 'https://news.google.com/rss/search?q=Iran+Hormuz+war+oil&hl=en&gl=US&ceid=US:en',        name: 'Google News' },
+];
+const SHIP_FEEDS = [
+  { url: 'https://oilprice.com/rss/main',                                                           name: 'OilPrice' },
+  { url: 'https://news.google.com/rss/search?q=Hormuz+shipping+pipeline+tanker&hl=en&gl=US&ceid=US:en', name: 'Google News' },
+  { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', name: 'CNBC Energy' },
+];
+
+const WAR_KW  = ['iran','hormuz','irgc','tehran','khamenei','strait','missile','attack','strike','military','sanctions','tanker','nuclear','houthi','conflict','war','blockade','biden','trump','israel','hezbollah','retaliat'];
+const SHIP_KW = ['hormuz','tanker','shipping','pipeline','bypass','petroline','fujairah','crude','oil price','brent','wti','opec','refinery','lng','supply disruption'];
+
+function getWarTag(t) {
+  const low = t.toLowerCase();
+  if (['attack','strike','missile','war','conflict','retaliat','blockade'].some(k => low.includes(k))) return '<span class="news-tag tag-war">Military</span>';
+  if (['sanctions','diplomacy','deal','negotiat','talks'].some(k => low.includes(k))) return '<span class="news-tag tag-diplo">Diplomacy</span>';
+  if (['oil','crude','brent','wti','energy','price'].some(k => low.includes(k))) return '<span class="news-tag tag-oil">Oil</span>';
+  if (['tanker','shipping','vessel','freight'].some(k => low.includes(k))) return '<span class="news-tag tag-shipping">Shipping</span>';
+  return '<span class="news-tag tag-war">Intel</span>';
+}
+
+function renderNews(items, listId, updateId, filterFn, tagFn, limit=14) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  let filtered = filterFn
+    ? items.filter(i => filterFn(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate))
+    : items.sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  filtered = filtered.slice(0, limit);
+  if (!filtered.length) { list.innerHTML = '<li class="news-loading">No headlines found — rate-limited. Refresh in a moment.</li>'; return; }
+  list.innerHTML = DOMPurify.sanitize(filtered.map(i => `
+    <li class="news-item">
+      <a href="${i.link}" target="_blank">${i.title}</a>
+      <div class="news-meta">
+        <span class="news-source">${i.sourceName || ''}</span>
+        <span class="news-time">${timeAgo(i.pubDate)}</span>
+        ${tagFn ? tagFn(i.title) : ''}
+      </div>
+    </li>`).join(''));
+  if (updateId) document.getElementById(updateId).textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadWarNews() {
+  Dash.time.start('hormuz:loadWarNews');
+  const results = await Promise.all(WAR_FEEDS.map(fetchFeed));
+  const all = [].concat(...results);
+  const isWar = t => WAR_KW.some(k => t.toLowerCase().includes(k));
+  renderNews(all, 'war-list', 'war-update', isWar, getWarTag, 16);
+  // Breaking bar
+  const top = all.filter(i => isWar(i.title)).sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate)).slice(0,3);
+  if (top.length) document.getElementById('breaking-text').innerHTML = DOMPurify.sanitize(
+    top.map(i => `<a href="${i.link}" target="_blank">${i.title}</a>`).join(' &nbsp;|&nbsp; '));
+  Dash.time.end('hormuz:loadWarNews');
+}
+
+async function loadShippingNews() {
+  Dash.time.start('hormuz:loadShippingNews');
+  const results = await Promise.all(SHIP_FEEDS.map(fetchFeed));
+  const all = [].concat(...results);
+  const isShip = t => SHIP_KW.some(k => t.toLowerCase().includes(k));
+  renderNews(all, 'ship-list', 'ship-update', isShip, getWarTag, 10);
+  Dash.time.end('hormuz:loadShippingNews');
+}
+
+// =====================
+// TV
+// =====================
+const TV_CHANNELS = [
+  { name: 'Bloomberg Television', videoId: 'iEpJwprxDdk' },
+  { name: 'Al Jazeera English',   videoId: 'gCNeDWCI0vo' },
+  { name: 'Sky News Live',        videoId: 'YDvsBbKfLPA' },
+  { name: 'CNBC Live',            videoId: '9NyxcX3rhQs' },
+];
+function initTV() {
+  const ch = TV_CHANNELS[1]; // default Al Jazeera for conflict coverage
+  document.getElementById('tv-iframe').src =
+    `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+}
+function switchTV(btn, idx) {
+  const ch = TV_CHANNELS[idx];
+  document.getElementById('tv-iframe').src =
+    `https://www.youtube-nocookie.com/embed/${ch.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1`;
+  document.getElementById('tv-now-channel').textContent = ch.name;
+  document.querySelectorAll('.tv-ch-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// =====================
+// LEAFLET MAP
+// =====================
+let map;
+const layers = {};
+let loadFIRMS;
+
+function initMap() {
+  const REGION_BOUNDS = L.latLngBounds([[19, 44], [33, 68]]);
+  map = L.map('map', {
+    center: [26.5, 54.5], zoom: 6,
+    minZoom: 5, maxZoom: 12,
+    maxBounds: REGION_BOUNDS, maxBoundsViscosity: 0.9,
+    zoomControl: true, attributionControl: true
+  });
+
+  // ESRI World Street Map — always English labels regardless of region (Arabic/Farsi suppressed)
+  // Dark filter applied via CSS to .leaflet-tile-pane only
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
+    maxZoom: 18
+  }).addTo(map);
+
+  // ── Shipping Lanes (IMO Traffic Separation Scheme) ──
+  const lanesGroup = L.layerGroup();
+
+  // Inbound lane (Gulf of Oman → Persian Gulf, southern TSS lane)
+  L.polyline([
+    [24.8, 58.8], [25.2, 58.2], [25.6, 57.6], [25.9, 57.0],
+    [26.2, 56.5], [26.55, 56.0], [26.8, 55.5], [27.1, 55.0]
+  ], { color: '#38BDF8', weight: 2.5, opacity: 0.85, dashArray: null })
+    .bindTooltip('<div class="map-tip-title">Inbound Shipping Lane</div><div class="map-tip-body">IMO Traffic Separation Scheme<br>Gulf of Oman → Persian Gulf<br>~17 nm wide navigable corridor</div>', {sticky:true})
+    .addTo(lanesGroup);
+
+  // Outbound lane (Persian Gulf → Gulf of Oman, northern TSS lane)
+  L.polyline([
+    [27.3, 54.8], [27.0, 55.3], [26.75, 55.8], [26.45, 56.3],
+    [26.1, 56.8], [25.7, 57.3], [25.3, 57.8], [25.0, 58.4]
+  ], { color: '#38BDF8', weight: 2.5, opacity: 0.85, dashArray: '6,4' })
+    .bindTooltip('<div class="map-tip-title">Outbound Shipping Lane</div><div class="map-tip-body">IMO Traffic Separation Scheme<br>Persian Gulf → Gulf of Oman<br>~6 nm separation zone between lanes</div>', {sticky:true})
+    .addTo(lanesGroup);
+
+  // Hormuz chokepoint marker
+  L.circleMarker([26.57, 56.25], { radius: 10, color: '#C94040', fillColor: '#C94040', fillOpacity: 0.25, weight: 2 })
+    .bindTooltip('<div class="map-tip-title">⚠ Strait of Hormuz</div><div class="map-tip-body"><strong style="color:#C94040">20M b/d at risk = 20% global oil</strong><br>21 nm navigable width (narrowest)<br>~27% of global seaborne oil trade<br>~20% of global LNG</div>', {sticky:true, maxWidth:220})
+    .addTo(lanesGroup);
+
+  layers.lanes = lanesGroup;
+  lanesGroup.addTo(map);
+
+  // ── Pipelines ──
+  const pipesGroup = L.layerGroup();
+
+  // Saudi E-W Pipeline (Petroline) — Abqaiq → Yanbu
+  L.polyline([
+    [25.93, 49.67], [25.7, 47.5], [25.3, 44.8],
+    [24.8, 42.0], [24.35, 39.5], [24.09, 38.10]
+  ], { color: '#F59E0B', weight: 2.5, opacity: 0.9 })
+    .bindTooltip('<div class="map-tip-title">🇸🇦 Saudi Petroline (E-W)</div><div class="map-tip-body">Abqaiq → Yanbu (Red Sea)<br><strong style="color:#F59E0B">Capacity: 5M b/d</strong> · Status: Active<br>Primary Hormuz bypass route<br>Currently running ~2.4M spare capacity</div>', {sticky:true, maxWidth:220})
+    .addTo(pipesGroup);
+
+  L.circleMarker([25.93, 49.67], { radius: 5, color: '#F59E0B', fillColor: '#F59E0B', fillOpacity: 0.9, weight: 1 })
+    .bindTooltip('<div class="map-tip-title">🇸🇦 Abqaiq Processing Facility</div><div class="map-tip-body">World\'s largest crude stabilisation plant<br>Petroline origin terminal<br>Attacked Sep 2019 — 5.7M b/d offline</div>', {sticky:true})
+    .addTo(pipesGroup);
+
+  L.circleMarker([24.09, 38.10], { radius: 5, color: '#F59E0B', fillColor: '#F59E0B', fillOpacity: 0.9, weight: 1 })
+    .bindTooltip('<div class="map-tip-title">🇸🇦 Yanbu Terminal</div><div class="map-tip-body">Red Sea export terminal<br>Saudi Aramco · Petroline terminus<br>Bypasses Hormuz entirely</div>', {sticky:true})
+    .addTo(pipesGroup);
+
+  // UAE Fujairah Pipeline — Habshan → Fujairah
+  L.polyline([
+    [23.86, 53.68], [24.2, 54.5], [24.75, 55.35], [25.12, 56.33]
+  ], { color: '#F59E0B', weight: 2, opacity: 0.75, dashArray: '5,3' })
+    .bindTooltip('<div class="map-tip-title">🇦🇪 UAE Fujairah Pipeline</div><div class="map-tip-body">Habshan → Fujairah (Gulf of Oman)<br><strong style="color:#F59E0B">Capacity: 1.8M b/d</strong> · Status: Limited<br>Operating near capacity · Hormuz bypass</div>', {sticky:true, maxWidth:220})
+    .addTo(pipesGroup);
+
+  L.circleMarker([25.12, 56.33], { radius: 5, color: '#F59E0B', fillColor: '#F59E0B', fillOpacity: 0.8, weight: 1 })
+    .bindTooltip('<div class="map-tip-title">🇦🇪 Fujairah Terminal</div><div class="map-tip-body">Gulf of Oman oil export hub<br>UAE Fujairah pipeline terminus<br>Largest bunkering hub outside Singapore</div>', {sticky:true})
+    .addTo(pipesGroup);
+
+  // Goreh-Jask Pipeline — inactive
+  L.polyline([
+    [27.82, 55.40], [27.2, 56.2], [26.5, 57.2], [25.63, 57.77]
+  ], { color: '#6B7280', weight: 2, opacity: 0.6, dashArray: '4,5' })
+    .bindTooltip('<div class="map-tip-title">🇮🇷 Goreh–Jask Pipeline</div><div class="map-tip-body">Goreh → Jask (Gulf of Oman)<br><strong style="color:#6B7280">Capacity: 300K b/d</strong> · Status: Inactive<br>Offline since Sep 2024<br>Would give Iran Hormuz bypass option</div>', {sticky:true, maxWidth:220})
+    .addTo(pipesGroup);
+
+  layers.pipes = pipesGroup;
+  pipesGroup.addTo(map);
+
+  // ── US Military Bases ──
+  const usGroup = L.layerGroup();
+  const usBases = [
+    { pos: [25.11, 51.31], name: 'Al Udeid Air Base', country: '🇺🇸 United States', detail: 'Qatar · CENTCOM Forward HQ<br>~10,000 personnel · B-52, F-15, F-35<br>Primary air operations hub in region' },
+    { pos: [26.21, 50.61], name: 'NSA Bahrain (5th Fleet)', country: '🇺🇸 United States', detail: 'Bahrain · US Naval Forces Central Command<br>5th Fleet HQ · Carrier Strike Group staging<br>Key to Hormuz naval response' },
+    { pos: [24.24, 54.55], name: 'Al Dhafra Air Base', country: '🇺🇸 United States', detail: 'UAE · US Air Forces Central<br>F-35A, U-2, RQ-4 Global Hawk<br>~2,500 personnel' },
+    { pos: [25.67, 57.36], name: 'Naval Base Muscat', country: '🇺🇸 / 🇴🇲 US–Oman', detail: 'Oman · Access agreement<br>Minesweeper staging area<br>Critical for Hormuz MCM ops' },
+    { pos: [22.55, 59.53], name: 'Camp Lemonnier (Djibouti)', country: '🇺🇸 United States', detail: 'Djibouti · CJTF-HOA<br>~4,000 personnel · drone operations<br>Red Sea / Gulf of Aden watch' },
+  ];
+  usBases.forEach(b => {
+    L.marker(b.pos, { icon: L.divIcon({ html: '<div style="font-size:16px;filter:drop-shadow(0 0 3px rgba(0,100,255,0.8))">🇺🇸</div>', iconSize:[20,20], className:'' }) })
+      .bindTooltip(`<div class="map-tip-title">${b.country} · ${b.name}</div><div class="map-tip-body">${b.detail}</div>`, {sticky:true, maxWidth:240})
+      .addTo(usGroup);
+  });
+  layers.us = usGroup;
+  usGroup.addTo(map);
+
+  // ── Iranian Military / IRGC ──
+  const irGroup = L.layerGroup();
+  const iranBases = [
+    { pos: [27.18, 56.25], name: 'Bandar Abbas Naval Base', detail: 'IRGC Navy HQ<br>Fast-attack boat fleet · Submarines<br>Controls Hormuz southern approach' },
+    { pos: [26.96, 56.27], name: 'Qeshm Island IRGC Base', detail: 'IRGC Ground Forces<br>Minelaying operations staging area<br>~6,000 naval mines stockpiled (ONI est.)' },
+    { pos: [25.87, 55.03], name: 'Abu Musa Island', detail: 'Disputed territory (UAE/Iran)<br>IRGC garrison · Radar installation<br>Overlooks tanker route' },
+    { pos: [26.26, 55.17], name: 'Greater Tunb Island', detail: 'Disputed territory (UAE/Iran)<br>IRGC outpost · Strategic position<br>Northern Hormuz approach' },
+    { pos: [26.97, 54.88], name: 'Bandar Lengeh', detail: 'IRGC Naval Station<br>Fast boat squadrons<br>Harpoon/Noor missile batteries' },
+    { pos: [27.20, 56.35], name: 'Minab Missile Site', detail: 'IRGC Aerospace Force<br>Zolfaghar / Fateh-110 ASBMs<br>Anti-ship missile batteries' },
+  ];
+  iranBases.forEach(b => {
+    L.marker(b.pos, { icon: L.divIcon({ html: '<div style="font-size:16px;filter:drop-shadow(0 0 3px rgba(255,50,50,0.9))">🇮🇷</div>', iconSize:[20,20], className:'' }) })
+      .bindTooltip(`<div class="map-tip-title">🇮🇷 IRGC · ${b.name}</div><div class="map-tip-body">${b.detail}</div>`, {sticky:true, maxWidth:240})
+      .addTo(irGroup);
+  });
+  layers.ir = irGroup;
+  irGroup.addTo(map);
+
+  // ── Nuclear Sites ──
+  const nucGroup = L.layerGroup();
+  const nucSites = [
+    { pos: [28.83, 50.89], name: 'Bushehr Nuclear Power Plant', detail: '🇮🇷 1,000 MW PWR · Russian-built<br>Civil power generation<br>IAEA safeguards · Operational since 2011' },
+    { pos: [33.72, 51.73], name: 'Natanz Enrichment Facility', detail: '🇮🇷 Underground centrifuge halls<br>~6,000 centrifuges operational<br>Enriching to 60% U-235 (IAEA 2024)<br>Previously attacked by Stuxnet' },
+    { pos: [34.88, 50.15], name: 'Fordow Enrichment Site', detail: '🇮🇷 Deep underground (mountain)<br>~1,000 centrifuges<br>Hardened against air strike<br>Key red line for US/Israel' },
+    { pos: [34.15, 49.12], name: 'Arak IR-40 Reactor', detail: '🇮🇷 Heavy-water research reactor<br>Modified under 2015 JCPOA<br>Plutonium production concern' },
+    { pos: [24.09, 54.56], name: 'Barakah Nuclear Plant (UAE)', detail: '🇦🇪 4 x APR-1400 Korean PWR<br>5.6 GW capacity · First Arab nuclear plant<br>Civilian power · IAEA safeguards' },
+  ];
+  nucSites.forEach(s => {
+    L.marker(s.pos, { icon: L.divIcon({ html: '<div style="font-size:14px;background:#1a0a2a;border:1px solid #7a4aaa;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 4px rgba(150,80,255,0.8))">☢</div>', iconSize:[22,22], className:'' }) })
+      .bindTooltip(`<div class="map-tip-title">Nuclear · ${s.name}</div><div class="map-tip-body">${s.detail}</div>`, {sticky:true, maxWidth:250})
+      .addTo(nucGroup);
+  });
+  layers.nuc = nucGroup;
+  nucGroup.addTo(map);
+
+  // ── Key Cities ──
+  const citiesGroup = L.layerGroup();
+  const cities = [
+    { pos: [35.69, 51.39], name: 'Tehran',        flag: '🇮🇷' },
+    { pos: [24.69, 46.72], name: 'Riyadh',        flag: '🇸🇦' },
+    { pos: [24.47, 54.37], name: 'Abu Dhabi',     flag: '🇦🇪' },
+    { pos: [25.20, 55.27], name: 'Dubai',          flag: '🇦🇪' },
+    { pos: [33.34, 44.40], name: 'Baghdad',        flag: '🇮🇶' },
+    { pos: [29.37, 47.98], name: 'Kuwait City',   flag: '🇰🇼' },
+    { pos: [25.29, 51.53], name: 'Doha',           flag: '🇶🇦' },
+    { pos: [26.22, 50.58], name: 'Manama',         flag: '🇧🇭' },
+    { pos: [23.59, 58.59], name: 'Muscat',         flag: '🇴🇲' },
+    { pos: [31.77, 35.22], name: 'Jerusalem',      flag: '🇮🇱' },
+  ];
+  cities.forEach(c => {
+    L.marker(c.pos, {
+      icon: L.divIcon({
+        html: `<div style="font-size:11px;font-weight:600;color:#E8EDF5;background:rgba(15,21,37,0.88);border:1px solid #4a5580;padding:2px 6px;border-radius:2px;white-space:nowrap;letter-spacing:0.3px;text-shadow:0 0 6px rgba(90,130,175,0.7)">${c.flag} ${c.name}</div>`,
+        iconAnchor: [0, 12], className: ''
+      })
+    }).addTo(citiesGroup);
+  });
+  layers.cities = citiesGroup;
+  citiesGroup.addTo(map);
+
+
+  // ── Oil Fields & Key Infrastructure ──
+  const oilGroup = L.layerGroup();
+  const oilSites = [
+    { pos: [25.15, 49.35], name: 'Ghawar Oil Field',         flag: '🇸🇦', detail: 'World\'s largest conventional oil field<br>Est. 5.8M b/d production · Saudi Aramco<br>~8% of global daily supply' },
+    { pos: [27.10, 48.90], name: 'Safaniya Field',            flag: '🇸🇦', detail: 'World\'s largest offshore oil field<br>~1.4M b/d · Saudi Aramco<br>Offshore Persian Gulf' },
+    { pos: [26.63, 50.16], name: 'Ras Tanura Terminal',       flag: '🇸🇦', detail: 'World\'s largest oil export terminal<br>~7M b/d throughput · Saudi Aramco<br>Primary Saudi loading facility' },
+    { pos: [25.93, 49.67], name: 'Abqaiq Processing Plant',   flag: '🇸🇦', detail: 'World\'s largest crude stabilisation facility<br>Processes ~7% of global supply daily<br>Drone attacked Sep 2019 → 5.7M b/d offline' },
+    { pos: [29.55, 50.25], name: 'North Field / South Pars',  flag: '🇶🇦🇮🇷', detail: 'World\'s largest gas field<br>Qatar: North Field · Iran: South Pars<br>~75 TCF combined recoverable reserves' },
+    { pos: [29.24, 50.33], name: 'Kharg Island Terminal',     flag: '🇮🇷', detail: 'Iran\'s primary oil export terminal<br>~90% of all Iranian crude exports<br>High-value strike target in conflict scenario' },
+    { pos: [30.34, 48.30], name: 'Abadan Refinery',           flag: '🇮🇷', detail: 'One of world\'s largest refineries<br>~400K b/d capacity · NIORDC<br>Shatt al-Arab waterway, Iraq border' },
+    { pos: [26.70, 53.08], name: 'Lavan Island Terminal',     flag: '🇮🇷', detail: 'Iranian offshore oil & gas hub<br>Secondary export terminal<br>South Pars condensate export point' },
+    { pos: [29.15, 48.13], name: 'Kuwait Oil Fields (Burgan)',flag: '🇰🇼', detail: 'Burgan — world\'s 2nd largest oil field<br>~1.7M b/d · Kuwait Petroleum Corp<br>Saudi Arabia border region' },
+    { pos: [25.20, 55.33], name: 'Jebel Ali Port',            flag: '🇦🇪', detail: 'Region\'s largest port · DP World<br>World\'s largest man-made harbor<br>Key LNG & container hub' },
+    { pos: [25.12, 56.33], name: 'Fujairah Port & Terminal',  flag: '🇦🇪', detail: 'Gulf of Oman · UAE bypass terminal<br>Largest oil storage hub outside Cushing<br>Habshan pipeline terminus · Bunkering hub' },
+    { pos: [26.57, 56.25], name: 'Strait Chokepoint',         flag: '⚠', detail: '<strong style="color:#C94040">20M b/d at risk = 20% global supply</strong><br>Narrowest navigable width: 21 nm<br>~27% of seaborne oil · ~20% of global LNG' },
+  ];
+  oilSites.forEach(s => {
+    const isChoke = s.flag === '⚠';
+    const color = isChoke ? '#C94040' : s.flag.includes('🇮🇷') ? '#E87D2B' : s.flag.includes('🇸🇦') ? '#F59E0B' : '#5A82AF';
+    L.circleMarker(s.pos, {
+      radius: isChoke ? 0 : 6,
+      color, fillColor: color, fillOpacity: 0.75, weight: 1.5
+    })
+    .bindTooltip(`<div class="map-tip-title">${s.flag} ${s.name}</div><div class="map-tip-body">${s.detail}</div>`, {sticky:true, maxWidth:260})
+    .addTo(oilGroup);
+  });
+  layers.oil = oilGroup;
+  oilGroup.addTo(map);
+
+  // ── GCC Military Bases ──
+  const gccGroup = L.layerGroup();
+  const gccBases = [
+    // Saudi Arabia
+    { pos: [24.06, 47.58], name: 'Prince Sultan Air Base',       flag: '🇸🇦', detail: 'Royal Saudi Air Force · Al Kharj<br>Formerly hosted USAF (Operation Southern Watch)<br>F-15SA, Typhoon squadrons<br>~100 km southeast of Riyadh' },
+    { pos: [26.27, 50.15], name: 'King Abdulaziz AB (Dhahran)', flag: '🇸🇦', detail: 'RSAF Eastern Province HQ<br>Adjacent to Aramco HQ and Ras Tanura<br>Strategic location: Hormuz threat axis' },
+    { pos: [27.90, 45.53], name: 'King Khalid Military City',   flag: '🇸🇦', detail: 'Saudi Armed Forces · Northern border<br>Built to defend Iraq border corridor<br>Major ground force staging hub' },
+    { pos: [21.35, 40.56], name: 'King Fahad Air Base (Taif)',  flag: '🇸🇦', detail: 'RSAF · Taif, western Saudi Arabia<br>F-15 · Typhoon · Tornado squadrons<br>Air defense coverage, Houthi threat axis' },
+    // UAE
+    { pos: [25.03, 55.37], name: 'Al Minhad Air Base',          flag: '🇦🇪', detail: 'UAE Air Force · Dubai area<br>Hosts Australian & UK forces<br>F/A-18, C-17, C-130 operations<br>Key coalition logistics hub' },
+    { pos: [24.18, 55.78], name: 'Al Ain Air Base',             flag: '🇦🇪', detail: 'UAE Air Force · Abu Dhabi Emirate<br>F-16E Block 60 (Desert Falcon)<br>Training and reserve squadrons' },
+    // Kuwait
+    { pos: [29.45, 47.52], name: 'Ali Al Salem Air Base',       flag: '🇰🇼', detail: 'Kuwait Air Force / USAF<br>A-10, F/A-18, C-130 operations<br>Forward staging for Iraq operations<br>~20 km from Iraqi border' },
+    { pos: [29.20, 48.15], name: 'Camp Arifjan',                flag: '🇰🇼', detail: '🇺🇸🇰🇼 US Army Central / Kuwait Land Force<br>Largest US logistics base in region<br>Pre-positioned heavy equipment (APS-5)<br>~25,000 US personnel capacity' },
+    { pos: [28.93, 48.01], name: 'Ahmed Al Jaber Air Base',     flag: '🇰🇼', detail: 'Kuwait Air Force primary base<br>F/A-18C/D Hornets · C-130s<br>Southern Kuwait · near Saudi border' },
+    // Bahrain
+    { pos: [26.02, 50.59], name: 'Sheikh Isa Air Base',         flag: '🇧🇭', detail: 'Bahrain Defence Force Air Wing<br>Hosts USMC Aviation Det. and RAAF<br>F-16, F/A-18 capable<br>Adjacent to NSA Bahrain (5th Fleet)' },
+    // Oman
+    { pos: [17.67, 54.02], name: 'Thumrait Air Base',           flag: '🇴🇲', detail: 'Royal Air Force of Oman<br>US/UK access rights<br>Used in Gulf War I & Afghan operations<br>Southern Oman — strategic reach' },
+    { pos: [20.67, 58.90], name: 'Masirah Island Air Base',     flag: '🇴🇲', detail: 'Royal Air Force of Oman<br>USAF access rights · Indian Ocean staging<br>Used for C-130, P-3 Orion ops<br>Key ISR platform for Gulf of Oman' },
+    { pos: [23.59, 58.28], name: 'Seeb Air Base (Muscat)',      flag: '🇴🇲', detail: 'RAFO HQ · Muscat, Oman<br>Hosts UK & US liaison teams<br>Adjacent to Muscat International Airport<br>Controls eastern Hormuz approach' },
+    // Qatar — Al Udeid listed in US layer; add QEAF base
+    { pos: [25.38, 51.40], name: 'Qatar Emiri Air Force HQ',    flag: '🇶🇦', detail: 'Qatar Emiri Air Force<br>Rafale, F-15QA, C-17 fleet<br>Al Udeid complex shared with USAF CENTCOM<br>Qatar hosts largest US air base in region' },
+  ];
+  gccBases.forEach(b => {
+    const flagColor = b.flag === '🇸🇦' ? 'rgba(0,120,0,0.7)' : b.flag === '🇦🇪' ? 'rgba(0,80,200,0.7)' : 'rgba(50,120,180,0.7)';
+    L.marker(b.pos, {
+      icon: L.divIcon({
+        html: `<div style="font-size:15px;filter:drop-shadow(0 0 3px ${flagColor})">${b.flag}</div>`,
+        iconSize: [20, 20], className: ''
+      })
+    })
+    .bindTooltip(`<div class="map-tip-title">${b.flag} ${b.name}</div><div class="map-tip-body">${b.detail}</div>`, {sticky:true, maxWidth:260})
+    .addTo(gccGroup);
+  });
+  layers.gcc = gccGroup;
+  gccGroup.addTo(map);
+
+  // ── GCC Refineries ──
+  const refGroup = L.layerGroup();
+  const refineries = [
+    // Saudi Arabia
+    { pos: [26.60, 50.14], name: 'Ras Tanura Refinery',      flag: '🇸🇦', cap: '550K b/d',  op: 'Saudi Aramco',    detail: 'Integrated with world\'s largest export terminal<br>550K b/d · Saudi Aramco<br>Produces gasoline, jet fuel, diesel, lube oils' },
+    { pos: [27.02, 49.66], name: 'Satorp Jubail Refinery',   flag: '🇸🇦', cap: '400K b/d',  op: 'Aramco / TotalEnergies', detail: 'Saudi Aramco + TotalEnergies JV<br>400K b/d · Exports to Europe & Asia<br>High-complexity: produces Euro 5 fuels' },
+    { pos: [24.16, 38.07], name: 'Yanbu Refinery',           flag: '🇸🇦', cap: '245K b/d',  op: 'Saudi Aramco',    detail: 'Red Sea coast · Petroline western end<br>245K b/d · Saudi Aramco<br>Key bypass refinery, Hormuz-independent' },
+    { pos: [22.79, 39.04], name: 'Petro Rabigh',             flag: '🇸🇦', cap: '400K b/d',  op: 'Aramco / Sumitomo', detail: 'Saudi Aramco + Sumitomo Chemical JV<br>400K b/d · Integrated refinery-petrochemical<br>Red Sea coast' },
+    { pos: [24.58, 46.66], name: 'Riyadh Refinery',          flag: '🇸🇦', cap: '126K b/d',  op: 'Saudi Aramco',    detail: 'Inland refinery serving domestic market<br>126K b/d · Saudi Aramco<br>Fuels Riyadh metro area' },
+    { pos: [16.90, 42.58], name: 'Jazan Refinery',           flag: '🇸🇦', cap: '400K b/d',  op: 'Saudi Aramco',    detail: 'New mega-refinery on Red Sea<br>400K b/d · Operational 2022<br>Southern Saudi Arabia, export-oriented' },
+    // UAE
+    { pos: [24.10, 52.73], name: 'Ruwais Refinery',          flag: '🇦🇪', cap: '837K b/d',  op: 'ADNOC',           detail: 'World\'s 4th largest refinery complex<br>837K b/d · ADNOC<br>Abu Dhabi · Gulf coast, Hormuz-dependent' },
+    // Kuwait
+    { pos: [29.07, 48.13], name: 'Mina Al Ahmadi Refinery',  flag: '🇰🇼', cap: '466K b/d',  op: 'KNPC',            detail: 'Kuwait\'s oldest & largest refinery<br>466K b/d · KNPC<br>Adjacent to main crude export terminal' },
+    { pos: [28.93, 48.17], name: 'Mina Abdullah Refinery',   flag: '🇰🇼', cap: '270K b/d',  op: 'KNPC',            detail: '270K b/d · KNPC<br>Produces high-value products · Kuwait' },
+    { pos: [28.74, 48.12], name: 'Al Zour Refinery',         flag: '🇰🇼', cap: '615K b/d',  op: 'KNPC',            detail: 'New mega-refinery · Operational 2022<br>615K b/d · KNPC<br>One of world\'s largest new refineries' },
+    // Qatar
+    { pos: [24.99, 51.57], name: 'Mesaieed Refinery',        flag: '🇶🇦', cap: '137K b/d',  op: 'QAPCO / QatarEnergy', detail: '137K b/d · QatarEnergy<br>Mesaieed Industrial City<br>Integrated with petrochemicals complex' },
+    // Bahrain
+    { pos: [26.16, 50.63], name: 'BAPCO Sitra Refinery',     flag: '🇧🇭', cap: '267K b/d',  op: 'BAPCO',           detail: 'Bahrain\'s national refinery<br>267K b/d · BAPCO (Bahrain Petroleum Co.)<br>Expansion to 360K b/d underway' },
+    // Oman
+    { pos: [23.60, 58.54], name: 'Mina Al Fahal Refinery',   flag: '🇴🇲', cap: '106K b/d',  op: 'OQ (Oman Oil)',   detail: 'Oman\'s main refinery · Muscat<br>106K b/d · OQ (formerly Oman Oil)<br>Gulf of Oman coast · Hormuz-independent' },
+    { pos: [24.35, 56.72], name: 'Sohar Refinery',           flag: '🇴🇲', cap: '116K b/d',  op: 'OQ / IPIC',      detail: 'OQ + IPIC (Abu Dhabi) JV<br>116K b/d · Sohar Industrial Port Area<br>Feeds domestic market & exports' },
+  ];
+  refineries.forEach(r => {
+    L.circleMarker(r.pos, {
+      radius: 7, color: '#A855F7', fillColor: '#7C3AED', fillOpacity: 0.8, weight: 1.5
+    })
+    .bindTooltip(
+      `<div class="map-tip-title">🏭 ${r.flag} ${r.name}</div>` +
+      `<div class="map-tip-body"><strong style="color:#A855F7">${r.cap}</strong> · ${r.op}<br>${r.detail}</div>`,
+      {sticky: true, maxWidth: 260}
+    )
+    .addTo(refGroup);
+  });
+  layers.ref = refGroup;
+  refGroup.addTo(map);
+
+  // ── Pipeline Terminals (export/import hubs) ──
+  const termGroup = L.layerGroup();
+  const terminals = [
+    { pos: [24.09, 38.05], name: 'Yanbu Red Sea Terminal',   flag: '🇸🇦', detail: 'Saudi Aramco · Red Sea export hub<br>Petroline (E-W) western terminus<br>5M b/d bypass capacity · Hormuz-independent<br>Tanker loading for Europe & Americas' },
+    { pos: [26.63, 50.16], name: 'Ras Tanura Marine Terminal',flag: '🇸🇦', detail: 'World\'s largest oil export terminal<br>~7M b/d · Saudi Aramco<br>All traffic passes through Hormuz<br>Sea Island & North Pier jetties' },
+    { pos: [25.12, 56.33], name: 'Fujairah Marine Terminal', flag: '🇦🇪', detail: 'ADNOC / Fujairah Oil Terminal<br>Habshan–Fujairah pipeline terminus · 1.8M b/d<br>Gulf of Oman · Hormuz-independent<br>World\'s 2nd largest bunkering hub' },
+    { pos: [25.87, 51.56], name: 'Ras Laffan Terminal',      flag: '🇶🇦', detail: 'QatarEnergy · World\'s largest LNG hub<br>~77M t/y LNG export capacity<br>North Field gas pipeline hub<br>Multiple LNG trains (trains 1–7 + NFE)' },
+    { pos: [29.07, 48.10], name: 'Mina Al Ahmadi Terminal',  flag: '🇰🇼', detail: 'Kuwait\'s primary crude export terminal<br>~2M b/d throughput · KPC<br>Sea Island berths for VLCC loading<br>Linked to Burgan field pipeline network' },
+    { pos: [28.77, 48.06], name: 'Al Zour LNG Terminal',     flag: '🇰🇼', detail: 'Kuwait\'s first LNG import terminal<br>~22M t/y regasification capacity<br>Operational 2021 · Adjacent to Al Zour refinery' },
+    { pos: [23.60, 58.54], name: 'Mina Al Fahal Terminal',   flag: '🇴🇲', detail: 'Oman\'s main crude export terminal<br>~900K b/d · OQ<br>Gulf of Oman · Hormuz-independent<br>PDO pipeline network terminus' },
+    { pos: [24.37, 56.72], name: 'Sohar Port Terminal',      flag: '🇴🇲', detail: 'Sohar Industrial Port · Oman<br>Petrochemical & refined product export<br>Gulf of Oman · Growing LNG hub<br>OQ8 JV liquid bulk facilities' },
+    { pos: [26.18, 50.62], name: 'Sitra Terminal (Bahrain)', flag: '🇧🇭', detail: 'BAPCO · Bahrain crude & product export<br>Adjacent to BAPCO Sitra refinery<br>Gulf coast · Hormuz-dependent' },
+    { pos: [25.63, 57.77], name: 'Jask Terminal (Iran)',     flag: '🇮🇷', detail: 'NIOC · Goreh–Jask pipeline eastern end<br>Capacity: 1M b/d (design)<br>Currently inactive · Gulf of Oman<br>Would give Iran Hormuz bypass if operational' },
+    { pos: [25.20, 55.33], name: 'Jebel Ali Terminal',       flag: '🇦🇪', detail: 'DP World · Region\'s largest port<br>Container & liquid bulk hub<br>Dubai · Hormuz-dependent<br>Key LNG and petrochemical trade route' },
+  ];
+  terminals.forEach(t => {
+    L.circleMarker(t.pos, {
+      radius: 6, color: '#06B6D4', fillColor: '#0891B2', fillOpacity: 0.8, weight: 1.5
+    })
+    .bindTooltip(
+      `<div class="map-tip-title">⚓ ${t.flag} ${t.name}</div>` +
+      `<div class="map-tip-body">${t.detail}</div>`,
+      {sticky: true, maxWidth: 260}
+    )
+    .addTo(termGroup);
+  });
+  layers.term = termGroup;
+  termGroup.addTo(map);
+
+  // ── NASA FIRMS Thermal Hotspots (VIIRS/SNPP) ──
+  // Source: NASA Fire Information for Resource Management System
+  // Detects oil fires, facility strikes, industrial thermal anomalies — Gulf region
+  const firmsGroup = L.layerGroup();
+  layers.firms = firmsGroup;
+
+  function _renderFIRMS(hotspots) {
+    firmsGroup.clearLayers();
+    hotspots.forEach(h => {
+      const conf = (h.confidence || '').toLowerCase();
+      // High confidence = bright red; nominal = orange; low = yellow
+      const color = conf === 'high' ? '#FF2200' : conf === 'nominal' ? '#FF6600' : '#FF9900';
+      const r     = conf === 'high' ? 7 : conf === 'nominal' ? 5 : 3;
+      const frp   = h.frp != null ? `${h.frp} MW` : 'n/a';
+      const bright= h.brightness != null ? `${Math.round(h.brightness)} K` : 'n/a';
+      const dt    = h.datetime ? h.datetime.slice(0, 16).replace('T', ' ') + ' UTC' : '';
+      L.circleMarker([h.lat, h.lon], {
+        radius: r, color, fillColor: color, fillOpacity: 0.88, weight: 0.5
+      })
+      .bindTooltip(
+        `<div class="map-tip-title">🔥 Thermal Hotspot</div>` +
+        `<div class="map-tip-body">NASA FIRMS · VIIRS/SNPP<br>` +
+        `Confidence: <b style="color:${color}">${h.confidence || '?'}</b><br>` +
+        `Brightness: ${bright} · FRP: ${frp}<br>` +
+        `${dt}</div>`,
+        {sticky: true, maxWidth: 240}
+      )
+      .addTo(firmsGroup);
+    });
+    const n = hotspots.length;
+    document.getElementById('map-status').textContent =
+      `NASA FIRMS · ${n} thermal hotspot${n !== 1 ? 's' : ''} · 48h · Gulf region`;
+  }
+
+  loadFIRMS = async function() {
+    Dash.time.start('hormuz:loadFIRMS');
+    try {
+      const r = await cachedFetch('/api/fires', 900000); // 15-min cache
+      if (!r.ok) { console.warn('FIRMS: HTTP', r.status); Dash.time.end('hormuz:loadFIRMS'); return; }
+      const payload = await r.json();
+      if (!Array.isArray(payload)) { console.warn('FIRMS:', payload.error || payload); Dash.time.end('hormuz:loadFIRMS'); return; }
+      _renderFIRMS(payload);
+    } catch (e) { console.warn('FIRMS:', e.message); }
+    Dash.time.end('hormuz:loadFIRMS');
+  };
+
+  firmsGroup.addTo(map);
+
+
+  // Resize fix
+  setTimeout(() => map.invalidateSize(), 300);
+  window.addEventListener('resize', () => map.invalidateSize());
+}
+
+function toggleLayer(name, show) {
+  if (!layers[name]) return;
+  if (show) layers[name].addTo(map);
+  else map.removeLayer(layers[name]);
+}
+function toggleFIRMS(show) {
+  toggleLayer('firms', show);
+}
+
+// =====================
+// REFRESH ALL
+// =====================
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function refreshAll() {
+  const btn = document.querySelector('.refresh-all-btn');
+  if (btn) { btn.textContent = '↻ LOADING...'; btn.disabled = true; }
+  loadMarketIndicators();
+  await loadCommodities(); await sleep(200);
+  loadWarNews(); loadShippingNews();
+  if (btn) { btn.textContent = '↻ REFRESH ALL'; btn.disabled = false; }
+}
+
+// =====================
+// INIT
+// =====================
+function init() {
+  initTV();
+  // Above-the-fold first: market bar + price strip + map shell
+  loadMarketIndicators();
+  loadCommodities();
+  initMap();
+  // Defer below-the-fold content
+  setTimeout(loadFIRMS, 400);
+  setTimeout(loadWarNews, 600);
+  setTimeout(loadShippingNews, 800);
+
+  // Staggered refresh intervals via Dash.stagger
+  Dash.stagger([loadMarketIndicators, loadCommodities], 60000, 5000);
+  Dash.stagger([loadFIRMS], 900000, 0);          // 15-min — matches /api/fires cache
+  Dash.stagger([loadWarNews, loadShippingNews], 600000, 5000);
+}
+init();
+</script>
+</body>
+</html>

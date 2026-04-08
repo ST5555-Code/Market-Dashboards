@@ -1,0 +1,234 @@
+import { useMemo, useState, useEffect, useRef } from 'react';
+import PanelCard from '@shared/components/PanelCard';
+import useEDGAR from '@shared/hooks/useEDGAR';
+
+const SPAC_PATTERNS = [
+  /acquisition\s+corp/i,
+  /blank\s+check/i,
+  /special\s+purpose/i,
+  /acquisition\s+holdings/i,
+  /merger\s+corp/i,
+  /capital\s+acquisition/i,
+  /sponsor\s+acquisition/i,
+  /\bspac\b/i,
+];
+
+function isSPAC(company) {
+  return SPAC_PATTERNS.some(p => p.test(company));
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return '1d ago';
+  return `${days}d ago`;
+}
+
+function fmtSize(v) {
+  if (v == null) return '';
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+  return `$${(v / 1e3).toFixed(0)}K`;
+}
+
+function fmtPrice(v) {
+  if (v == null) return '';
+  return `$${v.toFixed(2)}`;
+}
+
+function fmtChg(v) {
+  if (v == null) return '';
+  const sign = v >= 0 ? '+' : '';
+  return `${sign}${v.toFixed(1)}%`;
+}
+
+// Fetch YF quotes for tickers
+function useIPOQuotes(tickers) {
+  const [data, setData] = useState({});
+  const mountedRef = useRef(true);
+  const tickerKey = tickers.join(',');
+
+  useEffect(() => {
+    mountedRef.current = true;
+    if (!tickers.length) return;
+
+    async function fetchQuotes() {
+      try {
+        const res = await fetch(`/api/quotes?syms=${tickers.join(',')}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!mountedRef.current) return;
+
+        const parsed = {};
+        for (const sym of tickers) {
+          try {
+            const result = json[sym]?.chart?.result?.[0];
+            if (!result) continue;
+            const meta = result.meta;
+            const price = meta.regularMarketPrice;
+            const prevClose = meta.chartPreviousClose ?? meta.previousClose;
+            const changePct = prevClose ? ((price - prevClose) / prevClose) * 100 : null;
+            parsed[sym] = { price, changePct, volume: meta.regularMarketVolume || null };
+          } catch { /* skip */ }
+        }
+        setData(parsed);
+      } catch { /* silent */ }
+    }
+
+    fetchQuotes();
+    return () => { mountedRef.current = false; };
+  }, [tickerKey]);
+
+  return data;
+}
+
+function FilingRow({ filing, tag, quoteData }) {
+  const q = quoteData?.[filing.ticker] || null;
+  const hasOffer = filing.offerSize != null;
+  const hasLine2 = q || hasOffer;
+
+  return (
+    <a
+      href={filing.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block py-1.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] -mx-1 px-1 rounded transition-colors"
+    >
+      {/* Line 1: Ticker + Name + Offer size + Date */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-gold font-bold w-[38px] flex-shrink-0 tabular-nums">
+          {filing.ticker || '--'}
+        </span>
+        <span className="text-[10px] text-txt-secondary truncate flex-1 min-w-0">
+          {filing.company}
+        </span>
+        {tag && (
+          <span className={`text-[7px] font-bold tracking-wide px-1 py-0.5 rounded flex-shrink-0 ${tag.color}`}>
+            {tag.label}
+          </span>
+        )}
+        {hasOffer && (
+          <span className="text-[10px] text-gold font-semibold flex-shrink-0 tabular-nums">
+            {fmtSize(filing.offerSize)} @ {fmtPrice(filing.offerPrice)}
+          </span>
+        )}
+        <span className="text-[9px] text-txt-secondary flex-shrink-0">{timeAgo(filing.filedDate)}</span>
+      </div>
+
+      {/* Line 2: Current price + Change % (right-aligned under offer size) */}
+      {hasLine2 && (
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="w-[38px] flex-shrink-0" />
+          <span className="flex-1" />
+          {q && (
+            <div className="flex items-center gap-2 flex-shrink-0 text-[10px] tabular-nums">
+              <span className="text-txt-primary font-medium">{fmtPrice(q.price)}</span>
+              {q.changePct != null && (
+                <span className={q.changePct >= 0 ? 'text-pos' : 'text-neg'}>
+                  {fmtChg(q.changePct)}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </a>
+  );
+}
+
+function SectionLabel({ label, count }) {
+  return (
+    <div className="flex items-center gap-2 mb-1 mt-2.5 first:mt-0">
+      <span className="text-[9px] font-bold tracking-wider text-gold/70 uppercase">{label}</span>
+      <span className="text-[9px] text-txt-secondary">({count})</span>
+      <div className="flex-1 border-b border-gold/10" />
+    </div>
+  );
+}
+
+function EmptyState({ loading, message }) {
+  if (loading) return null;
+  return <p className="text-txt-secondary text-[10px] py-1">{message}</p>;
+}
+
+const MAX_PER_SECTION = 5;
+
+export default function IPOTrackerPanel() {
+  // Last 5 business days, enrich 424B4 with offer size parsing
+  const { filings: pricedFilings, loading: pricedLoading, lastUpdated: pricedUpdated } =
+    useEDGAR('424B4', '', 7, 10, 600000, true);
+
+  const { filings: filedFilings, loading: filedLoading, lastUpdated: filedUpdated } =
+    useEDGAR('S-1', '', 7, 10, 600000);
+
+  const loading = pricedLoading || filedLoading;
+  const lastUpdated = pricedUpdated || filedUpdated;
+
+  // Collect tickers for YF enrichment
+  const pricedTickers = useMemo(() => {
+    return pricedFilings.filter(f => f.ticker).map(f => f.ticker).slice(0, 15);
+  }, [pricedFilings]);
+
+  const quoteData = useIPOQuotes(pricedTickers);
+
+  // Separate SPACs, filter micro-caps
+  const { pricedIPOs, pricedSPACs } = useMemo(() => {
+    const ipos = [];
+    const spacs = [];
+    for (const f of pricedFilings) {
+      if (isSPAC(f.company)) { spacs.push(f); continue; }
+      const q = f.ticker ? quoteData[f.ticker] : null;
+      if (q?.price && q.price < 10) continue;
+      ipos.push(f);
+    }
+    return { pricedIPOs: ipos.slice(0, MAX_PER_SECTION), pricedSPACs: spacs };
+  }, [pricedFilings, quoteData]);
+
+  const { filedIPOs, filedSPACs } = useMemo(() => {
+    const ipos = [];
+    const spacs = [];
+    for (const f of filedFilings) {
+      (isSPAC(f.company) ? spacs : ipos).push(f);
+    }
+    return { filedIPOs: ipos.slice(0, MAX_PER_SECTION), filedSPACs: spacs };
+  }, [filedFilings]);
+
+  const allSPACs = [...pricedSPACs, ...filedSPACs].slice(0, MAX_PER_SECTION);
+
+  return (
+    <PanelCard title="IPO Tracker (7d)" loading={loading} lastUpdated={lastUpdated} className="min-h-[280px]">
+      <div className="max-h-[500px] overflow-y-auto">
+        <SectionLabel label="Priced IPOs" count={pricedIPOs.length} />
+        {pricedIPOs.length === 0 && <EmptyState loading={pricedLoading} message="No priced IPOs this week" />}
+        {pricedIPOs.map((f, i) => (
+          <FilingRow key={`p-${i}`} filing={f} quoteData={quoteData} />
+        ))}
+
+        <SectionLabel label="New S-1 Filings" count={filedIPOs.length} />
+        {filedIPOs.length === 0 && <EmptyState loading={filedLoading} message="No new S-1 filings this week" />}
+        {filedIPOs.map((f, i) => (
+          <FilingRow key={`s-${i}`} filing={f} quoteData={quoteData} />
+        ))}
+
+        <SectionLabel label="SPACs" count={allSPACs.length} />
+        {allSPACs.length === 0 && <EmptyState loading={loading} message="No SPAC activity this week" />}
+        {allSPACs.map((f, i) => {
+          const isPriced = pricedSPACs.includes(f);
+          return (
+            <FilingRow
+              key={`sc-${i}`}
+              filing={f}
+              quoteData={quoteData}
+              tag={isPriced
+                ? { label: 'PRICED', color: 'bg-pos/15 text-pos border border-pos/30' }
+                : { label: 'FILED', color: 'bg-gold/15 text-gold border border-gold/30' }
+              }
+            />
+          );
+        })}
+      </div>
+    </PanelCard>
+  );
+}
