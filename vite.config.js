@@ -12,6 +12,7 @@ export default defineConfig({
         energy: resolve(__dirname, 'energy/index.html'),
         cleantech: resolve(__dirname, 'cleantech/index.html'),
         media: resolve(__dirname, 'media/index.html'),
+        hormuz: resolve(__dirname, 'hormuz/index.html'),
       },
     },
   },

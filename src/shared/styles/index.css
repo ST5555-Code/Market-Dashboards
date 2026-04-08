@@ -14,3 +14,18 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Dark map tiles for Hormuz */
+.map-tiles-dark {
+  filter: brightness(0.6) contrast(1.2) saturate(0.3) hue-rotate(180deg);
+}
+
+.leaflet-control-attribution {
+  background: rgba(20, 30, 53, 0.8) !important;
+  color: #A0AEC0 !important;
+  font-size: 9px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #DCB96E !important;
+}
