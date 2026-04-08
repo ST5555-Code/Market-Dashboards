@@ -149,7 +149,7 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
             <span className="text-[9px] text-txt-secondary">{liveCount}/{totalCount} live</span>
           </div>
 
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={180}>
             <LineChart data={chartData} margin={{ top: 18, right: 10, bottom: 5, left: -5 }}>
               <XAxis
                 dataKey="months"

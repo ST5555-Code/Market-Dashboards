@@ -89,7 +89,7 @@ export default function EnergyNewsFeed() {
 
   return (
     <PanelCard title="Energy Business News" loading={loading} lastUpdated={lastUpdated} onRefresh={fetchFeeds}>
-      <div className="max-h-[350px] overflow-y-auto">
+      <div className="max-h-[280px] overflow-y-auto">
         {items.length === 0 && !loading && (
           <p className="text-txt-secondary text-[10px] py-4 text-center">No energy headlines</p>
         )}
