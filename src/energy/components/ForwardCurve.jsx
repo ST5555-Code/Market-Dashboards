@@ -1,15 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import PanelCard from '@shared/components/PanelCard';
-
-function renderLabel({ x, y, value }) {
-  if (value == null) return null;
-  return (
-    <text x={x} y={y - 10} textAnchor="middle" fill="#FFFFFF" fontSize={9} fontWeight={600}>
-      {value.toFixed(2)}
-    </text>
-  );
-}
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -19,6 +10,26 @@ function CustomTooltip({ active, payload }) {
       <div className="text-txt-secondary">{d.label}</div>
       <div className="text-txt-primary font-semibold">${d.price?.toFixed(2)}</div>
     </div>
+  );
+}
+
+// Custom dot — larger on quarter months, smaller on others
+function CurveDot({ cx, cy, payload, color }) {
+  if (!payload?.price) return null;
+  const isQuarter = payload.months === 0 || payload.months % 3 === 0;
+  const r = isQuarter ? 3.5 : 2;
+  return <circle cx={cx} cy={cy} r={r} fill={color} stroke="#141E35" strokeWidth={1.5} />;
+}
+
+// Custom label — only show on spot and every 3 months
+function CurveLabel({ x, y, value, index, payload }) {
+  if (value == null) return null;
+  const months = payload?.months;
+  if (months !== 0 && months % 3 !== 0) return null;
+  return (
+    <text x={x} y={y - 10} textAnchor="middle" fill="#FFFFFF" fontSize={8} fontWeight={600}>
+      {value.toFixed(2)}
+    </text>
   );
 }
 
@@ -33,16 +44,29 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/quotes?syms=${symsKey}`);
-      if (!res.ok) return;
-      const json = await res.json();
+      // Split into batches of 18
+      const batches = [];
+      for (let i = 0; i < syms.length; i += 18) {
+        batches.push(syms.slice(i, i + 18));
+      }
+
+      const results = await Promise.all(
+        batches.map(async (batch) => {
+          const res = await fetch(`/api/quotes?syms=${batch.join(',')}`);
+          if (!res.ok) return {};
+          return res.json();
+        })
+      );
+
       if (!mountedRef.current) return;
 
       const parsed = {};
-      for (const sym of syms) {
-        const result = json[sym]?.chart?.result?.[0];
-        if (result?.meta?.regularMarketPrice) {
-          parsed[sym] = result.meta.regularMarketPrice;
+      for (const data of results) {
+        for (const sym of syms) {
+          const result = data[sym]?.chart?.result?.[0];
+          if (result?.meta?.regularMarketPrice) {
+            parsed[sym] = result.meta.regularMarketPrice;
+          }
         }
       }
       setPrices(parsed);
@@ -57,7 +81,7 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
   useEffect(() => {
     mountedRef.current = true;
     fetchData();
-    const id = setInterval(fetchData, 3600000); // 1 hour
+    const id = setInterval(fetchData, 3600000);
     return () => { mountedRef.current = false; clearInterval(id); };
   }, [fetchData]);
 
@@ -78,7 +102,18 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     const pad = (max - min) * 0.15 || 1;
-    return [Math.floor(min - pad), Math.ceil(max + pad)];
+    return [Math.floor((min - pad) * 10) / 10, Math.ceil((max + pad) * 10) / 10];
+  }, [chartData]);
+
+  // Generate quarter tick values for x-axis
+  const quarterTicks = useMemo(() => {
+    if (!chartData.length) return [];
+    const maxMonth = Math.max(...chartData.map(d => d.months));
+    const ticks = [0];
+    for (let m = 3; m <= maxMonth; m += 3) {
+      ticks.push(m);
+    }
+    return ticks;
   }, [chartData]);
 
   const spot = chartData[0]?.price;
@@ -106,13 +141,20 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
             <span className="text-[9px] text-txt-secondary">{liveCount}/{totalCount} live</span>
           </div>
 
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={chartData} margin={{ top: 20, right: 10, bottom: 5, left: -10 }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData} margin={{ top: 18, right: 10, bottom: 5, left: -5 }}>
               <XAxis
-                dataKey="label"
-                tick={{ fontSize: 9, fill: '#A0AEC0' }}
+                dataKey="months"
+                type="number"
+                domain={[0, 'dataMax']}
+                ticks={quarterTicks}
+                tick={{ fontSize: 8, fill: '#A0AEC0' }}
                 tickLine={false}
                 axisLine={{ stroke: '#2a3560' }}
+                tickFormatter={(m) => {
+                  const d = chartData.find(c => c.months === m);
+                  return d ? d.label : '';
+                }}
               />
               <YAxis
                 domain={domain}
@@ -128,10 +170,10 @@ export default function ForwardCurve({ title, contracts, color = '#DCB96E', unit
                 dataKey="price"
                 stroke={color}
                 strokeWidth={2}
-                dot={{ r: 4, fill: color, stroke: '#141E35', strokeWidth: 2 }}
-              >
-                <LabelList dataKey="price" content={renderLabel} />
-              </Line>
+                dot={<CurveDot color={color} />}
+                activeDot={{ r: 5, fill: color, stroke: '#141E35', strokeWidth: 2 }}
+                label={<CurveLabel />}
+              />
             </LineChart>
           </ResponsiveContainer>
         </>

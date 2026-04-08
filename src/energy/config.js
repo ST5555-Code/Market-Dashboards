@@ -71,32 +71,34 @@ export const ALL_SYMBOLS = [
 // Earnings — all stock tickers
 export const EARNINGS_SYMBOLS = STOCKS.map(s => s.sym).join(',');
 
-// Forward curve contracts
-export const WTI_CURVE = [
-  { sym: 'CL=F', label: 'Spot', months: 0 },
-  { sym: 'CLM26.NYM', label: "Jun'26", months: 2 },
-  { sym: 'CLU26.NYM', label: "Sep'26", months: 5 },
-  { sym: 'CLZ26.NYM', label: "Dec'26", months: 8 },
-  { sym: 'CLH27.NYM', label: "Mar'27", months: 11 },
-  { sym: 'CLM27.NYM', label: "Jun'27", months: 14 },
-  { sym: 'CLU27.NYM', label: "Sep'27", months: 17 },
-  { sym: 'CLZ27.NYM', label: "Dec'27", months: 20 },
-  { sym: 'CLZ28.NYM', label: "Dec'28", months: 32 },
-  { sym: 'CLZ29.NYM', label: "Dec'29", months: 44 },
-];
+// Month codes for futures: F=Jan G=Feb H=Mar J=Apr K=May M=Jun N=Jul Q=Aug U=Sep V=Oct X=Nov Z=Dec
+const MC = { 1:'F',2:'G',3:'H',4:'J',5:'K',6:'M',7:'N',8:'Q',9:'U',10:'V',11:'X',12:'Z' };
+const MN = { 1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec' };
 
-export const HH_CURVE = [
-  { sym: 'NG=F', label: 'Spot', months: 0 },
-  { sym: 'NGM26.NYM', label: "Jun'26", months: 2 },
-  { sym: 'NGU26.NYM', label: "Sep'26", months: 5 },
-  { sym: 'NGZ26.NYM', label: "Dec'26", months: 8 },
-  { sym: 'NGH27.NYM', label: "Mar'27", months: 11 },
-  { sym: 'NGM27.NYM', label: "Jun'27", months: 14 },
-  { sym: 'NGU27.NYM', label: "Sep'27", months: 17 },
-  { sym: 'NGZ27.NYM', label: "Dec'27", months: 20 },
-  { sym: 'NGZ28.NYM', label: "Dec'28", months: 32 },
-  { sym: 'NGZ29.NYM', label: "Dec'29", months: 44 },
-];
+function buildCurve(prefix, startYear, startMonth, endYear, endMonth) {
+  // Spot contract
+  const contracts = [{ sym: `${prefix}=F`, label: 'Spot', months: 0 }];
+  const baseYear = startYear;
+  const baseMonth = startMonth;
+  for (let y = startYear; y <= endYear; y++) {
+    const mStart = (y === startYear) ? startMonth + 1 : 1;
+    const mEnd = (y === endYear) ? endMonth : 12;
+    for (let m = mStart; m <= mEnd; m++) {
+      const yr = String(y).slice(-2);
+      const monthsOut = (y - baseYear) * 12 + (m - baseMonth);
+      contracts.push({
+        sym: `${prefix}${MC[m]}${yr}.NYM`,
+        label: `${MN[m]}'${yr}`,
+        months: monthsOut,
+      });
+    }
+  }
+  return contracts;
+}
+
+// Monthly contracts: Spot + May'26 through Dec'27
+export const WTI_CURVE = buildCurve('CL', 2026, 4, 2027, 12);
+export const HH_CURVE = buildCurve('NG', 2026, 4, 2027, 12);
 
 // RSS feeds for energy news
 export const NEWS_FEEDS = [
