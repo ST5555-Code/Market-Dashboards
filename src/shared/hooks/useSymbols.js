@@ -25,9 +25,15 @@ export default function useSymbols(dashboardKey, defaults = []) {
 
         // Map sector codes to display names
         const sectorMap = dashboard._sectors || {};
+        const defaultNames = {
+          major: 'Majors', etf: 'ETFs', oil: 'Oil E&P', gas: 'Gas',
+          ofs: 'Oilfield Services', power: 'Power / Utilities',
+          solar: 'Solar', wind: 'Wind', nuclear: 'Nuclear',
+          h2: 'Hydrogen / Fuel Cell', mineral: 'Critical Minerals',
+        };
         const mapped = stockList.map(s => ({
           ...s,
-          sector: sectorMap[s.sector] || s.sector || '?',
+          sector: sectorMap[s.sector] || defaultNames[s.sector] || s.sector || '?',
         }));
 
         setStocks(mapped);
