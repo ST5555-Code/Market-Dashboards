@@ -34,7 +34,7 @@ function App() {
 
   // Build symbol list from dynamic stocks + commodities + indices
   const allSymbols = useMemo(() => [
-    'CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F',
+    'CL=F', 'BZ=F', 'NG=F', 'TTF=F', 'RB=F', 'HO=F',
     '^GSPC', '^DJI', '^TNX', '^VIX',
     ...stocks.map(s => s.sym),
   ], [stocks]);
