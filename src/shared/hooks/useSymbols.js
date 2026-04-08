@@ -12,7 +12,7 @@ export default function useSymbols(dashboardKey, defaults = []) {
 
     async function fetchSymbols() {
       try {
-        const res = await fetch('/api/symbols');
+        const res = await fetch('/config/symbols.json');
         if (!res.ok) return;
         const data = await res.json();
         if (!mountedRef.current) return;
