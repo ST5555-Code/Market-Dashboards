@@ -61,8 +61,7 @@ function App() {
           quotes={quotes}
           loading={quotesLoading}
           onRefresh={handleRefreshAll}
-          dashboardTitle="M&A"
-          dashboardSubtitle="Intelligence Monitor"
+          dashboardTitle="M&A Dashboard"
         />
         <TopRow fredData={fredData} fredLoading={fredLoading} fredLastUpdated={fredLastUpdated} refreshFRED={refreshFRED} />
         <MainGrid

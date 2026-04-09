@@ -38,7 +38,7 @@ function isActive(href) {
   return path.startsWith(href);
 }
 
-export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelligence Monitor' }) {
+export default function TitleBar({ onRefresh, title = 'M&A Dashboard' }) {
   const [loading, setLoading] = useState(false);
 
   async function handleRefresh() {
@@ -50,8 +50,8 @@ export default function TitleBar({ onRefresh, title = 'M&A', subtitle = 'Intelli
 
   return (
     <div className="bg-navy border-b-[3px] border-gold px-5 py-2 flex items-center justify-between gap-4 relative">
-      <div className="text-[16px] font-bold tracking-[2px] text-white uppercase flex-shrink-0">
-        {title} <span className="text-gold">{subtitle}</span>
+      <div className="text-[16px] font-bold tracking-[2px] text-gold uppercase flex-shrink-0">
+        {title}
       </div>
 
       {/* Nav — centered absolutely so position is fixed regardless of title length */}

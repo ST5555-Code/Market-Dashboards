@@ -108,8 +108,8 @@ function FloatingTV({ activeIdx, setActiveIdx, onDock, onMinimize }) {
   );
 }
 
-export default function LiveTVPanel() {
-  const [activeIdx, setActiveIdx] = useState(0);
+export default function LiveTVPanel({ defaultChannel = 0 }) {
+  const [activeIdx, setActiveIdx] = useState(defaultChannel);
   const [floating, setFloating] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const ch = CHANNELS[activeIdx];

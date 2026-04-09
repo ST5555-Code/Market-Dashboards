@@ -54,8 +54,7 @@ function App() {
           quotes={quotes}
           loading={loading}
           onRefresh={refresh}
-          dashboardTitle="Media &"
-          dashboardSubtitle="Entertainment Tracker"
+          dashboardTitle="Media Dashboard"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={tickerSymbols}
         />

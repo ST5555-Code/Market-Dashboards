@@ -51,8 +51,7 @@ function App() {
           quotes={quotes}
           loading={loading}
           onRefresh={refresh}
-          dashboardTitle="Upstream Energy"
-          dashboardSubtitle="Intelligence Monitor"
+          dashboardTitle="Upstream Energy Dashboard"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={tickerSymbols}
         />

@@ -1,13 +1,14 @@
 import { useMemo, Component } from 'react';
-import StickyHeader from '@shared/components/StickyHeader';
+import TitleBar from '@shared/components/TitleBar';
+import MarketsBar from '@shared/components/MarketsBar';
 import LiveTVPanel from '@shared/components/LiveTVPanel';
 import NewsFeedPanel from '@shared/components/NewsFeedPanel';
 import PanelCard from '@shared/components/PanelCard';
-import MarketsBar from '@shared/components/MarketsBar';
 import useQuotes from '@shared/hooks/useQuotes';
 import HormuzMap from './components/HormuzMap';
+import WarHeadlineTape from './components/WarHeadlineTape';
 import {
-  ALL_SYMBOLS, MARKET_SYMBOLS, TICKER_SYMBOLS,
+  ALL_SYMBOLS, MARKET_SYMBOLS,
   WAR_FEEDS, SUPPLY_FEEDS, WAR_KEYWORDS, SUPPLY_KEYWORDS,
 } from './config';
 
@@ -68,18 +69,11 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-navy text-txt-primary font-sans">
-        {/* Custom header: title + red war headline tape + market data tape */}
+        {/* Custom header: title + red war headlines + market data */}
         <header className="sticky top-0 z-[1000]">
-          {/* Title bar — reuses shared TitleBar via StickyHeader internals */}
-          <StickyHeader
-            quotes={quotes}
-            loading={loading}
-            onRefresh={refresh}
-            dashboardTitle="Iran War"
-            dashboardSubtitle="Geopolitical Monitor"
-            marketSymbols={MARKET_SYMBOLS}
-            tickerSymbols={TICKER_SYMBOLS}
-          />
+          <TitleBar onRefresh={refresh} title="Iran War Dashboard" />
+          <WarHeadlineTape />
+          <MarketsBar quotes={quotes} loading={loading} symbols={MARKET_SYMBOLS} />
         </header>
 
         <div className="p-4 flex flex-col gap-4">
@@ -89,7 +83,7 @@ function App() {
               <HormuzMap />
             </div>
             <CommoditiesPanel quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
-            <LiveTVPanel />
+            <LiveTVPanel defaultChannel={4} />
           </div>
 
           {/* Row 2: Conflict | Supply Chain | Placeholder */}

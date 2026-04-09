@@ -47,8 +47,7 @@ function App() {
           quotes={quotes}
           loading={loading}
           onRefresh={refresh}
-          dashboardTitle="Cleantech &"
-          dashboardSubtitle="Transition Monitor"
+          dashboardTitle="Cleantech Dashboard"
           marketSymbols={MARKET_SYMBOLS}
           tickerSymbols={tickerSymbols}
         />

@@ -16,19 +16,13 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] Cleantech Carbon Prices box: individual bg-navy cards per metric
 - [x] Cleantech Fuel Credits box: individual bg-navy cards per metric
 - [x] Hormuz: renamed title to "Iran War Geopolitical Monitor"
-- [ ] **Iran War dashboard overhaul:**
-  - [ ] TV box same as other dashboards, default to Al Jazeera
-  - [ ] Top ticker tape = red background, scrolling war/Hormuz headlines (RSS)
-  - [ ] Bottom ticker tape = market data (commodities, indices)
-  - [ ] Top row: Map (spans 2 boxes wide) | Commodities (Brent, WTI, TTF, Gold in box 3) | TV (box 4)
-  - [ ] Map fix: restore dark theme colors, add all original layers (oil sites, refineries, terminals, pipelines, military bases, nuclear sites, shipping lanes). Each layer toggleable via clickable legend.
-  - [ ] Map sizing: fill 2-box width appropriately, match top row height
-  - [ ] Row 2 (3-column): Conflict & Military news | Supply Chain & Logistics news | Placeholder (TBD)
-  - [ ] Restore all map attributes from original vanilla dashboard (tooltips, icons, detail popups)
+- [x] **Iran War dashboard overhaul** — map 2x wide with toggleable legend (all layers restored), commodities box, conflict + supply chain news, consistent layout
+- [x] Remove vanilla dashboards from public/
+- [x] Remove unused PORTALS exports and imports
+- [ ] All dashboards: remove "Intelligence" from titles. Just "M&A Dashboard", "Upstream Energy Dashboard", etc. Full title in gold.
+- [ ] Landing page: simplify to buttons only, no descriptions. Just dashboard names.
+- [ ] Iran War: top ticker tape red with war headlines, bottom tape market data, default TV to Al Jazeera
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
-- [ ] Landing page: update card descriptions to match current dashboard content
-- [ ] Remove vanilla dashboards from public/ (energy, cleantech, media, hormuz — all React now)
-- [ ] Remove unused PORTALS exports from all config.js files (no longer used)
 - [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
 - [ ] Mobile QA pass across all dashboards
 
