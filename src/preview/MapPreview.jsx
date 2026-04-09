@@ -117,11 +117,6 @@ export default function MapPreview() {
             attribution=""
             opacity={1.0}
           />
-          <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-            attribution=""
-            opacity={1.0}
-          />
 
           {/* Chokepoint */}
           <CircleMarker
