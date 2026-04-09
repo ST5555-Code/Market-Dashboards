@@ -19,9 +19,9 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] **Iran War dashboard overhaul** — map 2x wide with toggleable legend (all layers restored), commodities box, conflict + supply chain news, consistent layout
 - [x] Remove vanilla dashboards from public/
 - [x] Remove unused PORTALS exports and imports
-- [ ] All dashboards: remove "Intelligence" from titles. Just "M&A Dashboard", "Upstream Energy Dashboard", etc. Full title in gold.
-- [ ] Landing page: simplify to buttons only, no descriptions. Just dashboard names.
-- [ ] Iran War: top ticker tape red with war headlines, bottom tape market data, default TV to Al Jazeera
+- [x] All dashboards: titles in gold — "M&A Dashboard", "Upstream Energy Dashboard", etc.
+- [x] Landing page: simplified to buttons only with dashboard names
+- [x] Iran War: red ALERT headline tape + market data tape + Al Jazeera default TV
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
 - [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
 - [ ] Mobile QA pass across all dashboards

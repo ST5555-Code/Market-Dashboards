@@ -11,6 +11,7 @@ import CarbonPricesPanel from './components/CarbonPricesPanel';
 import FuelCreditsPanel from './components/FuelCreditsPanel';
 import {
   STOCKS as DEFAULT_STOCKS, MARKET_SYMBOLS,
+  CT_FEEDS, NUCLEAR_FEEDS, DC_FEEDS,
 } from './config';
 
 class ErrorBoundary extends Component {
