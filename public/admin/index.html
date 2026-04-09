@@ -331,13 +331,11 @@
     <button class="tab active" onclick="switchTab('energy')"        id="tab-energy">Energy <span class="tab-badge" id="badge-energy">0</span></button>
     <button class="tab"        onclick="switchTab('cleantech')"     id="tab-cleantech">Cleantech <span class="tab-badge" id="badge-cleantech">0</span></button>
     <button class="tab"        onclick="switchTab('media')"         id="tab-media">Media <span class="tab-badge" id="badge-media">0</span></button>
-    <button class="tab"        onclick="switchTab('privateBanking')" id="tab-privateBanking">Private Banking <span class="tab-badge" id="badge-privateBanking">0</span></button>
   </div>
 
   <div id="panel-energy"         class="tab-panel active"></div>
   <div id="panel-cleantech"      class="tab-panel"></div>
   <div id="panel-media"          class="tab-panel"></div>
-  <div id="panel-privateBanking" class="tab-panel"></div>
 
   <div class="github-section">
     <div class="github-toggle" id="githubToggle" onclick="toggleGitHub()">
@@ -368,14 +366,13 @@
 // ══════════════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════════════
-const DASHBOARDS = ['energy','cleantech','media','privateBanking'];
+const DASHBOARDS = ['energy','cleantech','media'];
 
 // Built-in sectors (cannot be deleted)
 const BUILTIN_SECTORS = {
   energy:        { major:'Major Integrated', oil:'E&P Oil', gas:'E&P Gas', ofs:'Oilfield Services', etf:'ETF' },
   cleantech:     { etf:'ETF', power:'Power Utilities', solar:'Solar', wind:'Wind', nuclear:'Nuclear', h2:'Hydrogen', mineral:'Critical Minerals' },
   media:         {},
-  privateBanking:{}
 };
 
 let config   = {};
