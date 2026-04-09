@@ -8,6 +8,8 @@ import useQuotes from '@shared/hooks/useQuotes';
 import useSymbols from '@shared/hooks/useSymbols';
 import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
+import StudioMomentumPanel from './components/StudioMomentumPanel';
+import MusicChartsPanel from './components/MusicChartsPanel';
 import {
   STOCKS as DEFAULT_STOCKS,
   STREAMING_SCOREBOARD, STREAMING_FEEDS, STREAMING_KEYWORDS,
@@ -121,45 +123,11 @@ function App() {
               </button>
             </PanelCard>
 
-            {/* Panel 2: Box Office */}
-            <PanelCard title="Studio & Box Office" compact>
-              <table className="w-full text-[10px]">
-                <thead>
-                  <tr className="text-txt-secondary text-[8px] uppercase tracking-wider">
-                    <th className="text-left py-0.5 w-4">#</th>
-                    <th className="text-left py-0.5">Title</th>
-                    <th className="text-right py-0.5">Wknd</th>
-                    <th className="text-right py-0.5">Studio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {BOX_OFFICE_TABLE.map(r => (
-                    <tr key={r.rank} className="border-t border-white/5">
-                      <td className="py-1 text-gold font-bold">{r.rank}</td>
-                      <td className="py-1 text-txt-primary text-[9px]">{r.title}</td>
-                      <td className="py-1 text-right text-txt-primary font-medium tabular-nums">{r.weekend}</td>
-                      <td className="py-1 text-right text-txt-secondary text-[8px]">{r.studio}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="text-[7px] text-txt-secondary mt-0.5">Last reported</div>
-              <button onClick={() => setOverlay({ title: 'Box Office News', feeds: BOX_OFFICE_FEEDS, keywords: BOX_OFFICE_KEYWORDS })}
-                className="text-[8px] text-gold/50 hover:text-gold mt-1 cursor-pointer transition-colors">
-                View box office news ↗
-              </button>
-            </PanelCard>
+            {/* Panel 2: Studio Momentum (TMDB) */}
+            <StudioMomentumPanel />
 
-            {/* Panel 3: Music & Live */}
-            <PanelCard title="Music & Live" compact>
-              <div className="py-6 text-center">
-                <p className="text-txt-secondary text-[10px]">Coming soon</p>
-              </div>
-              <button onClick={() => setOverlay({ title: 'Music & Live News', feeds: MUSIC_FEEDS, keywords: MUSIC_KEYWORDS })}
-                className="text-[8px] text-gold/50 hover:text-gold cursor-pointer transition-colors">
-                View music news ↗
-              </button>
-            </PanelCard>
+            {/* Panel 3: Music Charts (iTunes RSS) */}
+            <MusicChartsPanel />
 
             <LiveTVPanel />
           </div>
