@@ -54,12 +54,12 @@ export default function HormuzMap() {
           zoom={MAP_ZOOM}
           minZoom={4}
           maxZoom={12}
-          style={{ height: '100%', width: '100%', background: '#141E35' }}
+          style={{ height: '100%', width: '100%', background: '#e8e8e8' }}
           scrollWheelZoom={true}
         >
-          {/* CartoDB Dark Matter — dark navy ocean, subtle labels, no CSS filter needed */}
+          {/* CartoDB Voyager — light blue water, readable country names, good contrast */}
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             attribution='&copy; <a href="https://carto.com/">CARTO</a>'
             subdomains="abcd"
           />

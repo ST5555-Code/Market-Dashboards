@@ -28,8 +28,13 @@ export default function WarHeadlineTape() {
       if (!mountedRef.current) return;
 
       const all = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000; // last 24 hours
       const filtered = all
-        .filter(item => WAR_KW.test(item.title))
+        .filter(item => {
+          if (!WAR_KW.test(item.title)) return false;
+          const pubDate = new Date(item.pubDate);
+          return !isNaN(pubDate.getTime()) && pubDate.getTime() > cutoff;
+        })
         .map(item => cleanTitle(item.title));
 
       const seen = new Set();

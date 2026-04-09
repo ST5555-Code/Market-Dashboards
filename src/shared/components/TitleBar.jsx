@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { label: 'Upstream', href: '/energy/' },
   { label: 'Cleantech', href: '/cleantech/' },
   { label: 'Media', href: '/media/' },
-  { label: 'Iran War', href: '/hormuz/' },
+  { label: 'Iran War', href: '/hormuz/', spacer: true },
 ];
 
 function Clock() {
@@ -62,7 +62,7 @@ export default function TitleBar({ onRefresh, title = 'M&A Dashboard' }) {
             <a
               key={item.label}
               href={item.href}
-              className={`px-2 py-0.5 rounded-sm border transition-all whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-sm border transition-all whitespace-nowrap ${item.spacer ? 'ml-3' : ''} ${
                 active
                   ? 'bg-gold text-navy border-gold font-bold'
                   : 'text-txt-secondary border-gold/20 hover:text-gold hover:border-gold/40'

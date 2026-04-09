@@ -1,15 +1,23 @@
+// Global markets tape — same as M&A
 export const MARKET_SYMBOLS = [
-  { sym: 'BZ=F', label: 'Brent' },
-  { sym: 'CL=F', label: 'WTI' },
-  { sym: 'GC=F', label: 'Gold' },
   { sym: '^GSPC', label: 'S&P 500' },
+  { sym: '^IXIC', label: 'Nasdaq' },
   { sym: '^DJI', label: 'Dow' },
-  { sym: '^TNX', label: '10Y UST' },
+  { sym: '^RUT', label: 'Russell' },
+  { sym: '^FTSE', label: 'FTSE' },
+  { sym: '^GDAXI', label: 'DAX' },
+  { sym: '^FCHI', label: 'CAC 40' },
+  { sym: '^STOXX50E', label: 'Stoxx 50' },
+  { sym: '^N225', label: 'Nikkei' },
+  { sym: '^HSI', label: 'Hang Seng' },
+  { sym: 'CL=F', label: 'WTI' },
   { sym: '^VIX', label: 'VIX' },
 ];
 
-export const TICKER_SYMBOLS = ['BZ=F', 'CL=F', 'TTF=F', 'RB=F', 'GC=F'];
-export const ALL_SYMBOLS = ['BZ=F', 'CL=F', 'TTF=F', 'RB=F', 'GC=F', '^GSPC', '^DJI', '^TNX', '^VIX'];
+export const ALL_SYMBOLS = [
+  'BZ=F', 'CL=F', 'TTF=F', 'GC=F', 'ALI=F',
+  '^GSPC', '^IXIC', '^DJI', '^RUT', '^FTSE', '^GDAXI', '^FCHI', '^STOXX50E', '^N225', '^HSI', '^TNX', '^VIX',
+];
 
 export const WAR_FEEDS = [
   { url: 'https://news.google.com/rss/search?q=Iran+IRGC+Hormuz+tanker+war+missile+strike&hl=en&gl=US&ceid=US:en', source: 'Google News' },
