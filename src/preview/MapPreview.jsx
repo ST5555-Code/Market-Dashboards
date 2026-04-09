@@ -43,24 +43,24 @@ export default function MapPreview() {
     return init;
   });
 
-  // Inject satellite-adjacent styles
+  // Inject satellite styles — no tile filter
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      .leaflet-container { background: #AAD3DF; }
-      .leaflet-tile-pane { filter: saturate(1.8) brightness(0.78) contrast(1.15) hue-rotate(-15deg); }
+      .leaflet-container { background: #1A3A5C; }
+      .leaflet-tile-pane { filter: none; }
       .leaflet-tooltip {
-        background: rgba(255, 255, 255, 0.95) !important;
-        border: 1px solid #B0A898 !important;
-        color: #4A4A4A !important;
+        background: rgba(28, 35, 51, 0.95) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        color: #FFFFFF !important;
         border-radius: 4px !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 11px !important;
         padding: 6px 8px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
       }
-      .leaflet-tooltip-top::before { border-top-color: #B0A898 !important; }
-      .leaflet-tooltip-right::before { border-right-color: #B0A898 !important; }
+      .leaflet-tooltip-top::before { border-top-color: rgba(255,255,255,0.2) !important; }
+      .leaflet-tooltip-right::before { border-right-color: rgba(255,255,255,0.2) !important; }
       .city-label-preview {
         background: transparent !important;
         border: none !important;
@@ -78,7 +78,7 @@ export default function MapPreview() {
   return (
     <div style={{ background: '#1E2846', minHeight: '100vh', padding: 16, fontFamily: 'Inter, sans-serif' }}>
       <h1 style={{ color: '#DCB96E', fontSize: 16, fontWeight: 700, marginBottom: 12, letterSpacing: 2 }}>
-        MAP PREVIEW — Satellite-Adjacent Light Palette
+        MAP PREVIEW — Satellite Imagery
       </h1>
       <div style={{ borderRadius: 8, overflow: 'hidden', height: 500 }}>
         <MapContainer
@@ -86,13 +86,12 @@ export default function MapPreview() {
           zoom={MAP_ZOOM}
           minZoom={4}
           maxZoom={12}
-          style={{ height: '100%', width: '100%', background: '#AAD3DF' }}
+          style={{ height: '100%', width: '100%', background: '#1A3A5C' }}
           scrollWheelZoom={true}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            subdomains="abcd"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA'
           />
 
           {/* Chokepoint */}
@@ -145,10 +144,10 @@ export default function MapPreview() {
               key={i}
               center={c.pos}
               radius={3}
-              pathOptions={{ color: '#4A4A4A', fillColor: '#4A4A4A', fillOpacity: 0.9, weight: 0.5 }}
+              pathOptions={{ color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.9, weight: 0.5 }}
             >
               <Tooltip permanent direction="right" offset={[6, 0]} className="city-label-preview">
-                <span style={{ fontSize: 10, color: '#4A4A4A', fontWeight: 500 }}>{c.name}</span>
+                <span style={{ fontSize: 10, color: '#FFFFFF', fontWeight: 500, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{c.name}</span>
               </Tooltip>
             </CircleMarker>
           ))}
@@ -156,7 +155,11 @@ export default function MapPreview() {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 16px', marginTop: 12 }}>
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: '12px 16px', marginTop: 12,
+        background: 'rgba(28, 35, 51, 0.92)', border: '1px solid rgba(255,255,255,0.15)',
+        borderRadius: 6, padding: '8px 12px',
+      }}>
         {LAYERS.map(l => (
           <button
             key={l.key}
@@ -164,7 +167,7 @@ export default function MapPreview() {
             style={{
               display: 'flex', alignItems: 'center', gap: 4, fontSize: 10,
               cursor: 'pointer', opacity: layers[l.key] ? 1 : 0.3,
-              background: 'none', border: 'none', color: '#A0AEC0',
+              background: 'none', border: 'none', color: '#FFFFFF',
             }}
           >
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, flexShrink: 0 }} />
