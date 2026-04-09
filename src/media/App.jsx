@@ -101,18 +101,18 @@ function App() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Panel 1: Streaming Metrics — horizontal bars */}
             <PanelCard title="Streaming Metrics" compact>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 {STREAMING_SCOREBOARD.slice(0, 6).map(s => {
-                  const maxSubs = 301; // Netflix as baseline
+                  const maxSubs = 301;
                   const numVal = parseInt(s.subs.replace(/[^0-9]/g, ''));
                   const pct = Math.min((numVal / maxSubs) * 100, 100);
                   return (
                     <div key={s.name} className="flex items-center gap-2">
-                      <span className="text-[8px] text-txt-secondary w-[50px] flex-shrink-0 text-right">{s.name}</span>
-                      <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden">
+                      <span className="text-[10px] text-txt-secondary w-[55px] flex-shrink-0 text-right font-medium">{s.name}</span>
+                      <div className="flex-1 h-4 bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-gold/60 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-[9px] text-txt-primary font-semibold w-[32px] tabular-nums">{s.subs}</span>
+                      <span className="text-[11px] text-txt-primary font-bold w-[36px] tabular-nums">{s.subs}</span>
                     </div>
                   );
                 })}

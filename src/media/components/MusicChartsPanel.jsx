@@ -44,22 +44,22 @@ export default function MusicChartsPanel() {
       ) : songs.length === 0 && !loading ? (
         <p className="text-txt-secondary text-[10px] py-4 text-center">No chart data</p>
       ) : (
-        <div className="flex flex-col gap-0.5">
-          {songs.map(s => (
+        <div className="flex flex-col gap-1">
+          {songs.slice(0, 5).map(s => (
             <a
               key={s.rank}
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 py-1 hover:bg-white/[0.02] -mx-1 px-1 rounded transition-colors"
+              className="flex items-center gap-2.5 py-1.5 hover:bg-white/[0.02] -mx-1 px-1 rounded transition-colors"
             >
-              <span className="text-[10px] text-gold font-bold w-[14px] flex-shrink-0 text-right">{s.rank}</span>
+              <span className="text-[14px] text-gold font-bold w-[16px] flex-shrink-0 text-right">{s.rank}</span>
               {s.artwork && (
-                <img src={s.artwork} alt="" className="w-6 h-6 rounded flex-shrink-0" />
+                <img src={s.artwork} alt="" className="w-8 h-8 rounded flex-shrink-0" />
               )}
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] text-txt-primary font-medium truncate">{s.name}</div>
-                <div className="text-[8px] text-txt-secondary truncate">{s.artist}</div>
+                <div className="text-[12px] text-txt-primary font-semibold truncate">{s.name}</div>
+                <div className="text-[10px] text-txt-secondary truncate">{s.artist}</div>
               </div>
             </a>
           ))}
