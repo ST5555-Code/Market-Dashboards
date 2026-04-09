@@ -47,9 +47,9 @@ function MiniChart({ data, color }) {
       return { day: days[dow] || '', v: d.value };
     });
   }, [data]);
-  if (chartData.length < 2) return <div className="flex-1" />;
+  if (chartData.length < 2) return <div style={{ height: 70 }} />;
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={70}>
       <AreaChart data={chartData} margin={{ top: 14, right: 4, bottom: 2, left: 4 }}>
         <XAxis dataKey="day" tick={{ fontSize: 8, fill: '#A0AEC0' }} tickLine={false} axisLine={false} />
         <Area type="monotone" dataKey="v" stroke={color} fill={color} fillOpacity={0.1} strokeWidth={1.5}
@@ -148,7 +148,7 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
             <button
               key={c.sym}
               onClick={() => setOverlay(c)}
-              className="group bg-navy rounded-lg p-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors w-full flex-1 flex flex-col"
+              className="group bg-navy rounded-lg p-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors w-full"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[9px] text-txt-secondary group-hover:text-gold transition-colors">
@@ -163,9 +163,7 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
                   )}
                 </div>
               </div>
-              <div className="flex-1 min-h-[50px]">
-                <MiniChart data={c.hist} color={c.color} />
-              </div>
+              <MiniChart data={c.hist} color={c.color} />
             </button>
           );
         })}
