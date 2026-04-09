@@ -80,7 +80,7 @@ export default function HormuzMap() {
 
   return (
     <PanelCard title="Strategic Map">
-      <div className="rounded overflow-hidden" style={{ height: 340 }}>
+      <div className="rounded overflow-hidden h-[250px] md:h-[340px]">
         <MapContainer
           center={MAP_CENTER}
           zoom={MAP_ZOOM}

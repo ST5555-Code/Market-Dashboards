@@ -43,7 +43,7 @@ export default function MarketsBar({ quotes, loading, symbols }) {
   return (
     <div className="bg-navy border-b border-gold/30 flex items-center">
       {/* Fixed label */}
-      <div className="bg-gold text-navy text-[10px] font-bold py-2 tracking-wider flex-shrink-0 z-10 w-[70px] text-center">
+      <div className="bg-gold text-navy text-[9px] md:text-[10px] font-bold py-2 tracking-wider flex-shrink-0 z-10 w-[50px] md:w-[70px] text-center">
         MARKETS
       </div>
       {/* Scrolling tape */}

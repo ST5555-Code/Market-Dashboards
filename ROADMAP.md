@@ -31,11 +31,7 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] Iran War Analysis & Intelligence panel
 - [x] Iran War satellite map: ESRI imagery + emoji markers + Gulf zoom lock
 - [x] Media dashboard: Streaming Metrics bars, Studio Momentum (TMDB), Music Charts (iTunes), Cable & Broadcast, M&A Deal Flow panels
-- [ ] **Media Streaming Scoreboard update:**
-  - [ ] Task 1: Replace static subscriber data with updated numbers (Netflix 325M, Disney+ 125M, Hulu 53M, Max 116M, Paramount+ 78M, Peacock 41M, Apple TV+ ~46M, Spotify 678M, YouTube Premium 100M+). Cards show service, count, "As of Q#" date, note if present.
-  - [ ] Task 2: Auto-update detection via earnings RSS (Netflix IR, Disney, WBD, Paramount, Comcast). Poll 60min. New earnings headline → banner "New [Service] earnings detected — subscriber count may be stale. [Dismiss]". Seen/dismissed state in localStorage. Notification only, no auto-update.
-  - [ ] Task 3: Add Netflix Q1 2026 earnings (2026-04-15, ~approximate) to calendar. Flag Q4 2025 as reported. Red badge when ≤7 days.
-  - [ ] Add RSS domains to whitelist: ir.netflix.net, thewaltdisneycompany.com, ir.wbd.com, ir.paramount.com, corporate.comcast.com
+- [x] Media Streaming Scoreboard: updated subscriber data, earnings detection via IR RSS, whitelist added
 - [ ] Mobile QA pass across all dashboards
 
 ---

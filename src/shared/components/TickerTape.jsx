@@ -68,7 +68,7 @@ export default function TickerTape({ quotes, tickerSymbols }) {
 
   return (
     <div className="bg-navy-panel border-b border-gold/30 flex items-center">
-      <div className="bg-gold text-navy text-[10px] font-bold py-2 tracking-wider flex-shrink-0 z-10 w-[70px] text-center">
+      <div className="bg-gold text-navy text-[9px] md:text-[10px] font-bold py-2 tracking-wider flex-shrink-0 z-10 w-[50px] md:w-[70px] text-center">
         {label}
       </div>
       <div className="flex-1 overflow-hidden py-1.5">

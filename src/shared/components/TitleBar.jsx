@@ -28,7 +28,7 @@ function Clock() {
     return () => clearInterval(id);
   }, []);
 
-  return <span className="text-gold font-semibold text-sm">{time}</span>;
+  return <span className="text-gold font-semibold text-[11px] md:text-sm">{time}</span>;
 }
 
 function isActive(href) {
@@ -49,8 +49,8 @@ export default function TitleBar({ onRefresh, title = 'M&A Dashboard' }) {
   }
 
   return (
-    <div className="bg-navy border-b-[3px] border-gold px-5 py-2 flex items-center justify-between gap-4 relative">
-      <div className="text-[16px] font-bold tracking-[2px] text-gold uppercase flex-shrink-0">
+    <div className="bg-navy border-b-[3px] border-gold px-3 md:px-5 py-2 flex items-center justify-between gap-2 md:gap-4 relative">
+      <div className="text-[12px] md:text-[16px] font-bold tracking-[1px] md:tracking-[2px] text-gold uppercase flex-shrink-0">
         {title}
       </div>
 
@@ -75,7 +75,7 @@ export default function TitleBar({ onRefresh, title = 'M&A Dashboard' }) {
       </div>
 
       {/* Clock + Refresh */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
         <Clock />
         <button
           onClick={handleRefresh}
