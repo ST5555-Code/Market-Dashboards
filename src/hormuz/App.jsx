@@ -49,12 +49,12 @@ function MiniChart({ data, color }) {
   }, [data]);
   if (chartData.length < 2) return <div style={{ height: 90 }} />;
 
-  // Tight Y domain to show daily volatility
+  // Very tight Y domain — maximize visual volatility
   const values = chartData.map(d => d.v);
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const pad = (max - min) * 0.3 || 0.5;
-  const domain = [Math.floor((min - pad) * 100) / 100, Math.ceil((max + pad) * 100) / 100];
+  const pad = (max - min) * 0.15 || 0.2;
+  const domain = [min - pad, max + pad];
 
   return (
     <ResponsiveContainer width="100%" height={90}>
@@ -160,11 +160,11 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
               className="group bg-navy rounded-lg p-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors w-full"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[9px] text-txt-secondary group-hover:text-gold transition-colors">
-                  {c.label} <span className="text-gold/30 group-hover:text-gold/60">↗</span>
+                <span className="text-[12px] font-semibold text-txt-secondary group-hover:text-gold transition-colors">
+                  {c.label} <span className="text-gold/30 group-hover:text-gold/60 text-[9px]">↗</span>
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[13px] font-bold text-txt-primary tabular-nums">${fmt(q?.price)}</span>
+                  <span className="text-[14px] font-bold text-txt-primary tabular-nums">${fmt(q?.price)}</span>
                   {q?.changePct != null && (
                     <span className={`text-[9px] font-semibold tabular-nums ${q.changePct >= 0 ? 'text-pos' : 'text-neg'}`}>
                       {q.changePct >= 0 ? '+' : ''}{q.changePct.toFixed(2)}%
