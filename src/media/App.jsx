@@ -10,9 +10,10 @@ import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
 import StudioMomentumPanel from './components/StudioMomentumPanel';
 import MusicChartsPanel from './components/MusicChartsPanel';
+import StreamingMetricsPanel from './components/StreamingMetricsPanel';
 import {
   STOCKS as DEFAULT_STOCKS,
-  STREAMING_SCOREBOARD, STREAMING_FEEDS, STREAMING_KEYWORDS,
+  STREAMING_DATA, EARNINGS_DETECT_FEEDS, STREAMING_FEEDS, STREAMING_KEYWORDS,
   BOX_OFFICE_FEEDS, BOX_OFFICE_KEYWORDS, BOX_OFFICE_TABLE,
   MUSIC_FEEDS, MUSIC_KEYWORDS,
   ENTERTAINMENT_FEEDS,
@@ -99,29 +100,8 @@ function App() {
         <div className="p-4 flex flex-col gap-4">
           {/* Top row: Streaming | Box Office | TBD | TV */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Panel 1: Streaming Metrics — horizontal bars */}
-            <PanelCard title="Streaming Metrics" compact>
-              <div className="flex flex-col gap-2.5">
-                {STREAMING_SCOREBOARD.slice(0, 6).map(s => {
-                  const maxSubs = 301;
-                  const numVal = parseInt(s.subs.replace(/[^0-9]/g, ''));
-                  const pct = Math.min((numVal / maxSubs) * 100, 100);
-                  return (
-                    <div key={s.name} className="flex items-center gap-2">
-                      <span className="text-[10px] text-txt-secondary w-[60px] flex-shrink-0 text-right font-medium">{s.name}</span>
-                      <div className="flex-1 h-5 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-gold/60 rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-[11px] text-txt-primary font-bold w-[38px] tabular-nums">{s.subs}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <button onClick={() => setOverlay({ title: 'Streaming News', feeds: STREAMING_FEEDS, keywords: STREAMING_KEYWORDS })}
-                className="text-[8px] text-gold/50 hover:text-gold mt-2 cursor-pointer transition-colors">
-                View streaming news ↗
-              </button>
-            </PanelCard>
+            {/* Panel 1: Streaming Metrics — bars + earnings alerts */}
+            <StreamingMetricsPanel onViewNews={() => setOverlay({ title: 'Streaming News', feeds: STREAMING_FEEDS, keywords: STREAMING_KEYWORDS })} />
 
             {/* Panel 2: Studio Momentum (TMDB) */}
             <StudioMomentumPanel />

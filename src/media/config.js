@@ -41,15 +41,24 @@ export const SPORTS_FEEDS = [
   { url: 'https://www.sportico.com/feed/', source: 'Sportico' },
 ];
 
-export const STREAMING_SCOREBOARD = [
-  { name: 'Netflix', subs: '301M' },
-  { name: 'Disney+', subs: '124M' },
-  { name: 'Max', subs: '116M' },
-  { name: 'Paramount+', subs: '72M' },
-  { name: 'Peacock', subs: '36M' },
-  { name: 'Apple TV+', subs: '~25M' },
-  { name: 'Spotify', subs: '678M' },
-  { name: 'YouTube Premium', subs: '100M+' },
+export const STREAMING_DATA = [
+  { service: 'Netflix',        subs: '325M',  asOf: 'Q4 2025', note: 'Paid subscribers' },
+  { service: 'Disney+',        subs: '125M',  asOf: 'Q1 2025', note: '' },
+  { service: 'Hulu',           subs: '53M',   asOf: 'Q1 2025', note: '' },
+  { service: 'Max',            subs: '116M',  asOf: 'Q1 2025', note: '' },
+  { service: 'Paramount+',     subs: '78M',   asOf: 'Q2 2025', note: '' },
+  { service: 'Peacock',        subs: '41M',   asOf: 'Q2 2025', note: '' },
+  { service: 'Apple TV+',      subs: '~46M',  asOf: 'Est. 2025', note: 'Does not disclose' },
+  { service: 'Spotify',        subs: '678M',  asOf: 'Latest', note: '' },
+  { service: 'YouTube Premium',subs: '100M+', asOf: 'Latest', note: '' },
+];
+
+export const EARNINGS_DETECT_FEEDS = [
+  { service: 'Netflix',    rss: 'https://ir.netflix.net/ir/rss/news',        keywords: ['subscriber','quarterly','earnings','results'] },
+  { service: 'Disney',     rss: 'https://thewaltdisneycompany.com/feed/',    keywords: ['disney+','hulu','subscriber','streaming','quarterly'] },
+  { service: 'Max',        rss: 'https://ir.wbd.com/rss/news',              keywords: ['max','subscriber','direct-to-consumer','streaming'] },
+  { service: 'Paramount+', rss: 'https://ir.paramount.com/rss/news',        keywords: ['paramount+','subscriber','streaming','quarterly'] },
+  { service: 'Peacock',    rss: 'https://corporate.comcast.com/feed',        keywords: ['peacock','subscriber','streaming','quarterly'] },
 ];
 
 export const SPORTS_RIGHTS = [

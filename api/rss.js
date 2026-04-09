@@ -38,6 +38,12 @@ const ALLOWED_DOMAINS = [
   'the-numbers.com',
   'tvnewscheck.com',
   'flixpatrol.com',
+  // Earnings detection
+  'ir.netflix.net',
+  'thewaltdisneycompany.com',
+  'ir.wbd.com',
+  'ir.paramount.com',
+  'corporate.comcast.com',
   // Hormuz
   'aljazeera.com',
   // Analysis
