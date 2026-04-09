@@ -398,7 +398,7 @@ async function init() {
 async function reloadFromAPI() {
   setStatus('loading','Loading…');
   try {
-    const r = await fetch('/api/symbols?_=' + Date.now());
+    const r = await fetch('/config/symbols.json?_=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     config = {};
