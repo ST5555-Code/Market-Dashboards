@@ -8,7 +8,6 @@ import useQuotes from '@shared/hooks/useQuotes';
 import useSymbols from '@shared/hooks/useSymbols';
 import StockTable from '../energy/components/StockTable';
 import EarningsCalendar from '../energy/components/EarningsCalendar';
-import SportsRightsPanel from './components/SportsRightsPanel';
 import {
   STOCKS as DEFAULT_STOCKS,
   STREAMING_SCOREBOARD, STREAMING_FEEDS, STREAMING_KEYWORDS,
@@ -175,11 +174,8 @@ function App() {
           {/* Stock Table — 3 columns like energy */}
           <StockTable stocks={stocks} quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
 
-          {/* Bottom: Sports Rights + Earnings — 2 col like energy */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SportsRightsPanel />
-            <EarningsCalendar symbols={earningsSymbols} columns={3} />
-          </div>
+          {/* Earnings — full width, 3 columns */}
+          <EarningsCalendar symbols={earningsSymbols} columns={3} />
         </div>
 
         {/* Floating news overlay */}
