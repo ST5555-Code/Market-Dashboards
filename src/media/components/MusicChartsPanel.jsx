@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PanelCard from '@shared/components/PanelCard';
 
-// Apple Music RSS — free, no key required
-const ITUNES_URL = 'https://rss.applemarketingtools.com/api/v2/us/music/most-played/10/songs.json';
+// Fetches via server-side proxy to avoid CORS/redirect issues
 
 export default function MusicChartsPanel() {
   const [songs, setSongs] = useState([]);
@@ -16,20 +15,11 @@ export default function MusicChartsPanel() {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
     try {
-      const res = await fetch(ITUNES_URL, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) throw new Error(`iTunes ${res.status}`);
+      const res = await fetch('/api/media-data?type=music', { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       if (!mountedRef.current) return;
-
-      const results = (data.feed?.results || []).slice(0, 8).map((s, i) => ({
-        rank: i + 1,
-        name: s.name,
-        artist: s.artistName,
-        artwork: s.artworkUrl100,
-        url: s.url,
-      }));
-
-      setSongs(results);
+      setSongs(data.songs || []);
       setLastUpdated(new Date());
       setError(null);
     } catch (e) {
