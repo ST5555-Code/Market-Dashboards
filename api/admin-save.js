@@ -27,8 +27,8 @@ export default async function handler(req, res) {
 
   const { pin, symbols } = req.body || {};
 
-  if (pin !== ADMIN_PIN) {
-    return res.status(403).json({ error: 'Invalid PIN', debug: { pinLen: pin?.length, expectedLen: ADMIN_PIN?.length, match: pin === ADMIN_PIN } });
+  if ((pin || '').trim() !== (ADMIN_PIN || '').trim()) {
+    return res.status(403).json({ error: 'Invalid PIN' });
   }
 
   if (!symbols || typeof symbols !== 'object') {
