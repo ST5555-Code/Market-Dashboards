@@ -55,12 +55,12 @@ export default function StudioMomentumPanel() {
       ) : studioData.length === 0 && !loading ? (
         <p className="text-txt-secondary text-[10px] py-4 text-center">No data</p>
       ) : studioData.length > 0 ? (
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={studioData} margin={{ top: 4, right: 4, bottom: 2, left: -10 }} layout="vertical">
-            <XAxis type="number" tick={{ fontSize: 10, fill: '#A0AEC0' }} tickLine={false} axisLine={false} />
-            <YAxis type="category" dataKey="studio" tick={{ fontSize: 11, fill: '#A0AEC0', fontWeight: 500 }} tickLine={false} axisLine={false} width={70} />
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={studioData} margin={{ top: 4, right: 8, bottom: 2, left: 0 }} layout="vertical">
+            <XAxis type="number" tick={{ fontSize: 10, fill: '#A0AEC0' }} tickLine={false} axisLine={false} hide />
+            <YAxis type="category" dataKey="studio" tick={{ fontSize: 10, fill: '#A0AEC0', fontWeight: 500 }} tickLine={false} axisLine={false} width={85} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="count" fill="#DCB96E" radius={[0, 3, 3, 0]} barSize={16} />
+            <Bar dataKey="count" fill="#DCB96E" radius={[0, 3, 3, 0]} barSize={14} label={{ position: 'right', fontSize: 10, fill: '#fff', fontWeight: 600 }} />
           </BarChart>
         </ResponsiveContainer>
       ) : null}

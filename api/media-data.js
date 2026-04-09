@@ -77,17 +77,43 @@ export default async function handler(req, res) {
         })
       );
 
+      // Track named studios and individual "other" companies
+      const counts = {};
+      const otherCompanies = {};
+
       for (const d of details) {
         if (d.status === 'fulfilled' && d.value) {
           const studio = mapStudio(d.value.production_companies);
-          counts[studio] = (counts[studio] || 0) + 1;
+          if (studio === 'Other') {
+            // Track the first production company name
+            const coName = d.value.production_companies?.[0]?.name || 'Independent';
+            otherCompanies[coName] = (otherCompanies[coName] || 0) + 1;
+          } else {
+            counts[studio] = (counts[studio] || 0) + 1;
+          }
         }
       }
 
+      // Break out "other" companies with 2+ films into named entries
+      let otherTotal = 0;
+      for (const [name, count] of Object.entries(otherCompanies)) {
+        if (count >= 2) {
+          counts[name] = count;
+        } else {
+          otherTotal += count;
+        }
+      }
+      if (otherTotal > 0) counts['Other'] = otherTotal;
+
+      // Sort by count descending, but put "Other" at the bottom
       const sorted = Object.entries(counts)
         .map(([studio, count]) => ({ studio, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8);
+        .sort((a, b) => {
+          if (a.studio === 'Other') return 1;
+          if (b.studio === 'Other') return -1;
+          return b.count - a.count;
+        })
+        .slice(0, 10);
 
       res.setHeader('Cache-Control', 'public, max-age=3600');
       return res.status(200).json({ studios: sorted });
