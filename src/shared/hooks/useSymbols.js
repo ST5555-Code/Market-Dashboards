@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Loads stock list from /api/symbols for a given dashboard key
+// Loads stock list from /config/symbols.json for a given dashboard key
 // Falls back to provided defaults if API fails
 export default function useSymbols(dashboardKey, defaults = []) {
   const [stocks, setStocks] = useState(defaults);

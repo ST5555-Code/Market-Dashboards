@@ -26,13 +26,18 @@ export default function NewsFeedPanel({ title, feeds, keywords, limit = 14, inte
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const mountedRef = useRef(true);
+  const fetchingRef = useRef(false);
   const keywordsRegex = keywords ? new RegExp(keywords.join('|'), 'i') : null;
 
   const fetchFeeds = useCallback(async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       const results = await Promise.allSettled(
         feeds.map(async (feed) => {
-          const res = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+          const res = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, {
+            signal: AbortSignal.timeout(8000), // 8s per feed max
+          });
           if (!res.ok) return [];
           const json = await res.json();
           return (json.items || []).map(item => ({ ...item, feedSource: feed.source }));
@@ -64,6 +69,7 @@ export default function NewsFeedPanel({ title, feeds, keywords, limit = 14, inte
       setItems(deduped.slice(0, limit));
       setLastUpdated(new Date());
     } catch { /* silent */ } finally {
+      fetchingRef.current = false;
       if (mountedRef.current) setLoading(false);
     }
   }, [feeds, keywordsRegex, limit]);

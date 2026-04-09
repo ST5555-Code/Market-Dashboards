@@ -29,9 +29,12 @@ export default function useQuotes(symbols, intervalMs = 60000) {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const mountedRef = useRef(true);
+  const fetchingRef = useRef(false);
   const symbolsKey = symbols.join(',');
 
   const fetchQuotes = useCallback(async () => {
+    if (fetchingRef.current) return; // overlap protection
+    fetchingRef.current = true;
     try {
       const allSyms = symbolsKey.split(',');
 
@@ -67,6 +70,7 @@ export default function useQuotes(symbols, intervalMs = 60000) {
     } catch {
       // silent fail — keep stale data
     } finally {
+      fetchingRef.current = false;
       if (mountedRef.current) setLoading(false);
     }
   }, [symbolsKey]);

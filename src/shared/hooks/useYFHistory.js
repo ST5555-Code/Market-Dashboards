@@ -20,8 +20,11 @@ export default function useYFHistory(symbol, range = 'ytd', interval = '1d', int
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const mountedRef = useRef(true);
+  const fetchingRef = useRef(false);
 
   const fetchData = useCallback(async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       const res = await fetch(`/api/quotes?syms=${symbol}&range=${range}&interval=${interval}`);
       if (!res.ok) return;
@@ -35,6 +38,7 @@ export default function useYFHistory(symbol, range = 'ytd', interval = '1d', int
     } catch {
       // silent
     } finally {
+      fetchingRef.current = false;
       if (mountedRef.current) setLoading(false);
     }
   }, [symbol, range, interval]);
