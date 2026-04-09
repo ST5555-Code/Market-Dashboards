@@ -47,8 +47,17 @@ export default function MapPreview() {
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      .leaflet-container { background: #1A3A5C; }
+      .leaflet-container {
+        background: #1A3A5C;
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
       .leaflet-tile-pane { filter: none; }
+      .leaflet-overlay-pane canvas,
+      .leaflet-tile-pane .leaflet-layer:last-child img {
+        opacity: 0.9;
+      }
       .leaflet-tooltip {
         background: rgba(28, 35, 51, 0.95) !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
@@ -92,6 +101,11 @@ export default function MapPreview() {
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA'
+          />
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution=""
+            opacity={0.9}
           />
 
           {/* Chokepoint */}
