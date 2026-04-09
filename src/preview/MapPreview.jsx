@@ -48,7 +48,7 @@ export default function MapPreview() {
     const style = document.createElement('style');
     style.innerHTML = `
       .leaflet-container { background: #AAD3DF; }
-      .leaflet-tile-pane { filter: saturate(1.5) brightness(0.90) contrast(1.05) hue-rotate(-15deg); }
+      .leaflet-tile-pane { filter: saturate(1.8) brightness(0.78) contrast(1.15) hue-rotate(-15deg); }
       .leaflet-tooltip {
         background: rgba(255, 255, 255, 0.95) !important;
         border: 1px solid #B0A898 !important;
