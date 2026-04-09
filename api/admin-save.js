@@ -25,9 +25,22 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
   }
 
-  // Debug: token prefix check (safe — does not expose the full token)
+  // Debug: verify token works against GitHub
   if (req.query?.debug === '1') {
-    return res.status(200).json({ tokenPrefix: GITHUB_TOKEN.slice(0, 6), tokenLen: GITHUB_TOKEN.length });
+    try {
+      const testRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `token ${GITHUB_TOKEN.trim()}`, Accept: 'application/vnd.github.v3+json' },
+      });
+      const testData = await testRes.json();
+      return res.status(200).json({
+        tokenPrefix: GITHUB_TOKEN.trim().slice(0, 6),
+        tokenLen: GITHUB_TOKEN.trim().length,
+        ghStatus: testRes.status,
+        ghUser: testData.login || testData.message,
+      });
+    } catch (e) {
+      return res.status(200).json({ error: e.message });
+    }
   }
 
   const { pin, symbols } = req.body || {};
