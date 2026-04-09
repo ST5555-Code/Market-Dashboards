@@ -285,41 +285,6 @@
   "media": {
     "stocks": [
       {
-        "sym": "NFLX",
-        "name": "Netflix",
-        "sector": "streaming"
-      },
-      {
-        "sym": "DIS",
-        "name": "Disney",
-        "sector": "streaming"
-      },
-      {
-        "sym": "WBD",
-        "name": "Warner Bros Discovery",
-        "sector": "streaming"
-      },
-      {
-        "sym": "CMCSA",
-        "name": "Comcast / Peacock",
-        "sector": "streaming"
-      },
-      {
-        "sym": "PARA",
-        "name": "Paramount Global",
-        "sector": "streaming"
-      },
-      {
-        "sym": "SPOT",
-        "name": "Spotify",
-        "sector": "audio"
-      },
-      {
-        "sym": "LYV",
-        "name": "Live Nation",
-        "sector": "live"
-      },
-      {
         "sym": "AMZN",
         "name": "Amazon",
         "sector": "bigtech"
@@ -340,16 +305,47 @@
         "sector": "bigtech"
       },
       {
-        "sym": "MSFT",
-        "name": "Microsoft",
-        "sector": "bigtech"
+        "sym": "NFLX",
+        "name": "Netflix",
+        "sector": "streaming"
+      },
+      {
+        "sym": "DIS",
+        "name": "Disney",
+        "sector": "diversified"
+      },
+      {
+        "sym": "WBD",
+        "name": "Warner Bros Discovery",
+        "sector": "diversified"
+      },
+      {
+        "sym": "PARA",
+        "name": "Paramount Global",
+        "sector": "diversified"
+      },
+      {
+        "sym": "SPOT",
+        "name": "Spotify",
+        "sector": "audio"
+      },
+      {
+        "sym": "LYV",
+        "name": "Live Nation",
+        "sector": "audio"
+      },
+      {
+        "sym": "CMCSA",
+        "name": "Comcast / Peacock",
+        "sector": "cable"
       }
     ],
     "_sectors": {
       "streaming": "Streaming",
       "audio": "Audio & Music",
-      "live": "Live Entertainment",
-      "bigtech": "Big Tech / Media"
+      "bigtech": "Big Tech / Media",
+      "diversified": "Diversified",
+      "cable": "Cable"
     }
   }
 }
