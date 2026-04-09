@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`,
       {
         headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Authorization: `token ${GITHUB_TOKEN}`,
           Accept: 'application/vnd.github.v3+json',
         },
         signal: AbortSignal.timeout(10000),
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Authorization: `token ${GITHUB_TOKEN}`,
           Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
