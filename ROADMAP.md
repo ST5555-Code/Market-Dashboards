@@ -26,11 +26,11 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] **Iran War batch:** ALERT 24h filter, global markets tape, commodity mini charts (WTI/Brent/TTF clickable), Voyager map tiles, Gold+Aluminum below TV
 - [x] All dashboards: spacing gap before Iran War nav button
 - [x] M&A: all 8 panels verified in bundle, APIs healthy
-- [ ] **Hormuz APIs:** ACLED 403, FIRMS 401, GDACS timeout — fix credentials or remove functions
-- [x] Iran War commodities: bigger charts (60px), large Gold/Aluminum boxes with comma formatting
-- [x] Iran War Analysis & Intelligence panel (Google News + EIA + Reuters, 27 keywords)
-- [x] Iran War satellite map: ESRI imagery + reference overlay + emoji markers + Gulf zoom lock + preview cleanup
-- [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
+- [x] Hormuz APIs: removed ACLED, FIRMS, GDACS (broken, unused)
+- [x] Iran War commodities: bigger charts, Gold/Aluminum boxes, comma formatting
+- [x] Iran War Analysis & Intelligence panel
+- [x] Iran War satellite map: ESRI imagery + emoji markers + Gulf zoom lock
+- [x] Media dashboard: Streaming Metrics bars, Studio Momentum (TMDB), Music Charts (iTunes), Cable & Broadcast, M&A Deal Flow panels
 - [ ] **Media Streaming Scoreboard update:**
   - [ ] Task 1: Replace static subscriber data with updated numbers (Netflix 325M, Disney+ 125M, Hulu 53M, Max 116M, Paramount+ 78M, Peacock 41M, Apple TV+ ~46M, Spotify 678M, YouTube Premium 100M+). Cards show service, count, "As of Q#" date, note if present.
   - [ ] Task 2: Auto-update detection via earnings RSS (Netflix IR, Disney, WBD, Paramount, Comcast). Poll 60min. New earnings headline → banner "New [Service] earnings detected — subscriber count may be stale. [Dismiss]". Seen/dismissed state in localStorage. Notification only, no auto-update.
