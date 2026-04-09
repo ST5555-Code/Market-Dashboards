@@ -17,12 +17,18 @@ function SolarBarChart({ history }) {
         {history.map((h, i) => {
           const pct = max > 0 ? (h.value / max) * 100 : 0;
           const isLatest = i === last;
+          const monthFull = h.period?.slice(0, 7);
           return (
             <div
               key={h.period}
-              className={`flex-1 rounded-sm ${isLatest ? 'bg-gold' : 'bg-gold/30'}`}
+              className={`flex-1 rounded-sm cursor-default relative group ${isLatest ? 'bg-gold' : 'bg-gold/30 hover:bg-gold/50'}`}
               style={{ height: `${Math.max(pct, 5)}%` }}
-            />
+              title={`${monthFull}: ${h.value} TWh`}
+            >
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-navy border border-gold/30 rounded px-1 py-0.5 text-[7px] text-txt-primary whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                {h.value}
+              </div>
+            </div>
           );
         })}
       </div>

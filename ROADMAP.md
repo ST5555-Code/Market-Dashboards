@@ -22,7 +22,7 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] All dashboards: titles in gold — "M&A Dashboard", "Upstream Energy Dashboard", etc.
 - [x] Landing page: simplified to buttons only with dashboard names
 - [x] Iran War: red ALERT headline tape + market data tape + Al Jazeera default TV
-- [ ] **SECURITY** Admin panel: remove GitHub PAT from localStorage. Either remove admin entirely (edit JSON directly) or build safer auth flow (Vercel auth, server-side token, or GitHub OAuth).
+- [x] **SECURITY** Admin panel: PAT removed from browser. Server-side save via /api/admin-save with PIN auth. Needs GITHUB_TOKEN env var on Vercel.
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
 - [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
 - [ ] Mobile QA pass across all dashboards
