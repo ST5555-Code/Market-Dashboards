@@ -37,17 +37,25 @@ function fmt(v) {
   return v.toFixed(2);
 }
 
-// Mini sparkline for 5-day commodity chart
+// Mini chart for 5-day commodity with dots and labels
 function MiniChart({ data, color }) {
   const chartData = useMemo(() => {
     if (!data?.length) return [];
-    return data.slice(-5).map(d => ({ v: d.value }));
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    return data.slice(-5).map(d => {
+      const dow = new Date(d.date).getDay();
+      return { day: days[dow] || '', v: d.value };
+    });
   }, [data]);
-  if (chartData.length < 2) return <div className="h-[60px]" />;
+  if (chartData.length < 2) return <div className="flex-1" />;
   return (
-    <ResponsiveContainer width="100%" height={60}>
-      <AreaChart data={chartData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-        <Area type="monotone" dataKey="v" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={1.5} dot={false} />
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={chartData} margin={{ top: 14, right: 4, bottom: 2, left: 4 }}>
+        <XAxis dataKey="day" tick={{ fontSize: 8, fill: '#A0AEC0' }} tickLine={false} axisLine={false} />
+        <Area type="monotone" dataKey="v" stroke={color} fill={color} fillOpacity={0.1} strokeWidth={1.5}
+          dot={{ r: 3, fill: color, stroke: '#141E35', strokeWidth: 1.5 }}
+          label={{ position: 'top', fontSize: 8, fill: '#fff', formatter: (v) => v?.toFixed(1) }}
+        />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -132,15 +140,15 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
   ];
 
   return (
-    <PanelCard title="Commodities" loading={loading} lastUpdated={lastUpdated} compact>
-      <div className="flex flex-col gap-1">
+    <PanelCard title="Commodities" loading={loading} lastUpdated={lastUpdated} compact className="flex flex-col">
+      <div className="flex flex-col gap-1 flex-1">
         {commodities.map(c => {
           const q = quotes[c.sym];
           return (
             <button
               key={c.sym}
               onClick={() => setOverlay(c)}
-              className="group bg-navy rounded-lg p-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors w-full"
+              className="group bg-navy rounded-lg p-2 text-left cursor-pointer hover:bg-white/[0.03] transition-colors w-full flex-1 flex flex-col"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[9px] text-txt-secondary group-hover:text-gold transition-colors">
@@ -155,7 +163,9 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
                   )}
                 </div>
               </div>
-              <MiniChart data={c.hist} color={c.color} />
+              <div className="flex-1 min-h-[50px]">
+                <MiniChart data={c.hist} color={c.color} />
+              </div>
             </button>
           );
         })}
@@ -211,7 +221,7 @@ function App() {
             <CommoditiesPanel quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
             <div className="flex flex-col gap-2">
               <LiveTVPanel defaultChannel={4} />
-              <div className="flex gap-2">
+              <div className="bg-navy-panel rounded-lg border border-gold/15 p-2 flex gap-2 flex-1">
                 <LargePrice label="Gold" sub="COMEX $/oz" quote={quotes['GC=F']} />
                 <LargePrice label="Aluminum" sub="LME $/MT" quote={quotes['ALI=F']} />
               </div>

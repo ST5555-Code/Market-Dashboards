@@ -27,9 +27,9 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] All dashboards: spacing gap before Iran War nav button
 - [x] M&A: all 8 panels verified in bundle, APIs healthy
 - [ ] **Hormuz APIs:** ACLED 403, FIRMS 401, GDACS timeout — fix credentials or remove functions
-- [ ] Iran War commodities box: increase chart height for WTI/Brent/TTF to fill the box. Gold + Aluminum below TV: larger boxes with bigger font, thousands comma-formatted, bottom aligned with commodities box.
-- [ ] Iran War row 2: replace "Analysis" placeholder with "ANALYSIS & INTELLIGENCE" NewsFeedPanel. Feeds: Google News (hormuz+iran+oil+analysis+forecast+sanctions), EIA press releases (eia.gov/rss/press_releases.xml), Reuters business (feeds.reuters.com/reuters/businessNews). Keywords: analysis, forecast, outlook, estimate, projection, opec, iea, eia, brent, wti, hedge, premium, risk, strategic reserve, spr, price, market, investment, goldman, morgan, citi, jpmorgan, rating, report, assessment, policy, geopolit, scenario, contingency. Add reuters.com + eia.gov to RSS whitelist. Do not modify existing two panels.
-- [ ] Iran War map: apply approved preview to main HormuzMap.jsx — satellite imagery + World_Reference_Overlay + emoji markers (🏭🇺🇸🇮🇷☢️) + bolder lines. Limit zoom/pan to Gulf region (maxBounds around Persian Gulf + Gulf of Oman). Initial focus on Strait of Hormuz. Delete MapPreview.jsx and /preview route after.
+- [x] Iran War commodities: bigger charts (60px), large Gold/Aluminum boxes with comma formatting
+- [x] Iran War Analysis & Intelligence panel (Google News + EIA + Reuters, 27 keywords)
+- [x] Iran War satellite map: ESRI imagery + reference overlay + emoji markers + Gulf zoom lock + preview cleanup
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
 - [ ] Mobile QA pass across all dashboards
 
