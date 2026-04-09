@@ -92,8 +92,8 @@ export default async function handler(req, res) {
     );
 
     if (!putRes.ok) {
-      const err = await putRes.json();
-      throw new Error(`GitHub PUT ${putRes.status}: ${err.message}`);
+      const errText = await putRes.text();
+      throw new Error(`GitHub PUT ${putRes.status}: ${errText.slice(0, 200)}`);
     }
 
     return res.status(200).json({ ok: true, message: 'Saved and deploying' });
