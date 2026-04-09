@@ -1,7 +1,7 @@
 // /api/media-data.js — Server-side proxy for TMDB + iTunes
 // Avoids CORS issues by fetching from server
 
-const TMDB_KEY = process.env.VITE_TMDB_API_KEY;
+const TMDB_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY;
 const ITUNES_URL = 'https://rss.applemarketingtools.com/api/v2/us/music/most-played/10/songs.json';
 
 const STUDIO_MAP = {
@@ -65,7 +65,6 @@ export default async function handler(req, res) {
       const data = await r.json();
 
       // Fetch details for each movie to get production companies
-      const counts = {};
       const details = await Promise.allSettled(
         (data.results || []).slice(0, 20).map(async (m) => {
           const dr = await fetch(
