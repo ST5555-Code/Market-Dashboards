@@ -342,34 +342,15 @@
   <div class="github-section">
     <div class="github-toggle" id="githubToggle" onclick="toggleGitHub()">
       <span class="arrow">▶</span>
-      GitHub Save — push directly, triggers Vercel deploy
+      Save & Deploy
     </div>
     <div class="github-body" id="githubBody">
       <p class="github-note">
-        Provide a GitHub <a href="https://github.com/settings/tokens/new?scopes=repo&description=stock-admin" target="_blank">Personal Access Token</a> with <strong>repo</strong> scope.
-        Stored in browser localStorage only — never sent anywhere except GitHub's API.
+        Save changes to deploy. Enter PIN to confirm.
       </p>
-      <div class="github-grid">
-        <div class="form-group">
-          <label>GitHub Token</label>
-          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" style="font-family:monospace">
-        </div>
-        <div class="form-group">
-          <label>Repo (owner/name)</label>
-          <input type="text" id="ghRepo" placeholder="sergetismen/intelligence-dashboards">
-        </div>
-        <div class="form-group">
-          <label>Branch</label>
-          <input type="text" id="ghBranch" value="main">
-        </div>
-        <div class="form-group">
-          <label>File path in repo</label>
-          <input type="text" id="ghPath" value="config/symbols.json">
-        </div>
-      </div>
       <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn btn-primary" onclick="saveToGitHub()">Push to GitHub → deploy</button>
-        <button class="btn btn-ghost btn-sm" onclick="saveGHSettings()">Save settings</button>
+        <input type="password" id="adminPin" placeholder="PIN" style="width:80px;font-family:monospace;padding:6px 10px;background:#1a1a2e;border:1px solid #333;color:#fff;border-radius:4px">
+        <button class="btn btn-primary" onclick="saveViaAPI()">Save & Deploy</button>
         <span id="ghStatus" style="font-size:11px;color:var(--muted)"></span>
       </div>
     </div>
@@ -413,7 +394,7 @@ function getSectorLabel(dash, key) { return getSectors(dash)[key] || key; }
 //  INIT
 // ══════════════════════════════════════════════════════
 async function init() {
-  loadGHSettings();
+  // loadGHSettings removed — no browser-side tokens
   await reloadFromAPI();
 }
 
@@ -1008,66 +989,39 @@ function toggleGitHub() {
   document.getElementById('githubBody').classList.toggle('open');
 }
 
-function saveGHSettings() {
-  ['ghToken','ghRepo','ghBranch','ghPath'].forEach(id => {
-    const v = document.getElementById(id).value.trim();
-    if (v) localStorage.setItem(id, v);
-  });
-  toast('Settings saved','success');
-}
+// Settings functions removed — no longer storing tokens in browser
 
-function loadGHSettings() {
-  ['ghToken','ghRepo','ghBranch','ghPath'].forEach(id => {
-    const v = localStorage.getItem(id);
-    if (v) document.getElementById(id).value = v;
-  });
-}
-
-async function saveToGitHub() {
-  const token  = document.getElementById('ghToken').value.trim();
-  const repo   = document.getElementById('ghRepo').value.trim();
-  const branch = document.getElementById('ghBranch').value.trim() || 'main';
-  const path   = document.getElementById('ghPath').value.trim()   || 'config/symbols.json';
+async function saveViaAPI() {
+  const pin = document.getElementById('adminPin').value.trim();
   const status = document.getElementById('ghStatus');
 
-  if (!token) { toast('GitHub token required','error'); return; }
-  if (!repo)  { toast('Repo required','error'); return; }
-  saveGHSettings();
+  if (!pin) { toast('PIN required','error'); return; }
 
-  status.textContent = 'Fetching file SHA…';
+  status.textContent = 'Saving…';
   status.style.color = 'var(--sandstone)';
 
   try {
-    const getRes = await fetch(
-      `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`,
-      { headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' } }
-    );
-    let sha = null;
-    if (getRes.ok) { sha = (await getRes.json()).sha; }
-    else if (getRes.status !== 404) throw new Error('GitHub ' + getRes.status);
+    const json = buildJSON();
+    const symbols = JSON.parse(json);
 
-    status.textContent = 'Pushing commit…';
-    const json    = buildJSON();
-    const content = btoa(unescape(encodeURIComponent(json)));
-    const now     = new Date().toISOString().slice(0,16).replace('T',' ');
-    const body    = { message: `stock-admin: update symbols.json (${now})`, content, branch };
-    if (sha) body.sha = sha;
+    const res = await fetch('/api/admin-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin, symbols }),
+    });
 
-    const putRes = await fetch(
-      `https://api.github.com/repos/${repo}/contents/${path}`,
-      { method:'PUT', headers:{ Authorization:'token '+token, Accept:'application/vnd.github.v3+json','Content-Type':'application/json' }, body:JSON.stringify(body) }
-    );
-    if (!putRes.ok) { const err = await putRes.json(); throw new Error(err.message||'PUT '+putRes.status); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Save failed');
 
     isDirty = false;
     document.getElementById('unsavedBanner').classList.add('hidden');
-    status.textContent = '✓ Pushed — deploying…';
+    status.textContent = '✓ Saved — deploying…';
     status.style.color = 'var(--green)';
-    toast('Committed to GitHub — Vercel deploying in ~30s','success');
+    toast('Saved — Vercel deploying in ~30s','success');
   } catch(e) {
     status.textContent = 'Error: ' + e.message;
     status.style.color = 'var(--red)';
-    toast('GitHub error: ' + e.message,'error');
+    toast('Save error: ' + e.message,'error');
   }
 }
 
