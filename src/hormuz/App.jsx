@@ -47,11 +47,20 @@ function MiniChart({ data, color }) {
       return { day: days[dow] || '', v: d.value };
     });
   }, [data]);
-  if (chartData.length < 2) return <div style={{ height: 70 }} />;
+  if (chartData.length < 2) return <div style={{ height: 90 }} />;
+
+  // Tight Y domain to show daily volatility
+  const values = chartData.map(d => d.v);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const pad = (max - min) * 0.3 || 0.5;
+  const domain = [Math.floor((min - pad) * 100) / 100, Math.ceil((max + pad) * 100) / 100];
+
   return (
-    <ResponsiveContainer width="100%" height={70}>
-      <AreaChart data={chartData} margin={{ top: 14, right: 4, bottom: 2, left: 4 }}>
+    <ResponsiveContainer width="100%" height={90}>
+      <AreaChart data={chartData} margin={{ top: 16, right: 4, bottom: 2, left: 4 }}>
         <XAxis dataKey="day" tick={{ fontSize: 8, fill: '#A0AEC0' }} tickLine={false} axisLine={false} />
+        <YAxis domain={domain} hide />
         <Area type="monotone" dataKey="v" stroke={color} fill={color} fillOpacity={0.1} strokeWidth={1.5}
           dot={{ r: 3, fill: color, stroke: '#141E35', strokeWidth: 1.5 }}
           label={{ position: 'top', fontSize: 8, fill: '#fff', formatter: (v) => v?.toFixed(1) }}
