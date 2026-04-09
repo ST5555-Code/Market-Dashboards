@@ -30,6 +30,14 @@ export const SUPPLY_FEEDS = [
   { url: 'https://www.cnbc.com/id/19836768/device/rss/rss.html', source: 'CNBC Energy' },
 ];
 
+export const ANALYSIS_FEEDS = [
+  { url: 'https://news.google.com/rss/search?q=hormuz+iran+oil+analysis+forecast+sanctions&hl=en&gl=US&ceid=US:en', source: 'Google News' },
+  { url: 'https://www.eia.gov/rss/press_releases.xml', source: 'EIA' },
+  { url: 'https://feeds.reuters.com/reuters/businessNews', source: 'Reuters' },
+];
+
+export const ANALYSIS_KEYWORDS = ['analysis','forecast','outlook','estimate','projection','opec','iea','eia','brent','wti','hedge','premium','risk','strategic reserve','spr','price','market','investment','goldman','morgan','citi','jpmorgan','rating','report','assessment','policy','geopolit','scenario','contingency'];
+
 export const WAR_KEYWORDS = ['iran','hormuz','irgc','tehran','strait','missile','attack','strike','military','sanctions','nuclear','houthi','conflict','war','blockade','israel','hezbollah','retaliat','drone','navy'];
 export const SUPPLY_KEYWORDS = ['hormuz','shipping','tanker','pipeline','oil','crude','lng','transit','vessel','port','embargo','sanctions','chokepoint','supply','disruption','bypass','fujairah','petroline'];
 

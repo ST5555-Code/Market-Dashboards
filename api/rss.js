@@ -37,6 +37,9 @@ const ALLOWED_DOMAINS = [
   'sportico.com',
   // Hormuz
   'aljazeera.com',
+  // Analysis
+  'eia.gov',
+  'feeds.reuters.com',
 ];
 
 function parseRSS(xml) {

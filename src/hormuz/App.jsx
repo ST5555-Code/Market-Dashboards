@@ -12,7 +12,8 @@ import HormuzMap from './components/HormuzMap';
 import WarHeadlineTape from './components/WarHeadlineTape';
 import {
   ALL_SYMBOLS, MARKET_SYMBOLS,
-  WAR_FEEDS, SUPPLY_FEEDS, WAR_KEYWORDS, SUPPLY_KEYWORDS,
+  WAR_FEEDS, SUPPLY_FEEDS, ANALYSIS_FEEDS,
+  WAR_KEYWORDS, SUPPLY_KEYWORDS, ANALYSIS_KEYWORDS,
 } from './config';
 
 class ErrorBoundary extends Component {
@@ -42,9 +43,9 @@ function MiniChart({ data, color }) {
     if (!data?.length) return [];
     return data.slice(-5).map(d => ({ v: d.value }));
   }, [data]);
-  if (chartData.length < 2) return <div className="h-[40px]" />;
+  if (chartData.length < 2) return <div className="h-[60px]" />;
   return (
-    <ResponsiveContainer width="100%" height={40}>
+    <ResponsiveContainer width="100%" height={60}>
       <AreaChart data={chartData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
         <Area type="monotone" dataKey="v" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={1.5} dot={false} />
       </AreaChart>
@@ -166,19 +167,24 @@ function CommoditiesPanel({ quotes, loading, lastUpdated }) {
   );
 }
 
-// Small price row for below TV
-function SmallPrice({ label, quote }) {
+function fmtComma(v) {
+  if (v == null) return '--';
+  return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function LargePrice({ label, sub, quote }) {
   return (
-    <div className="flex items-center justify-between py-1 border-b border-white/5 last:border-0">
-      <span className="text-[9px] text-txt-secondary">{label}</span>
-      <div className="flex items-center gap-1.5">
-        <span className="text-[11px] font-semibold text-txt-primary tabular-nums">${fmt(quote?.price)}</span>
-        {quote?.changePct != null && (
-          <span className={`text-[8px] tabular-nums ${quote.changePct >= 0 ? 'text-pos' : 'text-neg'}`}>
-            {quote.changePct >= 0 ? '+' : ''}{quote.changePct.toFixed(2)}%
-          </span>
-        )}
+    <div className="bg-navy rounded-lg p-3 flex-1">
+      <div className="text-[9px] text-txt-secondary">{label}</div>
+      <div className="text-[20px] font-bold text-txt-primary tabular-nums leading-tight">
+        ${fmtComma(quote?.price)}
       </div>
+      {quote?.changePct != null && (
+        <div className={`text-[11px] font-semibold tabular-nums ${quote.changePct >= 0 ? 'text-pos' : 'text-neg'}`}>
+          {quote.changePct >= 0 ? '+' : ''}{quote.changePct.toFixed(2)}%
+        </div>
+      )}
+      {sub && <div className="text-[7px] text-txt-secondary mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -205,9 +211,9 @@ function App() {
             <CommoditiesPanel quotes={quotes} loading={loading} lastUpdated={lastUpdated} />
             <div className="flex flex-col gap-2">
               <LiveTVPanel defaultChannel={4} />
-              <div className="bg-navy-panel rounded-lg border border-gold/15 px-3 py-2">
-                <SmallPrice label="Gold" quote={quotes['GC=F']} />
-                <SmallPrice label="Aluminum" quote={quotes['ALI=F']} />
+              <div className="flex gap-2">
+                <LargePrice label="Gold" sub="COMEX $/oz" quote={quotes['GC=F']} />
+                <LargePrice label="Aluminum" sub="LME $/MT" quote={quotes['ALI=F']} />
               </div>
             </div>
           </div>
@@ -216,11 +222,7 @@ function App() {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
             <NewsFeedPanel title="Conflict & Military" feeds={WAR_FEEDS} keywords={WAR_KEYWORDS} limit={12} />
             <NewsFeedPanel title="Supply Chain & Logistics" feeds={SUPPLY_FEEDS} keywords={SUPPLY_KEYWORDS} limit={12} />
-            <PanelCard title="Analysis" compact>
-              <div className="py-8 text-center">
-                <p className="text-txt-secondary text-[10px]">Coming soon</p>
-              </div>
-            </PanelCard>
+            <NewsFeedPanel title="Analysis & Intelligence" feeds={ANALYSIS_FEEDS} keywords={ANALYSIS_KEYWORDS} limit={12} />
           </div>
         </div>
       </div>
