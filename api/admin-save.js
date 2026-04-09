@@ -25,6 +25,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
   }
 
+  // Debug: token prefix check (safe — does not expose the full token)
+  if (req.query?.debug === '1') {
+    return res.status(200).json({ tokenPrefix: GITHUB_TOKEN.slice(0, 6), tokenLen: GITHUB_TOKEN.length });
+  }
+
   const { pin, symbols } = req.body || {};
 
   if ((pin || '').trim() !== (ADMIN_PIN || '').trim()) {
