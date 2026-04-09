@@ -23,16 +23,11 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] Landing page: simplified to buttons only with dashboard names
 - [x] Iran War: red ALERT headline tape + market data tape + Al Jazeera default TV
 - [x] **SECURITY** Admin panel: PAT removed from browser. Server-side save via /api/admin-save with PIN auth. Needs GITHUB_TOKEN env var on Vercel.
-- [ ] **Iran War dashboard batch:**
-  - [ ] ALERT tape: filter to last 24 hours only
-  - [ ] Markets tape: use same global markets as M&A dashboard (S&P, Nasdaq, Dow, Russell, FTSE, DAX, CAC, Stoxx, Nikkei, HSI, WTI, VIX)
-  - [ ] Commodities box: replace Gold with TTF. Show 5-day mini charts for WTI, Brent, TTF. All three clickable → floating chart overlay. Charts fill the box.
-  - [ ] Map: switch to lighter tile set — light blue water, visible land contrast, country names readable. Try CartoDB Voyager or Positron.
-  - [ ] Below TV in the same box: add Gold, Aluminum, Urea futures prices with daily % change. Do not resize TV or the outer box — bottom stays aligned with map.
-- [ ] All dashboards: add spacing gap before "Iran War" nav button (visual separator from industry dashboards)
+- [x] **Iran War batch:** ALERT 24h filter, global markets tape, commodity mini charts (WTI/Brent/TTF clickable), Voyager map tiles, Gold+Aluminum below TV
+- [x] All dashboards: spacing gap before Iran War nav button
+- [x] M&A: all 8 panels verified in bundle, APIs healthy
 - [ ] **Hormuz APIs:** ACLED 403, FIRMS 401, GDACS timeout — fix credentials or remove functions
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
-- [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
 - [ ] Mobile QA pass across all dashboards
 
 ---

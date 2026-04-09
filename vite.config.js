@@ -13,6 +13,7 @@ export default defineConfig({
         cleantech: resolve(__dirname, 'cleantech/index.html'),
         media: resolve(__dirname, 'media/index.html'),
         hormuz: resolve(__dirname, 'hormuz/index.html'),
+        preview: resolve(__dirname, 'preview/index.html'),
       },
     },
   },
