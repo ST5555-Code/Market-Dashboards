@@ -1,7 +1,7 @@
 // /api/rss.js — RSS proxy with domain whitelist
 // Usage: /api/rss?url=https://news.google.com/rss/search?q=merger
 
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 
 const ALLOWED_DOMAINS = [
   'news.google.com',

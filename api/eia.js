@@ -3,7 +3,7 @@
 // Caches 6 hours — EIA WPSR released every Wednesday ~10:30am ET
 
 const EIA_KEY = process.env.EIA_API_KEY;
-const ORIGIN  = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 const BASE    = 'https://api.eia.gov/v2';
 
 async function eiaFetch(route, facets, length = 3) {

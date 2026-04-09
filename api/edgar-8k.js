@@ -115,7 +115,7 @@ async function searchFilings(forms, query, days, limit) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app');
   res.setHeader('Content-Type', 'application/json');
 
   const forms = (req.query?.forms || '8-K').trim();

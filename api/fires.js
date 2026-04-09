@@ -2,7 +2,7 @@
 // Requires FIRMS_MAP_KEY env var
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', ORIGIN);

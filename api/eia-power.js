@@ -3,7 +3,7 @@
 // Caches 24h — EIA Electric Power Monthly releases with ~2 month lag
 
 const EIA_KEY = process.env.EIA_API_KEY;
-const ORIGIN  = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 const BASE    = 'https://api.eia.gov/v2';
 
 async function fetchGen(fueltypeId, length = 3) {

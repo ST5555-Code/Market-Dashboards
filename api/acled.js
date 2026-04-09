@@ -4,7 +4,7 @@
 // Register free at: https://acleddata.com/register/
 // NOTE: account must have API access enabled by ACLED — email access@acleddata.com if getting 403
 
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', ORIGIN);

@@ -1,7 +1,7 @@
 // /api/gdacs.js — GDACS wildfire/disaster proxy for Gulf & Middle East
 // No API key required. GDACS = Global Disaster Alert and Coordination System (UN OCHA)
 
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', ORIGIN);

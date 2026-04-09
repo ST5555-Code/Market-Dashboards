@@ -2,7 +2,7 @@
 // Accepts: /api/quotes?syms=^VIX,^TNX,HYG&range=ytd&interval=1d
 // For short range: CF Worker (fast). For long range: direct YF fetch (server-side).
 
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGIN = process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app';
 const CF_PROXY = 'https://yf-proxy.mktdash.workers.dev';
 
 async function fetchViaCF(sym) {

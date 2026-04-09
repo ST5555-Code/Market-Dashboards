@@ -16,6 +16,16 @@
   },
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.arcgisonline.com https://*.openstreetmap.org; frame-src https://www.youtube-nocookie.com; connect-src 'self' https://yf-proxy.mktdash.workers.dev https://query1.finance.yahoo.com https://api.allorigins.win https://api.stlouisfed.org https://efts.sec.gov https://www.sec.gov https://api.nasdaq.com https://api.eia.gov https://api.acleddata.com https://www.gdacs.org https://firms.modaps.eosdis.nasa.gov" }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },

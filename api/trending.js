@@ -4,7 +4,7 @@
 const USER_AGENT = 'Mozilla/5.0 (compatible; MADashboard/1.0)';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://market-dashboards.vercel.app');
   res.setHeader('Content-Type', 'application/json');
 
   try {
