@@ -35,6 +35,9 @@ const ALLOWED_DOMAINS = [
   'hollywoodreporter.com',
   'frontofficesports.com',
   'sportico.com',
+  'the-numbers.com',
+  'tvnewscheck.com',
+  'flixpatrol.com',
   // Hormuz
   'aljazeera.com',
   // Analysis
