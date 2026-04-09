@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip } from 'react-leaflet';
 import {
   OIL_SITES, REFINERIES, TERMINALS, US_BASES, GCC_BASES, IRAN_BASES,
-  NUCLEAR_SITES, CITIES, INBOUND_LANE, OUTBOUND_LANE, PETROLINE,
+  NUCLEAR_SITES, INBOUND_LANE, OUTBOUND_LANE, PETROLINE,
   FUJAIRAH_PIPE, MAP_CENTER, MAP_ZOOM,
 } from '../hormuz/config';
 
@@ -16,7 +16,6 @@ const LAYERS = [
   { key: 'gcc', label: 'GCC Bases', color: '#27AE60', defaultOn: false },
   { key: 'ir', label: 'Iran Bases', color: '#C0392B', defaultOn: true },
   { key: 'nuc', label: 'Nuclear', color: '#E74C3C', defaultOn: true },
-  { key: 'cities', label: 'Cities', color: '#4A4A4A', defaultOn: true },
 ];
 
 function MarkerLayer({ items, color, size = 6 }) {
@@ -103,9 +102,9 @@ export default function MapPreview() {
             attribution='Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA'
           />
           <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
             attribution=""
-            opacity={0.9}
+            opacity={0.8}
           />
 
           {/* Chokepoint */}
@@ -151,20 +150,6 @@ export default function MapPreview() {
           {layers.gcc && <MarkerLayer items={GCC_BASES} color="#27AE60" size={5} />}
           {layers.ir && <MarkerLayer items={IRAN_BASES} color="#C0392B" size={6} />}
           {layers.nuc && <MarkerLayer items={NUCLEAR_SITES} color="#E74C3C" size={7} />}
-
-          {/* Cities — dark labels on light map */}
-          {layers.cities && CITIES.map((c, i) => (
-            <CircleMarker
-              key={i}
-              center={c.pos}
-              radius={3}
-              pathOptions={{ color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.9, weight: 0.5 }}
-            >
-              <Tooltip permanent direction="right" offset={[6, 0]} className="city-label-preview">
-                <span style={{ fontSize: 10, color: '#FFFFFF', fontWeight: 500, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{c.name}</span>
-              </Tooltip>
-            </CircleMarker>
-          ))}
         </MapContainer>
       </div>
 
