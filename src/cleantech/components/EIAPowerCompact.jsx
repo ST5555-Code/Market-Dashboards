@@ -12,22 +12,31 @@ function SolarBarChart({ history }) {
   const last = history.length - 1;
 
   return (
-    <div className="flex items-end gap-1 h-[40px] mt-1.5">
-      {history.map((h, i) => {
-        const pct = max > 0 ? (h.value / max) * 100 : 0;
-        const isLatest = i === last;
-        const month = h.period?.slice(5, 7);
-        const monthNames = { '01':'J','02':'F','03':'M','04':'A','05':'M','06':'J','07':'J','08':'A','09':'S','10':'O','11':'N','12':'D' };
-        return (
-          <div key={h.period} className="flex-1 flex flex-col items-center gap-0.5">
+    <div className="mt-1.5">
+      <div className="flex items-end gap-1" style={{ height: 36 }}>
+        {history.map((h, i) => {
+          const pct = max > 0 ? (h.value / max) * 100 : 0;
+          const isLatest = i === last;
+          return (
             <div
-              className={`w-full rounded-sm transition-all ${isLatest ? 'bg-gold' : 'bg-gold/25'}`}
-              style={{ height: `${Math.max(pct, 4)}%` }}
+              key={h.period}
+              className={`flex-1 rounded-sm ${isLatest ? 'bg-gold' : 'bg-gold/30'}`}
+              style={{ height: `${Math.max(pct, 5)}%` }}
             />
-            <span className="text-[7px] text-txt-secondary">{monthNames[month] || ''}</span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      <div className="flex gap-1 mt-0.5">
+        {history.map((h, i) => {
+          const month = h.period?.slice(5, 7);
+          const monthNames = { '01':'J','02':'F','03':'M','04':'A','05':'M','06':'J','07':'J','08':'A','09':'S','10':'O','11':'N','12':'D' };
+          return (
+            <span key={h.period} className="flex-1 text-[7px] text-txt-secondary text-center">
+              {monthNames[month] || ''}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
