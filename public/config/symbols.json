@@ -286,52 +286,70 @@
     "stocks": [
       {
         "sym": "NFLX",
-        "name": "Netflix"
+        "name": "Netflix",
+        "sector": "streaming"
       },
       {
         "sym": "DIS",
-        "name": "Disney"
+        "name": "Disney",
+        "sector": "streaming"
       },
       {
         "sym": "WBD",
-        "name": "Warner Bros"
+        "name": "Warner Bros Discovery",
+        "sector": "streaming"
       },
       {
         "sym": "CMCSA",
-        "name": "Comcast"
+        "name": "Comcast / Peacock",
+        "sector": "streaming"
       },
       {
         "sym": "PARA",
-        "name": "Paramount"
+        "name": "Paramount Global",
+        "sector": "streaming"
       },
       {
         "sym": "SPOT",
-        "name": "Spotify"
+        "name": "Spotify",
+        "sector": "audio"
       },
       {
         "sym": "LYV",
-        "name": "Live Nation"
+        "name": "Live Nation",
+        "sector": "live"
       },
       {
         "sym": "AMZN",
-        "name": "Amazon"
+        "name": "Amazon",
+        "sector": "bigtech"
       },
       {
         "sym": "AAPL",
-        "name": "Apple"
+        "name": "Apple",
+        "sector": "bigtech"
       },
       {
         "sym": "GOOGL",
-        "name": "Alphabet"
+        "name": "Alphabet",
+        "sector": "bigtech"
       },
       {
         "sym": "META",
-        "name": "Meta"
+        "name": "Meta Platforms",
+        "sector": "bigtech"
       },
       {
         "sym": "MSFT",
-        "name": "Microsoft"
+        "name": "Microsoft",
+        "sector": "bigtech"
       }
-    ]
+    ],
+    "_sectors": {
+      "streaming": "Streaming",
+      "audio": "Audio & Music",
+      "live": "Live Entertainment",
+      "bigtech": "Big Tech / Media"
+    }
   }
 }

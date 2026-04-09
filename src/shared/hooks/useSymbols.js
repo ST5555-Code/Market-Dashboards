@@ -30,6 +30,8 @@ export default function useSymbols(dashboardKey, defaults = []) {
           ofs: 'Oilfield Services', power: 'Power / Utilities',
           solar: 'Solar', wind: 'Wind', nuclear: 'Nuclear',
           h2: 'Hydrogen / Fuel Cell', mineral: 'Critical Minerals',
+          streaming: 'Streaming', audio: 'Audio & Music',
+          live: 'Live Entertainment', bigtech: 'Big Tech / Media',
         };
         const mapped = stockList.map(s => ({
           ...s,
