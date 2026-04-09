@@ -23,6 +23,7 @@ _Accumulate changes here. Build and deploy as a batch._
 - [x] Landing page: simplified to buttons only with dashboard names
 - [x] Iran War: red ALERT headline tape + market data tape + Al Jazeera default TV
 - [x] **SECURITY** Admin panel: PAT removed from browser. Server-side save via /api/admin-save with PIN auth. Needs GITHUB_TOKEN env var on Vercel.
+- [ ] **Hormuz APIs:** ACLED returning 403 (credentials expired), FIRMS returning 401 (key invalid), GDACS timing out. Either refresh credentials in Vercel env vars or remove these 3 functions to stop wasting serverless invocations. Dashboard currently uses RSS not these APIs, so no live impact — but cleanup needed.
 - [ ] Media dashboard: fill in Streaming / Box Office / Ad Market top row boxes
 - [ ] M&A dashboard: test all panels after monorepo migration — verify nothing broke
 - [ ] Mobile QA pass across all dashboards
